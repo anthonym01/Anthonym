@@ -1,0 +1,59 @@
+{
+  "name": "anthonym",
+  "version": "1.0.0",
+  "description": "An electron based Music player",
+  "main": "main.js",
+  "author": {
+    "name": "Anthonym",
+    "email": "samuelmatheson20@gmail.com"
+  },
+  "homepage": "https://github.com/anthonym01/Anthonym",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthonym01/Anthonym"
+  },
+  "icon": "assets/icons/icon.png",
+  "license": "ISC",
+  "bin": "BB01",
+  "scripts": {
+    "start": "electron main.js",
+    "packager-win32": "electron-packager ./ --overwrite --asar --platform=win32 --arch=all --icon=assets/icons/icon.ico --prune=true --out=dist --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"anthonym\"",
+    "packager-linux": "electron-packager ./ anthonym --overwrite --asar --platform=linux --arch=all --icon=assets/icons/icon.png --prune=true --out=dist",
+    "packager-darwin": "electron-packager ./ --overwrite --platform=darwin --arch=all --icon=assets/icons/icon.png --prune=true --out=dist",
+    "deb-linux": "electron-installer-debian --src dist/{output-folder}/ --arch x64 --config debian.json",
+    "postinstall": "electron-builder install-app-deps",
+    "builder-default": "electron-builder",
+    "builder-linux": "electron-builder --linux deb appimage tar.xz snap pacman",
+    "builder-win": "electron-builder --win --x64 --ia32"
+  },
+  "build": {
+    "appId": "com.anthonym.electron",
+    "icon": "assets/icons/icon.png",
+    "productName": "anthonym",
+    "copyright": "none",
+    "buildVersion": "1.0.0",
+    "remoteBuild": "true",
+    "asar": "true",
+    "mac": {
+      "category": "utility",
+      "icon": "assets/icons/icon.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icons/icon.ico"
+    },
+    "linux": {
+      "category": "Music",
+      "icon": "assets/icons/icon.png"
+    }
+  },
+  "devDependencies": {
+    "asar": "^1.0.0",
+    "electron": "^10.1.4",
+    "electron-builder": "^22.9.1"
+  },
+  "dependencies": {
+    "electron-store": "^6.0.1",
+    "electron-window-state": "^5.0.3"
+  }
+}

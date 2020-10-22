@@ -1,0 +1,31 @@
+To start off you'll need Nodejs and Yarn
+Install them from
+
+https://nodejs.org/en/ and https://classic.yarnpkg.com/en/docs/install/
+
+N.B. you may need to restart
+
+**** Install electron dependencies
+1. Open this this text file is in, in your terminal/powershell
+2. run command "npm install electron && yarn add electron-builder --dev" (it may take a couple minutes)
+
+**** Setup your app
+i recomend reading the electron documentation https://www.electronjs.org/docs, however this template is current set up to take your
+web files (such as html,css,js and font files) in the '/BrowserWindows' folder
+To start your app run "npm run start" or "yarn start" (i recomend using npm for this)
+
+
+**** Packageing you app for distribution (or testing)
+To package your app i once again recomend reading the electron documentation, how tempalte is currently set up to use 
+"electron-builder (https://github.com/electron-userland/electron-builder)" and "electron-packager (https://github.com/electron/electron-packager)" to package your app for you
+
+use command "yarn dist" to package your app for the platform your computer is currently running
+
+use resspective scripts in "package.json" file to package for desired platform and architecture,
+For example,
+Command "npm run package-mac-x64" will package your app for Mac OS 64bit
+and 
+Command "npm run package-win-arm64" will package your app for arm windows
+
+Personally i recomend using electron-packager for linux, and electron-builder for windows,
+I have no apple computers so goodluck with that friend

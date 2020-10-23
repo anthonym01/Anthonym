@@ -1,24 +1,20 @@
 const { app, BrowserWindow, Menu, screen, MenuItem, Tray } = require('electron');
 const path = require('path');
 const url = require('url');
-//const { createPublicKey } = require('crypto');
 const fs = require('fs');
-const windowStateKeeper = require('electron-window-state');//https://www.npmjs.com/package/electron-window-state
-const Store = require('electron-store');//Store objects (https://www.npmjs.com/package/electron-window-state)
-const storeinator = new Store;
+const windowStateKeeper = require('electron-window-state');
+const Store = require('electron-store'); const storeinator = new Store;
 
 let mainWindow = null;//defines the window as an abject
 let tray = false;
 
-let config = {
-	athingy: true,
-}
+let config = {	athingy: true,}
 
 app.on('ready', function () {//App ready to roll
 	if (storeinator.get('default')) {
 		config = JSON.parse(storeinator.get('default'))
 	} else {
-		storeinator.set('default',JSON.stringify(config))
+		storeinator.set('default', JSON.stringify(config))
 	}
 	createmainWindow()
 	//create_tray()

@@ -1,8 +1,10 @@
-const main = require('electron').remote.require('./main');//acess export functions in main
-const { dialog, Menu, MenuItem, systemPreferences, nativeTheme, clipboard, shell } = require('electron').remote;//Acess to electron dependencies
+//required
+const main = require('electron').remote.require('./main');//access export functions in main
+const { dialog, Menu, MenuItem, systemPreferences, nativeTheme, clipboard, shell } = require('electron').remote;
 const fs = require('fs');//file system
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
 
+//text box menus
 const text_box_menu = new Menu.buildFromTemplate([//Text box menu (for convinience)
     { role: 'cut' },
     { role: 'copy' },
@@ -13,8 +15,21 @@ const text_box_menu = new Menu.buildFromTemplate([//Text box menu (for convinien
     { role: 'redo' },
 ]);
 
+async function textboxmenu() {
+    //add events to text boxes
+    textbox.addEventListener('contextmenu', (event) => popupmenu, false)
+
+    //Popup the menu in this window
+    function popupmenu(event) {
+        event.preventDefault()
+        event.stopPropagation()
+        text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
+    }
+}
+
+//Body menu
 const menu_body = new Menu.buildFromTemplate([//Main body menu
-    { label: 'Force refresh UI', click() { maininitalizer() },accelerator:'CommandOrControl+F' },
+    { label: 'Force refresh UI', click() { maininitalizer() }, accelerator: 'CommandOrControl+F' },
     //{ type: 'separator' },
     { label: 'Contact developer', click() { shell.openExternal(my_website) } },
     //{ role: 'reload' },
@@ -26,10 +41,12 @@ window.addEventListener('contextmenu', (event) => {//Body menu attached to windo
     menu_body.popup({ window: require('electron').remote.getCurrentWindow() })//popup menu
 }, false);
 
+
+//Load page
 window.addEventListener('load', function () {//window loads
     console.log('Running from:', process.resourcesPath)
 
-    if (typeof (systemPreferences.getAccentColor) && typeof (systemPreferences.getAnimationSettings) == 'function') {
+    if (typeof (systemPreferences.getAccentColor) == 'function' && typeof (systemPreferences.getAnimationSettings) == 'function') {
         console.log('System preference accent color: ', systemPreferences.getAccentColor())//get system accent color
         console.log('System preference Anime settings: ', systemPreferences.getAnimationSettings().shouldRenderRichAnimation)//check if system prefers animations or not
     }
@@ -47,6 +64,7 @@ window.addEventListener('load', function () {//window loads
 
 function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
+player.play()
 }
 
 let config = {//Application configuration object
@@ -222,18 +240,27 @@ let config = {//Application configuration object
     },
 }
 
-//text box menus
-async function textboxmenu() {
-    //add events to text boxes
-    textbox.addEventListener('contextmenu', (event) => popupmenu, false)
-
-    //Popup the menu in this window
-    function popupmenu(event) {
-        event.preventDefault()
-        event.stopPropagation()
-        text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
+let player = {
+    playlists: [],
+    play: function () {
+        var sound = new Howl({//test playback
+            src: ['C:\\Users\\samue\\OneDrive - The University of Technology,Jamaica\\Music\\[NCS Release] - Be Together [NCS Release].mp3'],
+            autoplay: true,
+            loop: true,
+            volume: 1,
+            onend: function () {
+                console.log('Finished!');
+            },
+            onplayerror: function () {
+                sound.once('unlock', function () {
+                    sound.play();
+                });
+            }
+        });
+        sound.play()
     }
 }
+
 
 function get_url_variables(url) {
     //Yoinked from https://gomakethings.com/getting-all-query-string-values-from-a-url-with-vanilla-js/

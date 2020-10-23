@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "An electron based Music player",
   "main": "main.js",
+  "type": "module",
   "author": {
     "name": "Anthonym",
     "email": "samuelmatheson20@gmail.com"
@@ -12,6 +13,11 @@
     "type": "git",
     "url": "https://github.com/anthonym01/Anthonym"
   },
+  "keywords": [
+    "Electron",
+    "Audio",
+    "Player"
+  ],
   "icon": "assets/icons/icon.png",
   "license": "ISC",
   "bin": "BB01",
@@ -49,11 +55,12 @@
   },
   "devDependencies": {
     "asar": "^1.0.0",
-    "electron": "^10.1.4",
+    "electron": "^7.3.3",
     "electron-builder": "^22.9.1"
   },
   "dependencies": {
     "electron-store": "^6.0.1",
-    "electron-window-state": "^5.0.3"
+    "electron-window-state": "^5.0.3",
+    "howler": "^2.2.0"
   }
 }

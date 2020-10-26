@@ -56,7 +56,7 @@ window.addEventListener('load', function () {//window loads
         document.getElementById('first_setup_screen').style.display = "none";//hide first settup screen
         config.load()
         if (config.data.music_folders.length < 1) {
-            startfirstsetup()
+            first_settup.start()
         } else {
             maininitalizer()
         }
@@ -64,14 +64,13 @@ window.addEventListener('load', function () {//window loads
         config.validate()
         if (config.data.music_folders[0] == undefined) {//show first setup screen
             console.warn('no music folders')
-            startfirstsetup()
+            first_settup.start()
         }
     }
 })
 
 function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
-    //startfirstsetup()
     player.getfiles(config.data.music_folders)
 }
 
@@ -79,6 +78,7 @@ let config = {//Application configuration object
     baseconfig: {//base configuration
         use_alt_storage: false,
         alt_location: "",
+
     },
     data: {//application data
         key: "Anthonymcfg",
@@ -326,6 +326,10 @@ let player = {
             document.getElementById('main_library_view').appendChild(song_bar)
         }
     },
+    strip_file_details: function (pamth, parsedpamth) {//get metadata from music files
+        let filename = parsedpamth.name;
+        return { filename: filename, path: pamth }
+    }
 }
 
 let UI = {
@@ -348,59 +352,30 @@ let UI = {
 
 }
 
-//get metadata from music files
-function strip_file_details(pamth, parsedpamth) {
-    let filename = parsedpamth.name;
-    return { filename: filename, path: pamth }
-}
-
 //First settup (need to fix, folder removal)
-var folders = []//temporary folders
-function startfirstsetup() {
-    document.getElementById('first_setup_screen').style.display = "block";//hide first settup screen
-    document.getElementById('first_finish_btn').addEventListener('click', function () {//finish button in first settup screen
-        config.data.music_folders = folders;//save selected music folders
-        document.getElementById('first_setup_screen').style.display = "none";//hide first settup screen
-        config.save()
-        maininitalizer()
-    })
-    buildfirst_folders()
+let first_settup = {
+    folders: [],
+    start: function () {
+        document.getElementById('first_setup_screen').style.display = "block";//hide first settup screen
+        document.getElementById('first_finish_btn').addEventListener('click', function () {//finish button in first settup screen
+            config.data.music_folders = first_settup.folders;//save selected music folders
+            document.getElementById('first_setup_screen').style.display = "none";//hide first settup screen
+            config.save()
+            maininitalizer()
+        })
+        first_settup.buildfirst_folders()
 
-    function buildfirst_folders() {//rempresent selected folders
+
+    },
+    buildfirst_folders: function () {//rempresent selected folders
         document.getElementById('first_setup_folders').innerHTML = ""
 
-        for(let i in folders){
-            individual_folder(i);
+        for (let i in first_settup.folders) {
+            first_settup.individual_folder(i);
         }
         //folders.forEach(folder => { individual_folder(folder) })
 
-        function individual_folder(index) {
-            var parsed_folder = path.parse(folders[index] + slash)
-            var folder_first = document.createElement('div')
-            folder_first.classList = "folder_first"
-            folder_first.title = folders[index];
-            var first_icon = document.createElement('div')
-            first_icon.classList = "first_icon"
-            var first_title = document.createElement('div')
-            first_title.classList = "first_title"
-            first_title.innerHTML = parsed_folder.base;
-            var first_select_cancel_btn = document.createElement('div')
-            first_select_cancel_btn.classList="first_select_cancel_btn"
-            first_select_cancel_btn.title = "Remove"
 
-            folder_first.appendChild(first_select_cancel_btn)
-            folder_first.appendChild(first_title)
-            folder_first.appendChild(first_icon)
-            document.getElementById('first_setup_folders').appendChild(folder_first)
-
-            first_select_cancel_btn.addEventListener('click',function(){
-                console.log(folders)
-                console.log('Removing first folder: ',index)
-                folders.splice(index,1);//yeets the index i and closes the hole left behind
-                buildfirst_folders()
-            })
-
-        }
 
         //build add new folder functionality
         var addnew_first = document.createElement('div')
@@ -421,8 +396,44 @@ function startfirstsetup() {
                 properties: ['openDirectory', 'multiSelections'],
             }).then((filepath) => {//get filepaths
                 console.log(filepath.filePaths)
-                filepath.filePaths.forEach(mpath => { folders.push(mpath) })//push them into temporary local folder variable
-            }).finally(() => { buildfirst_folders() })//rebuild folders with new data
+                filepath.filePaths.forEach(mpath => { first_settup.folders.push(mpath) })//push them into temporary local folder variable
+            }).finally(() => { first_settup.buildfirst_folders() })//rebuild folders with new data
         })
+    },
+    individual_folder: function (index) {
+        let parsed_folder = path.parse(first_settup.folders[index] + slash)
+
+        let folder_first = document.createElement('div')
+        folder_first.classList = "folder_first"
+        folder_first.title = first_settup.folders[index];
+        let first_icon = document.createElement('div')
+        first_icon.classList = "first_icon"
+        let first_title = document.createElement('div')
+        first_title.classList = "first_title"
+        if (parsed_folder.name == "") {
+            first_title.innerHTML = first_settup.folders[index]
+        } else {
+            first_title.innerHTML = parsed_folder.name;
+        }
+        let first_select_cancel_btn = document.createElement('div')
+        first_select_cancel_btn.classList = "first_select_cancel_btn"
+        first_select_cancel_btn.title = "Remove"
+
+        first_select_cancel_btn.addEventListener('click', function () {
+            console.log(first_settup.folders)
+            console.log('Removing first folder: ', index)
+            //delete first_settup.folders[index];
+            switch (first_settup.folders.length) {
+                case 1: first_settup.folders.splice(index, 1); break;
+                default: first_settup.folders.splice(1, 1);
+            }
+            //first_settup.folders.splice(index, 1);//yeets the index i and closes the hole left behind
+            first_settup.buildfirst_folders()
+        })
+
+        folder_first.appendChild(first_select_cancel_btn)
+        folder_first.appendChild(first_title)
+        folder_first.appendChild(first_icon)
+        document.getElementById('first_setup_folders').appendChild(folder_first)
     }
 }

@@ -139,10 +139,12 @@ body {
     width: 2em;
     /*border-radius: 0.5em;*/
     background-color: none;
-    opacity: 0;
+    opacity: 1;
     /*box-shadow: 0em 0em .5em rgb(255, 0, 0);*/
     transition: opacity 300ms;
     cursor: pointer;
+    z-index: 50;
+    /*important*/
 }
 
 .first_select_cancel_btn::after {

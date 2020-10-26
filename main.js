@@ -6,9 +6,9 @@ const windowStateKeeper = require('electron-window-state');
 const Store = require('electron-store'); const storeinator = new Store;
 
 let mainWindow = null;//defines the window as an abject
-let tray = false;
+let tray = null;
 
-let config = {	athingy: true,}
+let config = { minimize_to_tray: true, quiton_X: true }
 
 app.on('ready', function () {//App ready to roll
 	if (storeinator.get('default')) {
@@ -16,8 +16,12 @@ app.on('ready', function () {//App ready to roll
 	} else {
 		storeinator.set('default', JSON.stringify(config))
 	}
+	Menu.setApplicationMenu(null)
 	createmainWindow()
-	//create_tray()
+})
+
+app.on('window-all-closed', () => {//all windows closed
+	if (tray == null) { app.quit() }
 })
 
 function createmainWindow() {//Creates the main render process
@@ -36,12 +40,13 @@ function createmainWindow() {//Creates the main render process
 		width: mainWindowState.width,
 		height: mainWindowState.height,
 		backgroundColor: '#000000',
-		frame: true,
+		frame: false,
 		center: true,//center the window
 		alwaysOnTop: false,
 		icon: path.join(__dirname, '/assets/icons/icon.png'),//some linux window managers cant process due to bug
 		title: 'Anthonym',
 		show: true,
+		skipTaskbar: false,
 		//titleBarStyle: 'hiddenInset',
 		webPreferences: {
 			nodeIntegration: true,
@@ -50,6 +55,7 @@ function createmainWindow() {//Creates the main render process
 			worldSafeExecuteJavaScript: true
 		},
 		minWidth: 400,
+		minHeight: 300,
 	})
 
 	mainWindow.loadURL(url.format({
@@ -61,31 +67,49 @@ function createmainWindow() {//Creates the main render process
 	mainWindowState.manage(mainWindow);//give window to window manager plugin
 }
 
+async function hidemainwwindow() {
+	create_tray();
+	mainWindow.hide();
+	mainWindow.setSkipTaskbar(true);
+}
+
+async function showmainwwindow() {
+	mainWindow.show();
+	mainWindow.focusOnWebView()
+	mainWindow.setSkipTaskbar(false);
+	tray.destroy();//yeets tray into the void must be done last
+}
+
 function create_tray() {//Create tray
 	tray = new Tray('assets/icons/icon.png')
 
-	tray.addListener('double-click', check_main_window)//double click tray
+	tray.on('click', showmainwwindow)//double click tray
+	//tray.on('double-click', check_main_window)//double click tray
 
 	const contextMenu = Menu.buildFromTemplate([//build context menu
-		{ id: 'name', label: 'Anthonym', click() { check_main_window() } },
-		{ type: 'separator' },//separator
+		{ id: 'name', label: 'Current song', toolTip: 'Open Player', click() { showmainwwindow() } },
+		{ type: 'separator' },
+		{
+			id: 'name', label: 'Next', click() {
+				console.log('Play next song')
+			}
+		},
+		{
+			id: 'name', label: 'Play/Pause', click() {
+				console.log('PlayPause')
+			}
+		},
+		{
+			id: 'name', label: 'Previous', click() {
+				console.log('Play Previous song')
+			}
+		},
+		{ type: 'separator' },
 		{ role: 'Quit' },//quit app
 	])
-	tray.setToolTip('Anthonym')
 	tray.setContextMenu(contextMenu)
+	tray.setToolTip('Anthonym')
 }
-
-app.on('window-all-closed', () => {//all windows closed
-	if (process.platform !== 'darwin' && tray == false) { app.quit() }
-})
-
-app.on('activate', () => {//for darwin
-	if (BrowserWindow.getAllWindows().length === 0) {
-		createmainWindow();
-	} else {
-		mainWindow.show();
-	}
-})
 
 async function write_file(filepath, buffer_data) {
 	console.log(filepath, buffer_data)
@@ -98,12 +122,8 @@ async function write_file(filepath, buffer_data) {
 	})
 }
 
-function check_main_window() {//Checks for main window and creates or shows it
-	if (BrowserWindow.getAllWindows().length !== 0) {//if no windows
-		mainWindow.show()
-	} else {
-		createmainWindow()
-	}
+async function storeinatorset() {
+	storeinator.set('default', JSON.stringify(config))
 }
 
 module.exports = {//exported modules
@@ -113,4 +133,36 @@ module.exports = {//exported modules
 	minimize: function () { mainWindow.minimize() },//minimize window
 	setontop: function () { mainWindow.setAlwaysOnTop(true) },//always on top the window
 	setnotontop: function () { mainWindow.setAlwaysOnTop(false) },//always on top'nt the window
+	Stash_window: function () { hidemainwwindow() },
+	set_minimize_to_tray: function (minimize_to_tray) {
+		config.minimize_to_tray = minimize_to_tray;
+		storeinatorset()
+	},
+	get_minimize_to_tray: function () { return config.minimize_to_tray },
+	minimize_btn: function () {
+		if (config.minimize_to_tray == true) {
+			hidemainwwindow()
+		} else {
+			mainWindow.minimize();
+		}
+	},
+	maximize_btn: function () {
+		if (config.minimize_to_tray == true) {
+			showmainwwindow
+		}
+		if (mainWindow.isMaximized()) {
+			//minimize
+			mainWindow.restore()
+		} else {
+			//maximize
+			mainWindow.maximize()
+		}
+	},
+	x_button: function () {
+		if (config.minimize_to_tray == true && config.quiton_X == true) {
+			app.quit()
+		} else {
+			hidemainwwindow()
+		}
+	}
 }

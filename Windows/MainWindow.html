@@ -2,9 +2,8 @@
 <html>
 
 <head>
-    <!--Meta Eliments-->
-    <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">
+    <!--<meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">-->
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="viewport" content="initial-scale=1, width=device-width">
     <meta name="description" content="Electron app">
@@ -13,6 +12,7 @@
     <meta charset="utf-8">
     <!--Style sheets-->
     <link rel="stylesheet" type="text/css" href="css/index.css">
+    <link rel="stylesheet" type="text/css" href="css/titlebar.css">
     <!--Scripts-->
     <script src="../node_modules/howler/dist/howler.js"></script>
     <script defer type="text/javascript" src="js/index.js"></script>
@@ -20,6 +20,45 @@
 </head>
 
 <body>
+    <!-- Titlebar for frameless windoww -->
+    <div id="Title_bar">
+        <div class="titlemenu">
+            <div class="titlemenu_btn" id="setting_btn" title="settings"></div>
+            <div class="titlemenu_btn" id="search_btn" title="Search"></div>
+        </div>
+        <div class="tbuttonholder">
+            <div class="tbutton" id="x-button" title="Close"></div>
+            <div class="tbutton" id="maximize-button" title="Maximize"></div>
+            <div class="tbutton" id="minimize-button" title="Minimize"></div>
+        </div>
+    </div>
+
+    <!-- (Prototype for) Main library view -->
+    <div class="library_view" id="main_library_view" style="display: block;">
+
+    </div>
+
+    <!-- Play back controls -->
+    <div class="Playbar">
+        <div id="songTitle">Nothing</div>
+        <div id="songArtist">by no one</div>
+        <div id="eqilizerbtn"></div>
+        <div id="volumebtn"></div>
+        <div class="shufflebtn" id="repeatbtn" title="repeat">repeat icon</div>
+        <div class="playbtn" id="playbtn" title="Play/Pause"></div>
+        <div class="playbtn" id="nextbtn" title="Next track"></div>
+        <div class="playbtn" id="previousbtn" title="Previous track"></div>
+        <div class="shufflebtn" id="shufflebtn" title="shuffle">shuffle icon</div>
+        <input type="range" name="song_progress_bar" min="0" max="60" value="30" id="song_progress_bar">
+    </div>
+
+    <!-- Settup screen to add music folders on first startup -->
+    <div id="first_setup_screen">
+        <div id="first_instruct">Select your music</div>
+        <div id="first_setup_folders"></div>
+        <button id="first_finish_btn">Finish</button>
+    </div>
+
 
 </body>
 

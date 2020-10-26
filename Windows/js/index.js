@@ -1,10 +1,18 @@
-//required
 const main = require('electron').remote.require('./main');//access export functions in main
-const { dialog, Menu, MenuItem, systemPreferences, nativeTheme, clipboard, shell } = require('electron').remote;
+const { dialog, Menu, MenuItem, nativeTheme, clipboard, shell } = require('electron').remote;
 const fs = require('fs');//file system
+const path = require('path');
+const wallpaper = require('wallpaper');
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
 
-//text box menus
+let slash;//slash for file path consistency in windows and linux
+if (process.platform == 'win32') { slash = '\\' } else { slash = '/' }
+
+//Taskbar buttons for frameless windows
+document.getElementById('x-button').addEventListener('click', function () { main.x_button() })//Frameless X button
+document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })//Frameless X minimize button
+document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })//Frameless X minimize button
+
 const text_box_menu = new Menu.buildFromTemplate([//Text box menu (for convinience)
     { role: 'cut' },
     { role: 'copy' },
@@ -15,25 +23,15 @@ const text_box_menu = new Menu.buildFromTemplate([//Text box menu (for convinien
     { role: 'redo' },
 ]);
 
-async function textboxmenu() {
-    //add events to text boxes
-    textbox.addEventListener('contextmenu', (event) => popupmenu, false)
-
-    //Popup the menu in this window
-    function popupmenu(event) {
-        event.preventDefault()
-        event.stopPropagation()
-        text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
-    }
-}
-
-//Body menu
 const menu_body = new Menu.buildFromTemplate([//Main body menu
-    { label: 'Force refresh UI', click() { maininitalizer() }, accelerator: 'CommandOrControl+F' },
-    //{ type: 'separator' },
+    { role: 'reload' },
+    { label: 'Force refresh UI', click() { maininitalizer() } },
     { label: 'Contact developer', click() { shell.openExternal(my_website) } },
-    //{ role: 'reload' },
-    { role: 'toggledevtools' }
+    { role: 'toggledevtools' },
+    { type: 'separator' },
+    { role: 'zoomIn' },
+    { role: 'resetZoom' },
+    { role: 'zoomOut' },
 ]);
 
 window.addEventListener('contextmenu', (event) => {//Body menu attached to window
@@ -41,30 +39,40 @@ window.addEventListener('contextmenu', (event) => {//Body menu attached to windo
     menu_body.popup({ window: require('electron').remote.getCurrentWindow() })//popup menu
 }, false);
 
-
-//Load page
 window.addEventListener('load', function () {//window loads
     console.log('Running from:', process.resourcesPath)
 
-    if (typeof (systemPreferences.getAccentColor) == 'function' && typeof (systemPreferences.getAnimationSettings) == 'function') {
-        console.log('System preference accent color: ', systemPreferences.getAccentColor())//get system accent color
-        console.log('System preference Anime settings: ', systemPreferences.getAnimationSettings().shouldRenderRichAnimation)//check if system prefers animations or not
-    }
+    //textbox menus
+    //textbox.addEventListener('contextmenu', (event) => popupmenu, false)
+    //Popup the menu in this window
+    /*function popupmenu(event) {
+        event.preventDefault()
+        event.stopPropagation()
+        text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
+    }*/
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
-    //textboxmenu()
-    Menu.setApplicationMenu(menu_body)
 
-    if (localStorage.getItem("APPnamecfg")) {//check if storage has the item
+    if (localStorage.getItem("Anthonymcfg")) {//check if storage has the item
+        document.getElementById('first_setup_screen').style.display = "none";//hide first settup screen
         config.load()
+        if (config.data.music_folders.length < 1) {
+            startfirstsetup()
+        } else {
+            maininitalizer()
+        }
     } else {
         config.validate()
+        if (config.data.music_folders[0] == undefined) {//show first setup screen
+            console.warn('no music folders')
+            startfirstsetup()
+        }
     }
-    maininitalizer()
 })
 
 function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
-player.play()
+    //startfirstsetup()
+    player.getfiles(config.data.music_folders)
 }
 
 let config = {//Application configuration object
@@ -73,7 +81,8 @@ let config = {//Application configuration object
         alt_location: "",
     },
     data: {//application data
-        key: "APPnamecfg",
+        key: "Anthonymcfg",
+        music_folders: [],
         /*usecount: 0,*/
     },
     save: async function () {//Save the config file
@@ -86,44 +95,44 @@ let config = {//Application configuration object
 
         function ToFileSystem() {//save config to directory defined by the user
             console.log('saving to File system: ', config.baseconfig.alt_location)
-            main.write_object_json_out(config.baseconfig.alt_location + "/APPnamecfg config.json", JSON.stringify(config.data))//hand off writing the file to main process
+            main.write_object_json_out(config.baseconfig.alt_location + "/Anthonymcfg config.json", JSON.stringify(config.data))//hand off writing the file to main process
         }
 
         function ToStorageAPI() {//Html5 storage API
             console.log('config saved to application storage')
-            localStorage.setItem("APPnamecfg", JSON.stringify(config.data))
+            localStorage.setItem("Anthonymcfg", JSON.stringify(config.data))
         }
     },
     load: function () {//Load the config file
         console.warn('Configuration is being loaded')
 
-        if (localStorage.getItem("APPnamecfg_baseconfig")) {//load base config
-            config.baseconfig = JSON.parse(localStorage.getItem("APPnamecfg_baseconfig"))
+        if (localStorage.getItem("Anthonymcfg_baseconfig")) {//load base config
+            config.baseconfig = JSON.parse(localStorage.getItem("Anthonymcfg_baseconfig"))
         } else {
             //first startup
-            localStorage.setItem("APPnamecfg_baseconfig", JSON.stringify(config.baseconfig))
+            localStorage.setItem("Anthonymcfg_baseconfig", JSON.stringify(config.baseconfig))
         }
 
         if (config.baseconfig.use_alt_storage == true) {//Load from alt location
             //load from alternate storage location
-            if (fs.existsSync(config.baseconfig.alt_location.toString() + "/APPnamecfg config.json")) {//Directory exists
-                var fileout = fs.readFileSync(config.baseconfig.alt_location.toString() + "/APPnamecfg config.json", { encoding: 'utf8' })//Read from file with charset utf8
+            if (fs.existsSync(config.baseconfig.alt_location.toString() + "/Anthonymcfg config.json")) {//Directory exists
+                var fileout = fs.readFileSync(config.baseconfig.alt_location.toString() + "/Anthonymcfg config.json", { encoding: 'utf8' })//Read from file with charset utf8
                 console.warn('config Loaded from: ', config.baseconfig.alt_location.toString(), 'Data from fs read operation: ', fileout)
                 fileout = JSON.parse(fileout)//parse the json
-                if (fileout.key == "APPnamecfg") {//check if file has key
+                if (fileout.key == "Anthonymcfg") {//check if file has key
                     config.data = fileout;
                     console.warn('configuration applied from file')
                 } else {//no key, not correct file, load from application storage
                     console.warn('The file is not a config file, internal configuration will be used')
-                    config.data = JSON.parse(localStorage.getItem("APPnamecfg"))
+                    config.data = JSON.parse(localStorage.getItem("Anthonymcfg"))
                 }
             } else {//file does not exist, was moved, deleted or is inaccesible
-                config.data = JSON.parse(localStorage.getItem("APPnamecfg"))
+                config.data = JSON.parse(localStorage.getItem("Anthonymcfg"))
                 alert("file does not exist, was moved, deleted or is otherwise inaccesible, please select a new location to save app data ")
                 config.selectlocation();
             }
         } else {//load from application storage
-            config.data = JSON.parse(localStorage.getItem("APPnamecfg"))
+            config.data = JSON.parse(localStorage.getItem("Anthonymcfg"))
             console.log('config Loaded from application storage')
         }
 
@@ -134,11 +143,11 @@ let config = {//Application configuration object
         console.warn('Config is being validated')
         var configisvalid = true
 
-        /*if (typeof (config.data.usecount) == 'undefined') {
-            config.data.usecount = 1
+        if (typeof (config.data.music_folders) == 'undefined' || typeof (config.data.music_folders) != 'object') {//array is type of object
+            config.data.music_folders = []
             configisvalid = false
-            console.log('"usecount" did not exist and was set to default')
-        }*/
+            console.log('"music_folders" did not exist and was set to default')
+        }
 
         if (!configisvalid) {
             console.log('config was found to be invalid and will be overwritten')
@@ -147,7 +156,7 @@ let config = {//Application configuration object
 
     },
     delete: function () {//Wjipe stowage
-        localStorage.clear("APPnamecfg")//yeet storage key
+        localStorage.clear("Anthonymcfg")//yeet storage key
         config.usedefault();//use default location
         console.log('config deleted: ')
         console.table(config.data)
@@ -158,7 +167,7 @@ let config = {//Application configuration object
 
         var date = new Date();
         dialog.showSaveDialog({//electron file save dialogue
-            defaultPath: "APPnamecfg backup " + Number(date.getMonth() + 1) + " - " + date.getDate() + " - " + date.getFullYear() + ".json",
+            defaultPath: "Anthonymcfg backup " + Number(date.getMonth() + 1) + " - " + date.getDate() + " - " + date.getFullYear() + ".json",
             buttonLabel: "Save"
         }).then((filepath) => {
             console.log(filepath)
@@ -191,7 +200,7 @@ let config = {//Application configuration object
                     } else {
                         console.log("The file content is : " + data);
                         var fileout = JSON.parse(data)
-                        if (fileout.key == "APPnamecfg") {//check if this file is a timetable backup file
+                        if (fileout.key == "Anthonymcfg") {//check if this file is a timetable backup file
                             config.data = fileout
                             config.save();
                             maininitalizer()
@@ -221,9 +230,9 @@ let config = {//Application configuration object
 
                 config.baseconfig.use_alt_storage = true
                 config.baseconfig.alt_location = path.filePaths[0]
-                localStorage.setItem("APPnamecfg_baseconfig", JSON.stringify(config.baseconfig))//save base config
+                localStorage.setItem("Anthonymcfg_baseconfig", JSON.stringify(config.baseconfig))//save base config
 
-                if (fs.existsSync(config.baseconfig.alt_location.toString() + "/APPnamecfg config.json")) {//config file already exist there
+                if (fs.existsSync(config.baseconfig.alt_location.toString() + "/Anthonymcfg config.json")) {//config file already exist there
                     config.load()
                 } else {//no config file exist there
                     config.save();
@@ -236,77 +245,184 @@ let config = {//Application configuration object
     },
     usedefault: function () {//use default storage location
         config.baseconfig.use_alt_storage = false
-        localStorage.setItem("APPnamecfg_baseconfig", JSON.stringify(config.baseconfig))//save base config
+        localStorage.setItem("Anthonymcfg_baseconfig", JSON.stringify(config.baseconfig))//save base config
     },
 }
 
 let player = {
     playlists: [],
-    play: function () {
-        var sound = new Howl({//test playback
-            src: ['C:\\Users\\samue\\OneDrive - The University of Technology,Jamaica\\Music\\[NCS Release] - Be Together [NCS Release].mp3'],
+    playlist_files: [],
+    queue: [],//Play queue randomized from playlist/library
+    files: [],//array filled with music files
+    getfiles: function (muzicpaths) {//gets files form array of music folder paths
+        console.log('Searching directory: ', muzicpaths)
+
+        muzicpaths.forEach(folder => {//for each folder in the array
+            fs.readdir(folder + slash, function (err, files) {//read the files within the directory
+
+                if (err) { console.warn('File error', err) }//error accessing directory due to it not existing or locked permissions
+
+                files.forEach(filel1 => {//for each file in this folder
+                    var parsedfilel1 = path.parse(folder + slash + filel1)
+
+                    switch (parsedfilel1.ext) {//check file types
+                        case ".mp3":
+                        case ".m4a":
+                        case ".mpeg":
+                        case ".opus":
+                        case ".ogg":
+                        case ".oga":
+                        case ".wav":
+                        case ".aac":
+                        case ".caf":
+                        case ".m4b":
+                        case ".mp4":
+                        case ".weba":
+                        case ".webm":
+                        case ".dolby":
+                        case ".flac"://playable as music file
+                            player.files.push(strip_file_details(folder + slash + filel1, parsedfilel1));
+                            break;
+                        case ""://Subfolder to search
+                            player.getfiles([folder + slash + filel1]);
+                            break;
+                        case ".m3u"://playlist file
+                            player.playlist_files.push(folder + slash + filel1);
+                            break;
+                        default: console.warn('Cannot handle (not supported): ', folder + slash + filel1);//not supported music file
+                    }
+                })
+            })
+        })
+        player.build_library();
+    },
+    play: function (source) {
+        var sound = new Howl({
+            src: source,//takes an array
             autoplay: true,
-            loop: true,
+            loop: false,
             volume: 1,
-            onend: function () {
-                console.log('Finished!');
+            onend: function () {//Playback ends
+                console.log('Finished playing', source);
             },
-            onplayerror: function () {
-                sound.once('unlock', function () {
-                    sound.play();
+            onplayerror: function () {//Playback fails
+                sound.once('unlock', function () {//wait for unlock
+                    player.play(source);// try to play again
                 });
             }
         });
-        sound.play()
-    }
+        sound.play()//play the sound that was just loaded
+    },
+    build_library: function () {
+        console.log('Building main library from', config.data.music_folders)
+        document.getElementById('main_library_view').innerHTML = "";
+        player.files.forEach(file => { buildsong(file) })
+
+        function buildsong(file) {
+            var song_bar = document.createElement('div')
+            song_bar.classList = "song_bar"
+            song_bar.innerHTML = file.filename
+
+            document.getElementById('main_library_view').appendChild(song_bar)
+        }
+    },
 }
 
+let UI = {
+    get_desktop_wallpaper: async function () {
+        wallpaper.get().then((wallpaperpath) => {//gets desktop wallpaper
+            if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
+                //use desktop wallpaper
+                wallpaperpath = wallpaperpath.replace(/\\/g, '/');// replace all \\ with /
+                console.log('Got desktop wallpaper: ', wallpaperpath)
+                return wallpaperpath;
+            } else {
+                console.log('Failed to get desktop wallpaper')
+                return 0;
+            }
+        }).catch((err) => {
+            console.warn('wallpaper error ', err)
+            return err;
+        })
+    },
 
-function get_url_variables(url) {
-    //Yoinked from https://gomakethings.com/getting-all-query-string-values-from-a-url-with-vanilla-js/
-    var params = {};
-    var parser = document.createElement('a');
-    parser.href = url;
-    var query = parser.search.substring(1);
-    var vars = query.split('&');
-    for (var i = 0; i < vars.length; i++) {
-        var pair = vars[i].split('=');
-        params[pair[0]] = decodeURIComponent(pair[1]);
-    }
-    return params;
-    //returns Object { "": "undefined" } if empty
-    //Call with getParams(window.location.href);
 }
 
-function HEXtoHSL(hex_put) {//Convert  System preference color hex to a form my brain can can use
-    var redhex = hex_put.slice(0, 2);
-    var greenhex = hex_put.slice(2, 4);
-    var bluehex = hex_put.slice(4, 6);
-    console.log(hex_put, ' : ', redhex, ' : ', greenhex, ' : ', bluehex)
-    if (redhex == 0) { redhex = '00' }
-    if (greenhex == 0) { greenhex = '00' }
-    if (bluehex == 0) { bluehex = '00' }
-    var r = parseInt(redhex, 16)
-    var g = parseInt(greenhex, 16)
-    var b = parseInt(bluehex, 16)
-    r /= 255, g /= 255, b /= 255;
+//get metadata from music files
+function strip_file_details(pamth, parsedpamth) {
+    let filename = parsedpamth.name;
+    return { filename: filename, path: pamth }
+}
 
-    var max = Math.max(r, g, b), min = Math.min(r, g, b);
-    var h, s, l = (max + min) / 2;
+//First settup (need to fix, folder removal)
+var folders = []//temporary folders
+function startfirstsetup() {
+    document.getElementById('first_setup_screen').style.display = "block";//hide first settup screen
+    document.getElementById('first_finish_btn').addEventListener('click', function () {//finish button in first settup screen
+        config.data.music_folders = folders;//save selected music folders
+        document.getElementById('first_setup_screen').style.display = "none";//hide first settup screen
+        config.save()
+        maininitalizer()
+    })
+    buildfirst_folders()
 
-    if (max == min) {
-        h = s = 0; // achromatic
-    } else {
-        var d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    function buildfirst_folders() {//rempresent selected folders
+        document.getElementById('first_setup_folders').innerHTML = ""
 
-        switch (max) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
+        for(let i in folders){
+            individual_folder(i);
+        }
+        //folders.forEach(folder => { individual_folder(folder) })
+
+        function individual_folder(index) {
+            var parsed_folder = path.parse(folders[index] + slash)
+            var folder_first = document.createElement('div')
+            folder_first.classList = "folder_first"
+            folder_first.title = folders[index];
+            var first_icon = document.createElement('div')
+            first_icon.classList = "first_icon"
+            var first_title = document.createElement('div')
+            first_title.classList = "first_title"
+            first_title.innerHTML = parsed_folder.base;
+            var first_select_cancel_btn = document.createElement('div')
+            first_select_cancel_btn.classList="first_select_cancel_btn"
+            first_select_cancel_btn.title = "Remove"
+
+            folder_first.appendChild(first_select_cancel_btn)
+            folder_first.appendChild(first_title)
+            folder_first.appendChild(first_icon)
+            document.getElementById('first_setup_folders').appendChild(folder_first)
+
+            first_select_cancel_btn.addEventListener('click',function(){
+                console.log(folders)
+                console.log('Removing first folder: ',index)
+                folders.splice(index,1);//yeets the index i and closes the hole left behind
+                buildfirst_folders()
+            })
+
         }
 
-        h /= 6;
+        //build add new folder functionality
+        var addnew_first = document.createElement('div')
+        addnew_first.classList = "folder_first"
+        addnew_first.title = " click to add new folders, you can select more than one";
+        var first_icon = document.createElement('div')
+        first_icon.classList = "folder_add_new"
+        var first_title = document.createElement('div')
+        first_title.classList = "first_title"
+        first_title.innerHTML = "Add folders"
+
+        addnew_first.appendChild(first_title)
+        addnew_first.appendChild(first_icon)
+        document.getElementById('first_setup_folders').appendChild(addnew_first)
+        addnew_first.addEventListener('click', function () {//click add new button
+            dialog.showOpenDialog({//dialog in directory selection mode
+                buttonLabel: 'Select music folder',
+                properties: ['openDirectory', 'multiSelections'],
+            }).then((filepath) => {//get filepaths
+                console.log(filepath.filePaths)
+                filepath.filePaths.forEach(mpath => { folders.push(mpath) })//push them into temporary local folder variable
+            }).finally(() => { buildfirst_folders() })//rebuild folders with new data
+        })
     }
-    return { h, s, l, r, g, b };
 }

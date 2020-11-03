@@ -1,9 +1,10 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray } = require('electron');
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain } = require('electron');
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
 const windowStateKeeper = require('electron-window-state');
 const Store = require('electron-store'); const storeinator = new Store;
+const {Howl, Howler} = require('howler');
 
 let mainWindow = null;//defines the window as an abject
 let tray = null;
@@ -16,14 +17,39 @@ app.on('ready', function () {//App ready to roll
 	} else {
 		storeinator.set('default', JSON.stringify(config))
 	}
-	Menu.setApplicationMenu(null)
-	createmainWindow()
+	//Menu.setApplicationMenu(null)
+	createmainWindow();
+
+	var sound = new Howl({
+		src:'C:\\Users\\samue\\Downloads\\Nightcore - Battlefield.m4a',//takes an array, or single path
+		autoplay: true,
+		loop: false,
+		volume: 1,
+		/*onend: function () {//Playback ends
+			//console.log('Finished playing', source);
+		},
+		onplayerror: function () {//Playback fails
+			stream1.once('unlock', function () {//wait for unlock
+				player.play(source.path);// try to play again
+			});
+		},
+		onplay:function(){//playback of loaded song file sucessfull
+			player.playstate = true
+		}*/
+	});
+	sound.play();
+
+	if (config.minimize_to_tray == true) {
+		create_tray()
+	}
 })
 
 app.on('window-all-closed', () => {//all windows closed
 	if (tray == null) { app.quit() }
 })
 
+
+/* Main window stuff */
 function createmainWindow() {//Creates the main render process
 	app.allowRendererProcessReuse = true;//Allow render processes to be reused
 
@@ -43,7 +69,7 @@ function createmainWindow() {//Creates the main render process
 		frame: false,
 		center: true,//center the window
 		alwaysOnTop: false,
-		icon: path.join(__dirname, '/assets/icons/icon.png'),//some linux window managers cant process due to bug
+		icon: path.join(__dirname, '/icon.png'),//some linux window managers cant process due to bug
 		title: 'Anthonym',
 		show: true,
 		skipTaskbar: false,
@@ -68,7 +94,9 @@ function createmainWindow() {//Creates the main render process
 }
 
 async function hidemainwwindow() {
-	create_tray();
+	if (process.platform == 'linux') {//keep tray persistent on windows
+		create_tray();
+	}
 	mainWindow.hide();
 	mainWindow.setSkipTaskbar(true);
 }
@@ -77,40 +105,50 @@ async function showmainwwindow() {
 	mainWindow.show();
 	mainWindow.focusOnWebView()
 	mainWindow.setSkipTaskbar(false);
-	tray.destroy();//yeets tray into the void must be done last
+	if (process.platform == 'linux') {//keep tray persistent on windows
+		tray.destroy();//yeets tray into the void must be done last
+	}
 }
 
-function create_tray() {//Create tray
-	tray = new Tray('assets/icons/icon.png')
-
-	tray.on('click', showmainwwindow)//double click tray
-	//tray.on('double-click', check_main_window)//double click tray
-
-	const contextMenu = Menu.buildFromTemplate([//build context menu
-		{ id: 'name', label: 'Current song', toolTip: 'Open Player', click() { showmainwwindow() } },
-		{ type: 'separator' },
-		{
-			id: 'name', label: 'Next', click() {
-				console.log('Play next song')
-			}
-		},
-		{
-			id: 'name', label: 'Play/Pause', click() {
-				console.log('PlayPause')
-			}
-		},
-		{
-			id: 'name', label: 'Previous', click() {
-				console.log('Play Previous song')
-			}
-		},
-		{ type: 'separator' },
-		{ role: 'Quit' },//quit app
-	])
-	tray.setContextMenu(contextMenu)
-	tray.setToolTip('Anthonym')
+/* Tray  functionality */
+async function create_tray() {//Create Tray
+	tray = new Tray('icon.png')
+	tray.on('click', showmainwwindow)//Simgle click
+	update_tray_menu('Anthonym')//First menu
 }
 
+async function update_tray_menu(now_playing) {//Updates tray meny with new info
+	let contextMenu = new Menu()//menu
+
+	contextMenu.append(new MenuItem({ label: now_playing, toolTip: 'Open Player', click() { showmainwwindow() } }))
+	contextMenu.append(new MenuItem({ type: 'separator' }))
+	contextMenu.append(new MenuItem({ label: 'Next', click() { tray_next() } }))
+	contextMenu.append(new MenuItem({ label: 'Play/Pause', click() { tray_playpause() } }))
+	contextMenu.append(new MenuItem({ label: 'Previous', click() { tray_previous() } }))
+	contextMenu.append(new MenuItem({ type: 'separator' }))
+	contextMenu.append(new MenuItem({ role: 'quit' }))
+
+	tray.setContextMenu(contextMenu)//Set tray meny
+	tray.setToolTip(now_playing)//Set tray tooltip
+}
+
+ipcMain.on('Play_msg', (event, now_playing) => {//Receive Song data from mainwindow and apply to tray
+	console.log('Set tray now playing to: ', now_playing, event);
+	update_tray_menu(now_playing)
+})
+
+async function tray_playpause(){//Tray play/pause action
+	mainWindow.webContents.send('tray_play_pause')//fire channel
+}
+async function tray_next(){//Tray Next action
+	mainWindow.webContents.send('tray_next')//fire channel
+}
+async function tray_previous(){//Tray previous action
+	mainWindow.webContents.send('tray_previous')//fire channel
+}
+
+
+//Schortcut to write changes to files because i keep forgetting the fs writefile
 async function write_file(filepath, buffer_data) {
 	console.log(filepath, buffer_data)
 	fs.writeFile(filepath, buffer_data, 'utf8', (err) => {//write config to file as json
@@ -128,27 +166,24 @@ async function storeinatorset() {
 
 module.exports = {//exported modules
 	write_object_json_out: function (filepath, buffer_data) { write_file(filepath, buffer_data) },
-	check_main_window: function () { check_main_window() },
-	clossapp: function () { app.quit() },//export quit app
-	minimize: function () { mainWindow.minimize() },//minimize window
-	setontop: function () { mainWindow.setAlwaysOnTop(true) },//always on top the window
-	setnotontop: function () { mainWindow.setAlwaysOnTop(false) },//always on top'nt the window
-	Stash_window: function () { hidemainwwindow() },
-	set_minimize_to_tray: function (minimize_to_tray) {
+	setontop: async function () { mainWindow.setAlwaysOnTop(true) },//always on top the window
+	setnotontop: async function () { mainWindow.setAlwaysOnTop(false) },//always on top'nt the window
+	Stash_window: async function () { hidemainwwindow() },
+	set_minimize_to_tray: async function (minimize_to_tray) {
 		config.minimize_to_tray = minimize_to_tray;
 		storeinatorset()
 	},
 	get_minimize_to_tray: function () { return config.minimize_to_tray },
-	minimize_btn: function () {
+	minimize_btn: async function () {
 		if (config.minimize_to_tray == true) {
 			hidemainwwindow()
 		} else {
 			mainWindow.minimize();
 		}
 	},
-	maximize_btn: function () {
+	maximize_btn: async function () {
 		if (config.minimize_to_tray == true) {
-			showmainwwindow
+			showmainwwindow()
 		}
 		if (mainWindow.isMaximized()) {
 			//minimize
@@ -158,7 +193,7 @@ module.exports = {//exported modules
 			mainWindow.maximize()
 		}
 	},
-	x_button: function () {
+	x_button: async function () {
 		if (config.minimize_to_tray == true && config.quiton_X == true) {
 			app.quit()
 		} else {

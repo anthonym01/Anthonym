@@ -1,17 +1,28 @@
 const main = require('electron').remote.require('./main');//access export functions in main
 const { dialog, Menu, MenuItem, nativeTheme, clipboard, shell } = require('electron').remote;
+const { ipcRenderer } = require('electron');
 const fs = require('fs');//file system
 const path = require('path');
 const wallpaper = require('wallpaper');
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
+//const {Howl, Howler} = require('howler');
 
 let slash;//slash for file path consistency in windows and linux
 if (process.platform == 'win32') { slash = '\\' } else { slash = '/' }
 
 //Taskbar buttons for frameless windows
-document.getElementById('x-button').addEventListener('click', function () { main.x_button() })//Frameless X button
-document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })//Frameless X minimize button
-document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })//Frameless X minimize button
+document.getElementById('x-button').addEventListener('click', function () {//Frameless X button
+    console.log('\'X\' Button clicked');
+    main.x_button();
+})
+document.getElementById('maximize-button').addEventListener('click', function () {//Frameless maximize button
+    console.log('Maximize Button clicked');
+    main.maximize_btn()
+})
+document.getElementById('minimize-button').addEventListener('click', function () {//Frameless minimize button
+    console.log('Minimize Button clicked');
+    main.minimize_btn()
+})
 
 const text_box_menu = new Menu.buildFromTemplate([//Text box menu (for convinience)
     { role: 'cut' },
@@ -58,6 +69,7 @@ window.addEventListener('load', function () {//window loads
         if (config.data.music_folders.length < 1) {
             first_settup.start()
         } else {
+            player.getfiles(config.data.music_folders)
             maininitalizer()
         }
     } else {
@@ -71,7 +83,6 @@ window.addEventListener('load', function () {//window loads
 
 function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
-    player.getfiles(config.data.music_folders)
 }
 
 let config = {//Application configuration object
@@ -249,12 +260,15 @@ let config = {//Application configuration object
     },
 }
 
-let player = {
-    playlists: [],
-    playlist_files: [],
-    queue: [],//Play queue randomized from playlist/library
+let player = {//Playback control
     files: [],//array filled with music files
-    getfiles: function (muzicpaths) {//gets files form array of music folder paths
+    playlist_files: [],
+    playlists: [],
+    queue: [],//Play queue randomized from playlist/library
+    stream1: null,//For howler to use
+    playstate: false,//is (should be) playing music
+    now_playing:null,
+    getfiles: async function (muzicpaths) {//gets files form array of music folder paths
         console.log('Searching directory: ', muzicpaths)
 
         muzicpaths.forEach(folder => {//for each folder in the array
@@ -281,10 +295,12 @@ let player = {
                         case ".webm":
                         case ".dolby":
                         case ".flac"://playable as music file
-                            player.files.push(strip_file_details(folder + slash + filel1, parsedfilel1));
+                            player.files.push(player.strip_file_details(folder + slash + filel1, parsedfilel1));
                             break;
                         case ""://Subfolder to search
-                            player.getfiles([folder + slash + filel1]);
+                            if (parsedfilel1.base.slice(0, 1) != "." && parsedfilel1.ext == "") {//.files are a files with no extension
+                                player.getfiles([folder + slash + filel1]);
+                            }
                             break;
                         case ".m3u"://playlist file
                             player.playlist_files.push(folder + slash + filel1);
@@ -296,34 +312,83 @@ let player = {
         })
         player.build_library();
     },
-    play: function (source) {
-        var sound = new Howl({
-            src: source,//takes an array
+    play: function (fileindex) {
+        /* If something is playing resumes playback,
+        if nothing is playing plays from the player.files[fileindex],
+        if not fileindex assumes playback of the last song
+        */
+        console.log('Playing: ', player.files[fileindex]);
+        if (player.playstate != false) {//is playing something
+            if (fileindex == undefined) {
+                player.pause()
+                return 0;
+            } else {
+                player.stream1.unload();
+            }
+        }
+        if(fileindex == undefined && player.now_playing!=null){
+            player.stream1.play()
+            return 0;
+        }
+        player.stream1 = new Howl({
+            src: player.files[fileindex].path,//takes an array, or single path
             autoplay: true,
             loop: false,
             volume: 1,
             onend: function () {//Playback ends
-                console.log('Finished playing', source);
+                console.log('Finished playing', player.files[fileindex]);
+                player.playstate = false;
             },
             onplayerror: function () {//Playback fails
-                sound.once('unlock', function () {//wait for unlock
-                    player.play(source);// try to play again
+                stream1.once('unlock', function () {//wait for unlock
+                    player.play(fileindex);// try to play again
                 });
+            },
+            onplay: function () {//playback of loaded song file sucessfull
+                player.playstate = true;//now playing and play pause functionality
+                player.now_playing=fileindex;
             }
         });
-        sound.play()//play the sound that was just loaded
+
+        player.stream1.play()//play the sound that was just loaded
+
+        ipcRenderer.send('Play_msg', player.files[fileindex].filename)//Send file name of playing song to main
+
+        document.getElementById('songTitle').innerHTML = player.files[fileindex].filename;
+
+    },
+    pause: function () {
+        console.log('Pause functionaliy');
+        if (player.playstate != false) {
+            player.stream1.pause()
+            player.playstate = false;
+        } else {//assume error
+            console.warn('Tried pause functionality with no playback');
+        }
+    },
+    next: function () {//Play next song in que if any
+        console.log('Play Next')
+    },
+    previous: function () {
+        console.log('Play Previous')
     },
     build_library: function () {
         console.log('Building main library from', config.data.music_folders)
         document.getElementById('main_library_view').innerHTML = "";
-        player.files.forEach(file => { buildsong(file) })
 
-        function buildsong(file) {
+        for (let fileindex in player.files) { buildsong(fileindex) }
+        //player.files.forEach(file => { buildsong(file) })
+
+        function buildsong(fileindex) {
             var song_bar = document.createElement('div')
             song_bar.classList = "song_bar"
-            song_bar.innerHTML = file.filename
+            song_bar.innerHTML = player.files[fileindex].filename;
+            song_bar.title = player.files[fileindex].filename;
 
             document.getElementById('main_library_view').appendChild(song_bar)
+            song_bar.addEventListener('click', function () {//hand source to player
+                player.play(fileindex)
+            })
         }
     },
     strip_file_details: function (pamth, parsedpamth) {//get metadata from music files
@@ -333,6 +398,9 @@ let player = {
 }
 
 let UI = {
+    initalize: function () {
+
+    },
     get_desktop_wallpaper: async function () {
         wallpaper.get().then((wallpaperpath) => {//gets desktop wallpaper
             if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
@@ -361,79 +429,94 @@ let first_settup = {
             config.data.music_folders = first_settup.folders;//save selected music folders
             document.getElementById('first_setup_screen').style.display = "none";//hide first settup screen
             config.save()
-            maininitalizer()
+            player.getfiles();
+            maininitalizer();
         })
-        first_settup.buildfirst_folders()
+        buildfirst_folders()
 
+        function buildfirst_folders() {//rempresent selected folders
+            document.getElementById('first_setup_folders').innerHTML = ""
 
-    },
-    buildfirst_folders: function () {//rempresent selected folders
-        document.getElementById('first_setup_folders').innerHTML = ""
-
-        for (let i in first_settup.folders) {
-            first_settup.individual_folder(i);
-        }
-        //folders.forEach(folder => { individual_folder(folder) })
-
-
-
-        //build add new folder functionality
-        var addnew_first = document.createElement('div')
-        addnew_first.classList = "folder_first"
-        addnew_first.title = " click to add new folders, you can select more than one";
-        var first_icon = document.createElement('div')
-        first_icon.classList = "folder_add_new"
-        var first_title = document.createElement('div')
-        first_title.classList = "first_title"
-        first_title.innerHTML = "Add folders"
-
-        addnew_first.appendChild(first_title)
-        addnew_first.appendChild(first_icon)
-        document.getElementById('first_setup_folders').appendChild(addnew_first)
-        addnew_first.addEventListener('click', function () {//click add new button
-            dialog.showOpenDialog({//dialog in directory selection mode
-                buttonLabel: 'Select music folder',
-                properties: ['openDirectory', 'multiSelections'],
-            }).then((filepath) => {//get filepaths
-                console.log(filepath.filePaths)
-                filepath.filePaths.forEach(mpath => { first_settup.folders.push(mpath) })//push them into temporary local folder variable
-            }).finally(() => { first_settup.buildfirst_folders() })//rebuild folders with new data
-        })
-    },
-    individual_folder: function (index) {
-        let parsed_folder = path.parse(first_settup.folders[index] + slash)
-
-        let folder_first = document.createElement('div')
-        folder_first.classList = "folder_first"
-        folder_first.title = first_settup.folders[index];
-        let first_icon = document.createElement('div')
-        first_icon.classList = "first_icon"
-        let first_title = document.createElement('div')
-        first_title.classList = "first_title"
-        if (parsed_folder.name == "") {
-            first_title.innerHTML = first_settup.folders[index]
-        } else {
-            first_title.innerHTML = parsed_folder.name;
-        }
-        let first_select_cancel_btn = document.createElement('div')
-        first_select_cancel_btn.classList = "first_select_cancel_btn"
-        first_select_cancel_btn.title = "Remove"
-
-        first_select_cancel_btn.addEventListener('click', function () {
-            console.log(first_settup.folders)
-            console.log('Removing first folder: ', index)
-            //delete first_settup.folders[index];
-            switch (first_settup.folders.length) {
-                case 1: first_settup.folders.splice(index, 1); break;
-                default: first_settup.folders.splice(1, 1);
+            for (let i in first_settup.folders) {
+                individual_folder(i);
             }
-            //first_settup.folders.splice(index, 1);//yeets the index i and closes the hole left behind
-            first_settup.buildfirst_folders()
-        })
+            //folders.forEach(folder => { individual_folder(folder) })
 
-        folder_first.appendChild(first_select_cancel_btn)
-        folder_first.appendChild(first_title)
-        folder_first.appendChild(first_icon)
-        document.getElementById('first_setup_folders').appendChild(folder_first)
+            function individual_folder(index) {
+                let parsed_folder = path.parse(first_settup.folders[index] + slash)
+
+                let folder_first = document.createElement('div')
+                folder_first.classList = "folder_first"
+                folder_first.title = first_settup.folders[index];
+                let first_icon = document.createElement('div')
+                first_icon.classList = "first_icon"
+                let first_title = document.createElement('div')
+                first_title.classList = "first_title"
+                if (parsed_folder.name == "") {
+                    first_title.innerHTML = first_settup.folders[index]
+                } else {
+                    first_title.innerHTML = parsed_folder.name;
+                }
+                let first_select_cancel_btn = document.createElement('div')
+                first_select_cancel_btn.classList = "first_select_cancel_btn"
+                first_select_cancel_btn.title = "Remove"
+
+                first_select_cancel_btn.addEventListener('click', function () {
+                    console.log(first_settup.folders)
+                    console.log('Removing first folder: ', index)
+                    first_settup.folders.splice(index, 1);//yeets the index i and closes the hole left behind
+                    buildfirst_folders()
+                })
+
+                folder_first.appendChild(first_select_cancel_btn)
+                folder_first.appendChild(first_title)
+                folder_first.appendChild(first_icon)
+                document.getElementById('first_setup_folders').appendChild(folder_first)
+            }
+
+            //build add new folder functionality
+            var addnew_first = document.createElement('div')
+            addnew_first.classList = "folder_first"
+            addnew_first.title = " click to add new folders, you can select more than one";
+            var first_icon = document.createElement('div')
+            first_icon.classList = "folder_add_new"
+            var first_title = document.createElement('div')
+            first_title.classList = "first_title"
+            first_title.innerHTML = "Add folders"
+
+            addnew_first.appendChild(first_title)
+            addnew_first.appendChild(first_icon)
+            document.getElementById('first_setup_folders').appendChild(addnew_first)
+            addnew_first.addEventListener('click', function () {//click add new button
+                dialog.showOpenDialog({//dialog in directory selection mode
+                    buttonLabel: 'Select music folder',
+                    properties: ['openDirectory', 'multiSelections'],
+                }).then((filepath) => {//get filepaths
+                    console.log(filepath.filePaths)
+                    filepath.filePaths.forEach(mpath => { first_settup.folders.push(mpath) })//push them into temporary local folder variable
+                }).finally(() => { buildfirst_folders() })//rebuild folders with new data
+            })
+        }
     }
 }
+
+//Play/pause button
+document.getElementById('playbtn').addEventListener('click', function () {
+    console.log('Pause button Pressed')
+    player.play()
+})
+ipcRenderer.on('tray_play_pause', () => { player.play() })//listening on channel 'tray_play_pause'
+
+//Next button
+document.getElementById('nextbtn').addEventListener('click', function () {
+    console.log('next button Pressed')
+    player.next()
+})
+ipcRenderer.on('tray_next', () => { player.next() })//listening on channel 'tray_next'
+
+//Previous button
+document.getElementById('previousbtn').addEventListener('click', function () {
+    console.log('Previous button Pressed')
+    player.previous()
+})
+ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'

@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "An electron based Music player",
   "main": "main.js",
-  "type": "module",
   "author": {
     "name": "Anthonym",
     "email": "samuelmatheson20@gmail.com"
@@ -18,7 +17,7 @@
     "Audio",
     "Player"
   ],
-  "icon": "assets/icons/icon.png",
+  "icon": "icon.png",
   "license": "ISC",
   "bin": "BB01",
   "scripts": {
@@ -34,7 +33,7 @@
   },
   "build": {
     "appId": "com.anthonym.electron",
-    "icon": "assets/icons/icon.png",
+    "icon": "icon.png",
     "productName": "anthonym",
     "copyright": "none",
     "buildVersion": "1.0.0",
@@ -42,7 +41,7 @@
     "asar": "true",
     "mac": {
       "category": "utility",
-      "icon": "assets/icons/icon.png"
+      "icon": "icon.png"
     },
     "win": {
       "target": "nsis",
@@ -50,18 +49,18 @@
     },
     "linux": {
       "category": "Music",
-      "icon": "assets/icons/icon.png"
+      "icon": "icon.png"
     }
   },
   "devDependencies": {
     "asar": "^1.0.0",
-    "electron": "^7.3.3",
+    "electron": "^10.1.5",
     "electron-builder": "^22.9.1"
   },
   "dependencies": {
     "electron-store": "^6.0.1",
     "electron-window-state": "^5.0.3",
-    "howler": "^2.2.0",
+    "howler": "^2.2.1",
     "wallpaper": "^4.4.1"
   }
 }

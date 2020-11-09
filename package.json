@@ -22,17 +22,13 @@
   "bin": "BB01",
   "scripts": {
     "start": "electron main.js",
-    "packager-win32": "electron-packager ./ --overwrite --asar --platform=win32 --arch=all --icon=assets/icons/icon.ico --prune=true --out=dist --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"anthonym\"",
-    "packager-linux": "electron-packager ./ anthonym --overwrite --asar --platform=linux --arch=all --icon=assets/icons/icon.png --prune=true --out=dist",
-    "packager-darwin": "electron-packager ./ --overwrite --platform=darwin --arch=all --icon=assets/icons/icon.png --prune=true --out=dist",
-    "deb-linux": "electron-installer-debian --src dist/{output-folder}/ --arch x64 --config debian.json",
     "postinstall": "electron-builder install-app-deps",
     "builder-default": "electron-builder",
     "builder-linux": "electron-builder --linux deb appimage tar.xz snap pacman",
     "builder-win": "electron-builder --win --x64 --ia32"
   },
   "build": {
-    "appId": "com.anthonym.electron",
+    "appId": "com.anthonym.music",
     "icon": "icon.png",
     "productName": "anthonym",
     "copyright": "none",
@@ -52,6 +48,11 @@
       "icon": "icon.png"
     }
   },
+  "files": [
+    "**/*",
+    "assets/icon.ico",
+    "assets/icon.png"
+  ],
   "devDependencies": {
     "asar": "^1.0.0",
     "electron": "^10.1.5",

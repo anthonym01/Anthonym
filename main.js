@@ -4,7 +4,6 @@ const url = require('url');
 const fs = require('fs');
 const windowStateKeeper = require('electron-window-state');
 const Store = require('electron-store'); const storeinator = new Store;
-const {Howl, Howler} = require('howler');
 
 let mainWindow = null;//defines the window as an abject
 let tray = null;
@@ -19,25 +18,6 @@ app.on('ready', function () {//App ready to roll
 	}
 	//Menu.setApplicationMenu(null)
 	createmainWindow();
-
-	var sound = new Howl({
-		src:'C:\\Users\\samue\\Downloads\\Nightcore - Battlefield.m4a',//takes an array, or single path
-		autoplay: true,
-		loop: false,
-		volume: 1,
-		/*onend: function () {//Playback ends
-			//console.log('Finished playing', source);
-		},
-		onplayerror: function () {//Playback fails
-			stream1.once('unlock', function () {//wait for unlock
-				player.play(source.path);// try to play again
-			});
-		},
-		onplay:function(){//playback of loaded song file sucessfull
-			player.playstate = true
-		}*/
-	});
-	sound.play();
 
 	if (config.minimize_to_tray == true) {
 		create_tray()
@@ -113,11 +93,11 @@ async function showmainwwindow() {
 /* Tray  functionality */
 async function create_tray() {//Create Tray
 	tray = new Tray('icon.png')
-	tray.on('click', showmainwwindow)//Simgle click
+	tray.on('click', showmainwwindow)//Single click
 	update_tray_menu('Anthonym')//First menu
 }
 
-async function update_tray_menu(now_playing) {//Updates tray meny with new info
+async function update_tray_menu(now_playing) {//Updates tray menu with new info
 	let contextMenu = new Menu()//menu
 
 	contextMenu.append(new MenuItem({ label: now_playing, toolTip: 'Open Player', click() { showmainwwindow() } }))
@@ -128,7 +108,7 @@ async function update_tray_menu(now_playing) {//Updates tray meny with new info
 	contextMenu.append(new MenuItem({ type: 'separator' }))
 	contextMenu.append(new MenuItem({ role: 'quit' }))
 
-	tray.setContextMenu(contextMenu)//Set tray meny
+	tray.setContextMenu(contextMenu)//Set tray menu
 	tray.setToolTip(now_playing)//Set tray tooltip
 }
 
@@ -138,7 +118,7 @@ ipcMain.on('Play_msg', (event, now_playing) => {//Receive Song data from mainwin
 })
 
 async function tray_playpause(){//Tray play/pause action
-	mainWindow.webContents.send('tray_play_pause')//fire channel
+	mainWindow.webContents.send('tray_play_pause')//fire channel to mainwindow
 }
 async function tray_next(){//Tray Next action
 	mainWindow.webContents.send('tray_next')//fire channel

@@ -44,6 +44,9 @@ node_modules/
 jspm_packages/
 MusicPlayer example/
 webaudio-examples-master/
+releases/
+dist/
+platforms/
 
 # TypeScript v1 declaration files
 typings/

@@ -1,13 +1,16 @@
-const main = require('electron').remote.require('./main');//access export functions in main
-const { dialog, Menu, MenuItem, nativeTheme, clipboard, shell } = require('electron').remote;
-const { ipcRenderer } = require('electron');
-const fs = require('fs');//file system
-const path = require('path');
-const wallpaper = require('wallpaper');
-const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
-//const {Howl, Howler} = require('howler');
+const { ipcRenderer, remote, Main } = require('electron');
+const main = remote.require('./main');//access export functions in main
+//const main = require("../../main");
+const { dialog, Menu, MenuItem, nativeTheme, clipboard, shell } = remote;
 
-let slash;//slash for file path consistency in windows and linux
+const fs = require('fs');//file system
+const path = require('path');//path
+const wallpaper = require('wallpaper');//Desktop wallpaper
+
+const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
+//const { Howl, Howler } = require('howler');
+
+let slash;//in windows and linux
 if (process.platform == 'win32') { slash = '\\' } else { slash = '/' }
 
 //Taskbar buttons for frameless windows
@@ -36,7 +39,7 @@ const text_box_menu = new Menu.buildFromTemplate([//Text box menu (for convinien
 
 const menu_body = new Menu.buildFromTemplate([//Main body menu
     { role: 'reload' },
-    { label: 'Force refresh UI', click() { maininitalizer() } },
+    { label: 'Refresh Library', click() { player.getfiles(main.get.musicfolders()); maininitalizer() } },
     { label: 'Contact developer', click() { shell.openExternal(my_website) } },
     { role: 'toggledevtools' },
     { type: 'separator' },
@@ -52,6 +55,7 @@ window.addEventListener('contextmenu', (event) => {//Body menu attached to windo
 
 window.addEventListener('load', function () {//window loads
     console.log('Running from:', process.resourcesPath)
+    player.getfiles(main.get.musicfolders())
 
     //textbox menus
     //textbox.addEventListener('contextmenu', (event) => popupmenu, false)
@@ -61,24 +65,15 @@ window.addEventListener('load', function () {//window loads
         event.stopPropagation()
         text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
     }*/
+
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
 
     if (localStorage.getItem("Anthonymcfg")) {//check if storage has the item
-        document.getElementById('first_setup_screen').style.display = "none";//hide first settup screen
         config.load()
-        if (config.data.music_folders.length < 1) {
-            first_settup.start()
-        } else {
-            player.getfiles(config.data.music_folders)
-            maininitalizer()
-        }
-    } else {
-        config.validate()
-        if (config.data.music_folders[0] == undefined) {//show first setup screen
-            console.warn('no music folders')
-            first_settup.start()
-        }
+        player.getfiles(main.get.musicfolders())
+        maininitalizer()
     }
+    if (main.get.musicfolders().length < 1) { first_settup() }
 })
 
 function maininitalizer() {//Used to start re-startable app functions
@@ -86,49 +81,23 @@ function maininitalizer() {//Used to start re-startable app functions
 }
 
 let config = {//Application configuration object
-    baseconfig: {//base configuration
-        use_alt_storage: false,
-        alt_location: "",
-
-    },
     data: {//application data
         key: "Anthonymcfg",
-        music_folders: [],
-        /*usecount: 0,*/
     },
     save: async function () {//Save the config file
         console.table('Configuration is being saved', config.data)
-
-        ToStorageAPI();//save to application storage reguardless incase the file gets removed by the user, because users are kinda dumb
-        if (config.baseconfig.use_alt_storage == true) {//save to alternate storage location
-            ToFileSystem();
-        }
-
-        function ToFileSystem() {//save config to directory defined by the user
-            console.log('saving to File system: ', config.baseconfig.alt_location)
-            main.write_object_json_out(config.baseconfig.alt_location + "/Anthonymcfg config.json", JSON.stringify(config.data))//hand off writing the file to main process
-        }
-
-        function ToStorageAPI() {//Html5 storage API
-            console.log('config saved to application storage')
-            localStorage.setItem("Anthonymcfg", JSON.stringify(config.data))
-        }
+        var stringeddata = JSON.stringify(config.data)
+        localStorage.setItem("Anthonymcfg", stringeddata)
+        main.write_alt_storage_location(stringeddata)
     },
     load: function () {//Load the config file
         console.warn('Configuration is being loaded')
-
-        if (localStorage.getItem("Anthonymcfg_baseconfig")) {//load base config
-            config.baseconfig = JSON.parse(localStorage.getItem("Anthonymcfg_baseconfig"))
-        } else {
-            //first startup
-            localStorage.setItem("Anthonymcfg_baseconfig", JSON.stringify(config.baseconfig))
-        }
-
-        if (config.baseconfig.use_alt_storage == true) {//Load from alt location
+        var alt_location = main.get.alt_location();
+        if (alt_location != false) {//Load from alt location
             //load from alternate storage location
-            if (fs.existsSync(config.baseconfig.alt_location.toString() + "/Anthonymcfg config.json")) {//Directory exists
-                var fileout = fs.readFileSync(config.baseconfig.alt_location.toString() + "/Anthonymcfg config.json", { encoding: 'utf8' })//Read from file with charset utf8
-                console.warn('config Loaded from: ', config.baseconfig.alt_location.toString(), 'Data from fs read operation: ', fileout)
+            if (fs.existsSync(alt_location + "/Anthonymcfg config.json")) {//Directory exists
+                var fileout = fs.readFileSync(alt_location + "/Anthonymcfg config.json", { encoding: 'utf8' })//Read from file with charset utf8
+                console.warn('config Loaded from: ', alt_location, 'Data from fs read operation: ', fileout)
                 fileout = JSON.parse(fileout)//parse the json
                 if (fileout.key == "Anthonymcfg") {//check if file has key
                     config.data = fileout;
@@ -148,30 +117,12 @@ let config = {//Application configuration object
         }
 
         console.table(config.data)
-        this.validate()
-    },
-    validate: function () {//validate configuration
-        console.warn('Config is being validated')
-        var configisvalid = true
-
-        if (typeof (config.data.music_folders) == 'undefined' || typeof (config.data.music_folders) != 'object') {//array is type of object
-            config.data.music_folders = []
-            configisvalid = false
-            console.log('"music_folders" did not exist and was set to default')
-        }
-
-        if (!configisvalid) {
-            console.log('config was found to be invalid and will be overwritten')
-            this.save()//Save new confog because old config is no longer valid
-        } else { console.log('config was found to be valid') }
-
     },
     delete: function () {//Wjipe stowage
         localStorage.clear("Anthonymcfg")//yeet storage key
-        config.usedefault();//use default location
-        console.log('config deleted: ')
-        console.table(config.data)
-        this.validate()
+        main.set.alt_location(false)
+        main.set.musicfolders([])
+        config.save()
     },
     backup: async function () {//backup configuration to a file
         console.warn('Configuration backup initiated')
@@ -185,7 +136,7 @@ let config = {//Application configuration object
             if (filepath.canceled == true) {//the file save dialogue was canceled my the user
                 console.warn('The file dialogue was canceled by the user')
             } else {
-                main.write_object_json_out(filepath.filePath, JSON.stringify(config.data))//hand off writing the file to main process
+                main.write_file(filepath.filePath, JSON.stringify(config.data))//hand off writing the file to main process
             }
         }).catch((err) => {//catch error
             alert('An error occured ', err.message);
@@ -227,36 +178,31 @@ let config = {//Application configuration object
     },
     selectlocation: async function () {//select location for configuration storage
         console.log('Select config location')
-        if (config.baseconfig.alt_location != undefined) {
-            var path = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'], defaultPath: config.baseconfig.alt_location.toString() })
+        var alt_location = main.get.alt_location()
+        if (alt_location != false) {
+            var altpath = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'], defaultPath: alt_location })
         } else {
-            var path = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'], defaultPath: null })
+            var altpath = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'],})
         }
 
-        await path.then((path) => {
-            if (path.canceled == true) {//user canceled dialogue
-                config.usedefault()
+        await altpath.then((altpath) => {
+            if (altpath.canceled == true) {//user canceled dialogue
+                main.set.alt_location(false)
             } else {
-                console.warn('Alternate configuration path :', path.filePaths[0])
+                console.warn('Alternate configuration path :', altpath.filePaths[0])
 
-                config.baseconfig.use_alt_storage = true
-                config.baseconfig.alt_location = path.filePaths[0]
-                localStorage.setItem("Anthonymcfg_baseconfig", JSON.stringify(config.baseconfig))//save base config
+                main.set.alt_location(altpath.filePaths[0])
 
-                if (fs.existsSync(config.baseconfig.alt_location.toString() + "/Anthonymcfg config.json")) {//config file already exist there
+                if (fs.existsSync(altpath + "/Anthonymcfg config.json")) {//config file already exist there
                     config.load()
                 } else {//no config file exist there
                     config.save();
                 }
             }
         }).catch((err) => {
-            config.usedefault()
+            main.set.alt_location(false)
             alert('An error occured ', err.message)
         })
-    },
-    usedefault: function () {//use default storage location
-        config.baseconfig.use_alt_storage = false
-        localStorage.setItem("Anthonymcfg_baseconfig", JSON.stringify(config.baseconfig))//save base config
     },
 }
 
@@ -267,7 +213,7 @@ let player = {//Playback control
     queue: [],//Play queue randomized from playlist/library
     stream1: null,//For howler to use
     playstate: false,//is (should be) playing music
-    now_playing:null,
+    now_playing: null,
     getfiles: async function (muzicpaths) {//gets files form array of music folder paths
         console.log('Searching directory: ', muzicpaths)
 
@@ -326,7 +272,7 @@ let player = {//Playback control
                 player.stream1.unload();
             }
         }
-        if(fileindex == undefined && player.now_playing!=null){
+        if (fileindex == undefined && player.now_playing != null) {
             player.stream1.play()
             return 0;
         }
@@ -346,7 +292,7 @@ let player = {//Playback control
             },
             onplay: function () {//playback of loaded song file sucessfull
                 player.playstate = true;//now playing and play pause functionality
-                player.now_playing=fileindex;
+                player.now_playing = fileindex;
             }
         });
 
@@ -444,7 +390,7 @@ ipcRenderer.on('tray_previous', () => { player.previous() })//listening on chann
 
 
 //Web playback test
-function web_play_test(url){
+function web_play_test(url) {
     console.log('Attempting to play');
     player.stream1 = new Howl({
         src: url,//takes an array, or single path
@@ -462,7 +408,7 @@ function web_play_test(url){
         },
         onplay: function () {//playback of loaded song file sucessfull
             player.playstate = true;//now playing and play pause functionality
-            player.now_playing=fileindex;
+            player.now_playing = fileindex;
         }
     });
 }

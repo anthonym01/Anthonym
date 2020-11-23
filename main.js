@@ -8,7 +8,12 @@ const Store = require('electron-store'); const storeinator = new Store;
 let mainWindow = null;//defines the window as an abject
 let tray = null;
 
-let config = { minimize_to_tray: true, quiton_X: true }
+let config = {
+	alt_location: false,
+	minimize_to_tray: true,
+	quiton_X: true,
+	music_folders: [],
+}
 
 app.on('ready', function () {//App ready to roll
 	if (storeinator.get('default')) {
@@ -117,21 +122,21 @@ ipcMain.on('Play_msg', (event, now_playing) => {//Receive Song data from mainwin
 	update_tray_menu(now_playing)
 })
 
-async function tray_playpause(){//Tray play/pause action
+async function tray_playpause() {//Tray play/pause action
 	mainWindow.webContents.send('tray_play_pause')//fire channel to mainwindow
 }
-async function tray_next(){//Tray Next action
+async function tray_next() {//Tray Next action
 	mainWindow.webContents.send('tray_next')//fire channel
 }
-async function tray_previous(){//Tray previous action
+async function tray_previous() {//Tray previous action
 	mainWindow.webContents.send('tray_previous')//fire channel
 }
 
 
 //Schortcut to write changes to files because i keep forgetting the fs writefile
-async function write_file(filepath, buffer_data) {
-	console.log(filepath, buffer_data)
-	fs.writeFile(filepath, buffer_data, 'utf8', (err) => {//write config to file as json
+async function write_file(filepath, data) {
+	console.log(filepath, data)
+	fs.writeFile(filepath, data, 'utf8', (err) => {//write config to file as json
 		if (err) {
 			alert("An error occurred creating the file" + err.message)
 		} else {
@@ -140,20 +145,19 @@ async function write_file(filepath, buffer_data) {
 	})
 }
 
-async function storeinatorset() {
-	storeinator.set('default', JSON.stringify(config))
-}
+async function storeinatorset() { storeinator.set('default', JSON.stringify(config)) }
 
 module.exports = {//exported modules
-	write_object_json_out: function (filepath, buffer_data) { write_file(filepath, buffer_data) },
+	write_file: async function (filepath, buffer_data) { write_file(filepath, buffer_data) },
+	write_alt_storage_location: async function (data) {//write data to alt storage location
+		if (config.alt_location != false) {
+			write_file(config.alt_location + "/Anthonymcfg config.json", data)
+		}
+	},
 	setontop: async function () { mainWindow.setAlwaysOnTop(true) },//always on top the window
 	setnotontop: async function () { mainWindow.setAlwaysOnTop(false) },//always on top'nt the window
 	Stash_window: async function () { hidemainwwindow() },
-	set_minimize_to_tray: async function (minimize_to_tray) {
-		config.minimize_to_tray = minimize_to_tray;
-		storeinatorset()
-	},
-	get_minimize_to_tray: function () { return config.minimize_to_tray },
+
 	minimize_btn: async function () {
 		if (config.minimize_to_tray == true) {
 			hidemainwwindow()
@@ -179,5 +183,25 @@ module.exports = {//exported modules
 		} else {
 			hidemainwwindow()
 		}
+	},
+	get: {
+		musicfolders: function () { return config.music_folders },
+		alt_location: function () { return config.alt_location },
+		minimize_to_tray: function () { return config.minimize_to_tray },
+	},
+	set: {
+		musicfolders: async function (music_folders) {
+			config.music_folders = music_folders;
+			storeinatorset();
+		},
+		alt_location: async function (alt_location) {
+			config.alt_location = alt_location;
+			storeinatorset();
+		},
+		minimize_to_tray: async function (minimize_to_tray) {
+			config.minimize_to_tray = minimize_to_tray;
+			storeinatorset()
+		},
 	}
+
 }

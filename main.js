@@ -16,11 +16,13 @@ let config = {
 }
 
 app.on('ready', function () {//App ready to roll
+
 	if (storeinator.get('default')) {
 		config = JSON.parse(storeinator.get('default'))
 	} else {
 		storeinator.set('default', JSON.stringify(config))
 	}
+
 	//Menu.setApplicationMenu(null)
 	createmainWindow();
 
@@ -79,9 +81,7 @@ function createmainWindow() {//Creates the main render process
 }
 
 async function hidemainwwindow() {
-	if (process.platform == 'linux') {//keep tray persistent on windows
-		create_tray();
-	}
+	//if (process.platform == 'linux') { create_tray(); }
 	mainWindow.hide();
 	mainWindow.setSkipTaskbar(true);
 }
@@ -90,9 +90,8 @@ async function showmainwwindow() {
 	mainWindow.show();
 	mainWindow.focusOnWebView()
 	mainWindow.setSkipTaskbar(false);
-	if (process.platform == 'linux') {//keep tray persistent on windows
-		tray.destroy();//yeets tray into the void must be done last
-	}
+
+	//if (process.platform == 'linux') { tray.destroy(); }
 }
 
 /* Tray  functionality */

@@ -46,16 +46,14 @@ body {
     background-color: var(--background-color);
     margin: 0;
     padding: 0;
-    height: 100vh;
-    width: 100vw;
     font-family: Lexend_Deca, system-ui, -apple-system, -apple-system-font, 'Segoe UI', 'Roboto', sans-serif;
-    overflow: hidden;
-    /*background-color: white;*/
+    overflow: auto;
+    user-select: none;
 }
 
 /*Scrollbar*/
 ::-webkit-scrollbar {
-    width: 0.3em;
+    width: 0.3rem;
 }
 
 ::-webkit-scrollbar-track {
@@ -226,17 +224,17 @@ body {
     position: fixed;
     bottom: 0;
     width: 100%;
-    height: 7em;
+    height: 7rem;
     background: var(--half_background-color);
-    box-shadow: 0em 0em 1em var(--accent_color);
+    box-shadow: 0 0 1em 0 var(--accent_color);
 }
 
 .playbtn {
     /* Play/pause, next and Previous button */
     position: absolute;
-    bottom: 1.25em;
-    height: 4.5em;
-    width: 4.5em;
+    bottom: 1.25rem;
+    height: 4.5rem;
+    width: 4.5rem;
     background-color: var(--background-color);
     border-radius: 50%;
     cursor: pointer;
@@ -257,7 +255,7 @@ body {
 
 #playbtn {
     /* Playbutton */
-    right: calc(50vw - 2.25em);
+    right: calc(50vw - 2.25rem);
     background-image: var(--play_icon);
     background-size: 80%;
     background-position: 90% 50%;
@@ -265,7 +263,7 @@ body {
 
 #nextbtn {
     /* Next track button */
-    right: calc(50vw - 7.5em);
+    right: calc(50vw - 7.5rem);
     transform: rotate(180deg);
     background-image: var(--previous_icon);
     background-size: 75%;
@@ -274,19 +272,18 @@ body {
 
 #previousbtn {
     /* Previous track button */
-    left: calc(50vw - 7.5em);
+    left: calc(50vw - 7.5rem);
     background-image: var(--previous_icon);
     background-size: 75%;
     background-position: 20% 50%;
 }
 
-
 .shufflebtn {
     /* Shuffle and Repeat button */
     position: absolute;
-    bottom: 1.25em;
-    height: 3.5em;
-    width: 3.5em;
+    bottom: 1.25rem;
+    height: 3.5rem;
+    width: 3.5rem;
     background-color: var(--background-color);
     border-radius: 50%;
     cursor: pointer;
@@ -307,37 +304,37 @@ body {
 
 #shufflebtn {
     /* Shuffle button */
-    left: calc(50vw - 12em);
+    left: calc(50vw - 12rem);
 }
 
 #repeatbtn {
     /* repeat button */
-    right: calc(50vw - 12em);
+    right: calc(50vw - 12rem);
 }
 
 #songTitle {
     /* Song title in playbar */
     position: absolute;
-    height: 1em;
-    font-size: 2em;
+    height: 2rem;
+    font-size: 2rem;
     width: auto;
     text-align: left;
     line-height: 100%;
     left: 2vw;
-    bottom: 1.8em;
+    bottom: 1.5rem;
 }
 
 #songArtist {
     /* Song artist below song title in playbar */
     position: absolute;
     left: 5vw;
-    height: 1em;
-    font-size: 1.25em;
+    height: 1.25rem;
+    font-size: 1.25rem;
     width: auto;
     text-align: left;
     line-height: 100%;
     left: 5vw;
-    bottom: 1.25em;
+    bottom: 0rem;
 }
 
 #song_progress_bar {

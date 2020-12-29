@@ -1,6 +1,5 @@
 const { ipcRenderer, remote, Main } = require('electron');
 const main = remote.require('./main');//access export functions in main
-//const main = require("../../main");
 const { dialog, Menu, MenuItem, nativeTheme, clipboard, shell } = remote;
 
 const fs = require('fs');//file system
@@ -386,29 +385,3 @@ document.getElementById('previousbtn').addEventListener('click', function () {
     player.previous()
 })
 ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
-
-
-
-//Web playback test
-function web_play_test(url) {
-    console.log('Attempting to play');
-    player.stream1 = new Howl({
-        src: url,//takes an array, or single path
-        autoplay: true,
-        loop: false,
-        volume: 1,
-        onend: function () {//Playback ends
-            console.log('Finished playing', player.files[fileindex]);
-            player.playstate = false;
-        },
-        onplayerror: function () {//Playback fails
-            stream1.once('unlock', function () {//wait for unlock
-                player.play(fileindex);// try to play again
-            });
-        },
-        onplay: function () {//playback of loaded song file sucessfull
-            player.playstate = true;//now playing and play pause functionality
-            player.now_playing = fileindex;
-        }
-    });
-}

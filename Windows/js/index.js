@@ -9,61 +9,14 @@ const wallpaper = require('wallpaper');//Desktop wallpaper
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
 //const { Howl, Howler } = require('howler');
 
-let slash;//in windows and linux
-if (process.platform == 'win32') { slash = '\\' } else { slash = '/' }
 
-//Taskbar buttons for frameless windows
-document.getElementById('x-button').addEventListener('click', function () {//Frameless X button
-    console.log('\'X\' Button clicked');
-    main.x_button();
-})
-document.getElementById('maximize-button').addEventListener('click', function () {//Frameless maximize button
-    console.log('Maximize Button clicked');
-    main.maximize_btn()
-})
-document.getElementById('minimize-button').addEventListener('click', function () {//Frameless minimize button
-    console.log('Minimize Button clicked');
-    main.minimize_btn()
-})
 
-const text_box_menu = new Menu.buildFromTemplate([//Text box menu (for convinience)
-    { role: 'cut' },
-    { role: 'copy' },
-    { role: 'paste' },
-    { role: 'selectAll' },
-    { role: 'seperator' },
-    { role: 'undo' },
-    { role: 'redo' },
-]);
-
-const menu_body = new Menu.buildFromTemplate([//Main body menu
-    { role: 'reload' },
-    { label: 'Refresh Library', click() { player.getfiles(main.get.musicfolders()); maininitalizer() } },
-    { label: 'Contact developer', click() { shell.openExternal(my_website) } },
-    { role: 'toggledevtools' },
-    { type: 'separator' },
-    { role: 'zoomIn' },
-    { role: 'resetZoom' },
-    { role: 'zoomOut' },
-]);
-
-window.addEventListener('contextmenu', (event) => {//Body menu attached to window
-    event.preventDefault()
-    menu_body.popup({ window: require('electron').remote.getCurrentWindow() })//popup menu
-}, false);
 
 window.addEventListener('load', function () {//window loads
     console.log('Running from:', process.resourcesPath)
+    create_body_menu()
+    create_text_menus()
     player.getfiles(main.get.musicfolders())
-
-    //textbox menus
-    //textbox.addEventListener('contextmenu', (event) => popupmenu, false)
-    //Popup the menu in this window
-    /*function popupmenu(event) {
-        event.preventDefault()
-        event.stopPropagation()
-        text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
-    }*/
 
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
 
@@ -72,11 +25,55 @@ window.addEventListener('load', function () {//window loads
         player.getfiles(main.get.musicfolders())
         maininitalizer()
     }
+
     if (main.get.musicfolders().length < 1) { first_settup() }
 })
 
 function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
+}
+
+//text box menus
+async function create_text_menus() {
+    const text_box_menu = new Menu.buildFromTemplate([//Text box menu (for convinience)
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' },
+        { role: 'seperator' },
+        { role: 'undo' },
+        { role: 'redo' },
+    ]);
+    //add events to text boxes
+    textbox.addEventListener('contextmenu', (event) => popupmenu, false)
+
+    //Popup the menu in this window
+    function popupmenu(event) {
+        event.preventDefault()
+        event.stopPropagation()
+        text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
+    }
+}
+
+//Body menu
+async function create_body_menu() {
+    const menu_body = new Menu.buildFromTemplate([//Main body menu
+        { role: 'reload' },
+        { label: 'Refresh Library', click() { player.getfiles(main.get.musicfolders()); maininitalizer() } },
+        { label: 'Contact developer', click() { shell.openExternal(my_website) } },
+        { role: 'toggledevtools' },
+        { type: 'separator' },
+        { role: 'zoomIn' },
+        { role: 'resetZoom' },
+        { role: 'zoomOut' },
+    ]);
+
+    Menu.setApplicationMenu(menu_body)
+
+    window.addEventListener('contextmenu', (e) => {//Body menu attached to window
+        e.preventDefault();
+        menu_body.popup({ window: remote.getCurrentWindow() })//popup menu
+    }, false);
 }
 
 let config = {//Application configuration object
@@ -181,7 +178,7 @@ let config = {//Application configuration object
         if (alt_location != false) {
             var altpath = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'], defaultPath: alt_location })
         } else {
-            var altpath = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'],})
+            var altpath = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'], })
         }
 
         await altpath.then((altpath) => {
@@ -217,40 +214,29 @@ let player = {//Playback control
         console.log('Searching directory: ', muzicpaths)
 
         muzicpaths.forEach(folder => {//for each folder in the array
-            fs.readdir(folder + slash, function (err, files) {//read the files within the directory
+            fs.readdir(folder, function (err, files) {//read the files within the directory
 
                 if (err) { console.warn('File error', err) }//error accessing directory due to it not existing or locked permissions
 
                 files.forEach(filel1 => {//for each file in this folder
-                    var parsedfilel1 = path.parse(folder + slash + filel1)
+                    var parsedfilel1 = path.parse(path.join(folder, filel1))
 
                     switch (parsedfilel1.ext) {//check file types
-                        case ".mp3":
-                        case ".m4a":
-                        case ".mpeg":
-                        case ".opus":
-                        case ".ogg":
-                        case ".oga":
-                        case ".wav":
-                        case ".aac":
-                        case ".caf":
-                        case ".m4b":
-                        case ".mp4":
-                        case ".weba":
-                        case ".webm":
-                        case ".dolby":
-                        case ".flac"://playable as music file
-                            player.files.push(player.strip_file_details(folder + slash + filel1, parsedfilel1));
+                        case ".mp3": case ".m4a": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
+                        case ".aac": case ".caf": case ".m4b": case ".mp4": case ".weba":
+                        case ".webm": case ".dolby": case ".flac":
+                            //playable as music files
+                            player.files.push(player.strip_file_details(path.join(folder, filel1)));
                             break;
                         case ""://Subfolder to search
                             if (parsedfilel1.base.slice(0, 1) != "." && parsedfilel1.ext == "") {//.files are a files with no extension
-                                player.getfiles([folder + slash + filel1]);
+                                player.getfiles([path.join(folder, filel1)]);
                             }
                             break;
                         case ".m3u"://playlist file
-                            player.playlist_files.push(folder + slash + filel1);
+                            player.playlist_files.push(path.join(folder, filel1));
                             break;
-                        default: console.warn('Cannot handle (not supported): ', folder + slash + filel1);//not supported music file
+                        default: console.warn('Cannot handle (not supported): ', path.join(folder, filel1));//not supported music file
                     }
                 })
             })
@@ -336,8 +322,8 @@ let player = {//Playback control
             })
         }
     },
-    strip_file_details: function (pamth, parsedpamth) {//get metadata from music files
-        let filename = parsedpamth.name;
+    strip_file_details: function (pamth) {//get metadata from music files
+        let filename = path.parse(pamth).name;
         return { filename: filename, path: pamth }
     }
 }
@@ -365,23 +351,28 @@ let UI = {
 
 }
 
-//Play/pause button
+//  Play\pause button
 document.getElementById('playbtn').addEventListener('click', function () {
     console.log('Pause button Pressed')
     player.play()
 })
 ipcRenderer.on('tray_play_pause', () => { player.play() })//listening on channel 'tray_play_pause'
 
-//Next button
+//  Next button
 document.getElementById('nextbtn').addEventListener('click', function () {
     console.log('next button Pressed')
     player.next()
 })
 ipcRenderer.on('tray_next', () => { player.next() })//listening on channel 'tray_next'
 
-//Previous button
+//  Previous button
 document.getElementById('previousbtn').addEventListener('click', function () {
     console.log('Previous button Pressed')
     player.previous()
 })
 ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
+
+//  Taskbar buttons for frameless windows
+document.getElementById('x-button').addEventListener('click', function () { main.x_button() })
+document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
+document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })

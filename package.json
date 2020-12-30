@@ -19,7 +19,7 @@
   ],
   "icon": "icon.png",
   "license": "ISC",
-  "bin": "BB01",
+  "bin": "AA01",
   "scripts": {
     "start": "electron main.js",
     "postinstall": "electron-builder install-app-deps",

@@ -15,25 +15,21 @@ let config = {
 	music_folders: [],
 }
 
-app.on('ready', function () {//App ready to roll
+if (storeinator.get('default')) {
+	config = JSON.parse(storeinator.get('default'))
+} else {
+	storeinator.set('default', JSON.stringify(config))
+}
 
-	if (storeinator.get('default')) {
-		config = JSON.parse(storeinator.get('default'))
-	} else {
-		storeinator.set('default', JSON.stringify(config))
-	}
+app.on('ready', function () {//App ready to roll
 
 	//Menu.setApplicationMenu(null)
 	createmainWindow();
 
-	if (config.minimize_to_tray == true) {
-		create_tray()
-	}
+	if (config.minimize_to_tray == true) { create_tray() }
 })
 
-app.on('window-all-closed', () => {//all windows closed
-	if (tray == null) { app.quit() }
-})
+app.on('window-all-closed', () => { if (tray == null) { app.quit() } })
 
 
 /* Main window stuff */
@@ -94,6 +90,7 @@ async function showmainwwindow() {
 	//if (process.platform == 'linux') { tray.destroy(); }
 }
 
+
 /* Tray  functionality */
 async function create_tray() {//Create Tray
 	tray = new Tray('icon.png')
@@ -130,7 +127,6 @@ async function tray_next() {//Tray Next action
 async function tray_previous() {//Tray previous action
 	mainWindow.webContents.send('tray_previous')//fire channel
 }
-
 
 //Schortcut to write changes to files because i keep forgetting the fs writefile
 async function write_file(filepath, data) {

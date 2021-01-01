@@ -9,24 +9,17 @@ const wallpaper = require('wallpaper');//Desktop wallpaper
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
 //const { Howl, Howler } = require('howler');
 
-
-
-
 window.addEventListener('load', function () {//window loads
     console.log('Running from:', process.resourcesPath)
     create_body_menu()
-    create_text_menus()
+    //create_text_menus()
     player.getfiles(main.get.musicfolders())
-
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
 
     if (localStorage.getItem("Anthonymcfg")) {//check if storage has the item
         config.load()
-        player.getfiles(main.get.musicfolders())
         maininitalizer()
     }
-
-    if (main.get.musicfolders().length < 1) { first_settup() }
 })
 
 function maininitalizer() {//Used to start re-startable app functions
@@ -203,52 +196,64 @@ let config = {//Application configuration object
 }
 
 let player = {//Playback control
-    files: [],//array filled with music files
+    files: [],//path and 
     playlist_files: [],
-    playlists: [],
+    playlists: [],//playlist arrays
     queue: [],//Play queue randomized from playlist/library
-    stream1: null,//For howler to use
+    stream1: null,//
+    stream2: null,//
     playstate: false,//is (should be) playing music
-    now_playing: null,
+    now_playing: null,//Song thats currently playing
+
     getfiles: async function (muzicpaths) {//gets files form array of music folder paths
         console.log('Searching directory: ', muzicpaths)
 
         muzicpaths.forEach(folder => {//for each folder in the array
+
             fs.readdir(folder, function (err, files) {//read the files within the directory
 
                 if (err) { console.warn('File error', err) }//error accessing directory due to it not existing or locked permissions
 
-                files.forEach(filel1 => {//for each file in this folder
-                    var parsedfilel1 = path.parse(path.join(folder, filel1))
+                files.forEach(file => {//for each file in the folder
 
-                    switch (parsedfilel1.ext) {//check file types
-                        case ".mp3": case ".m4a": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
-                        case ".aac": case ".caf": case ".m4b": case ".mp4": case ".weba":
-                        case ".webm": case ".dolby": case ".flac":
-                            //playable as music files
-                            player.files.push(player.strip_file_details(path.join(folder, filel1)));
-                            break;
-                        case ""://Subfolder to search
-                            if (parsedfilel1.base.slice(0, 1) != "." && parsedfilel1.ext == "") {//.files are a files with no extension
-                                player.getfiles([path.join(folder, filel1)]);
-                            }
-                            break;
-                        case ".m3u"://playlist file
-                            player.playlist_files.push(path.join(folder, filel1));
-                            break;
-                        default: console.warn('Cannot handle (not supported): ', path.join(folder, filel1));//not supported music file
+                    var fullfilepath = path.join(folder, file);
+                    if (fs.statSync(fullfilepath).isDirectory()) {//sud-directory to search
+                        player.getfiles([fullfilepath]);
+                    } else {//file to handle
+
+                        switch (path.parse(fullfilepath).ext) {//check file types
+
+                            case ".mp3": case ".m4a": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
+                            case ".aac": case ".caf": case ".m4b": case ".mp4": case ".weba":
+                            case ".webm": case ".dolby": case ".flac": //playable as music files
+                                player.files.push(player.strip_file_details(fullfilepath));
+                                break;
+
+                            case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
+                                player.playlist_files.push(fullfilepath);
+                                break;
+
+                            default: console.warn('Cannot handle (not supported): ', fullfilepath);//not supported music file
+                        }
                     }
+
                 })
             })
         })
         player.build_library();
+    },
+
+    strip_file_details: function (pamth) {//get metadata from music files
+        let filename = path.parse(pamth).name;
+        return { filename: filename, path: pamth }
     },
     play: function (fileindex) {
         /* If something is playing resumes playback,
         if nothing is playing plays from the player.files[fileindex],
         if not fileindex assumes playback of the last song
         */
-        console.log('Playing: ', player.files[fileindex]);
+        console.log('Attempt to play: ', player.files[fileindex]);
+
         if (player.playstate != false) {//is playing something
             if (fileindex == undefined) {
                 player.pause()
@@ -257,10 +262,12 @@ let player = {//Playback control
                 player.stream1.unload();
             }
         }
+
         if (fileindex == undefined && player.now_playing != null) {
             player.stream1.play()
             return 0;
         }
+
         player.stream1 = new Howl({
             src: player.files[fileindex].path,//takes an array, or single path
             autoplay: true,
@@ -303,8 +310,11 @@ let player = {//Playback control
     previous: function () {
         console.log('Play Previous')
     },
+    mute:function(){
+        mute(true)
+        
+    },
     build_library: function () {
-        console.log('Building main library from', config.data.music_folders)
         document.getElementById('main_library_view').innerHTML = "";
 
         for (let fileindex in player.files) { buildsong(fileindex) }
@@ -322,10 +332,7 @@ let player = {//Playback control
             })
         }
     },
-    strip_file_details: function (pamth) {//get metadata from music files
-        let filename = path.parse(pamth).name;
-        return { filename: filename, path: pamth }
-    }
+
 }
 
 let UI = {
@@ -372,7 +379,7 @@ document.getElementById('previousbtn').addEventListener('click', function () {
 })
 ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
 
-//  Taskbar buttons for frameless windows
+//  Taskbar buttons for frameless window
 document.getElementById('x-button').addEventListener('click', function () { main.x_button() })
 document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
 document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })

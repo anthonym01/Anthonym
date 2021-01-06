@@ -46,14 +46,119 @@ body {
     background-color: var(--background-color);
     margin: 0;
     padding: 0;
-    font-family: Lexend_Deca, system-ui, -apple-system, -apple-system-font, 'Segoe UI', 'Roboto', sans-serif;
+    font-family: Lexend_Deca, system-ui, 'Segoe UI', 'Roboto', sans-serif;
     overflow: auto;
     user-select: none;
 }
 
+/* Title bar and frame*/
+#Title_bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 30px;
+    width: 100%;
+    background-color: var(--off_grey);
+    -webkit-app-region: drag;
+}
+
+.tbuttonholder {
+    /* Task buttons container*/
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 135px;
+    height: 100%;
+    -webkit-app-region: no-drag;
+}
+
+.tbutton {
+    /* Task buttons */
+    background-color: var(--half_grey);
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 45px;
+    height: 100%;
+}
+
+.tbutton:hover {
+    background-color: var(--accent_color);
+}
+
+#x-button {
+    right: 0;
+}
+
+#x-button:hover {
+    background-color: red;
+}
+
+#maximize-button {
+    right: 45px;
+}
+
+#minimize-button {
+    right: 90px;
+}
+
+/* Title bar menu */
+.titlemenu {
+    position: absolute;
+    top: 0;
+    right: 135px;
+    width: 80px;
+    height: 100%;
+    -webkit-app-region: no-drag;
+}
+
+.titlemenu_btn {
+    /* Buttons for titlemenu */
+    position: absolute;
+    height: 30px;
+    width: 40px;
+    right: 0;
+    background-color: var(--off_grey);
+    cursor: pointer;
+    transition: background-color 300ms;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.titlemenu_btn:hover {
+    background-color: var(--half_grey);
+}
+
+.titlemenu_btn:active {
+    background-color: var(--accent_color);
+    transition: background-color 0ms;
+}
+
+#setting_btn {
+    right: 0;
+    background-image: var(--setting_icon);
+}
+
+#search_btn {
+    right: 40px;
+    background-size: 55%;
+    background-image: var(--search_icon);
+}
+
+.titlcon{
+    height: 30px;
+    width: 30px;
+    background-size: 85%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: url('../img/icon.png');
+    -webkit-app-region: drag;
+}
+
 /*Scrollbar*/
 ::-webkit-scrollbar {
-    width: 0.3rem;
+    width: 0.4rem;
 }
 
 ::-webkit-scrollbar-track {
@@ -67,6 +172,192 @@ body {
 ::-webkit-scrollbar-thumb:active {
     background-color: var(--accent_color);
 }
+
+/* Playback control pannel */
+.Playbar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 7rem;
+    background: var(--half_background-color);
+    box-shadow: 0 0 1rem 0 var(--accent_color);
+}
+
+.playbtn,
+.pausebtn {
+    /* Play/pause, next and Previous button */
+    position: absolute;
+    bottom: 1.25rem;
+    height: 4.5rem;
+    width: 4.5rem;
+    background-color: var(--background-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 300ms, background-image 300ms, background-size 300ms, background-position 300ms;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    right: calc(50vw - 2.25rem);
+    background-image: var(--play_icon);
+    background-size: 80%;
+    background-position: 90% 50%;
+}
+
+.pausebtn {
+    background-image: var(--pause_icon);
+    background-position: center;
+}
+
+.playbtn:hover,
+.pausebtn:hover {
+    background-color: var(--off_grey);
+}
+
+.playbtn:active,
+.pausebtn:active {
+    background-color: var(--accent_color);
+    transition: background-color 0ms;
+}
+
+#nextbtn {
+    /* Next track button */
+    right: calc(50vw - 7.5rem);
+    transform: rotate(180deg);
+    background-image: var(--previous_icon);
+    background-size: 75%;
+    background-position: 20% 50%;
+}
+
+#previousbtn {
+    /* Previous track button */
+    left: calc(50vw - 7.5rem);
+    background-image: var(--previous_icon);
+    background-size: 75%;
+    background-position: 20% 50%;
+}
+
+.shufflebtn {
+    /* Shuffle and Repeat button */
+    position: absolute;
+    bottom: 1.25rem;
+    height: 3.5rem;
+    width: 3.5rem;
+    background-color: var(--background-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 300ms;
+    user-select: none;
+    white-space: wrap;
+    text-align: center;
+}
+
+.shufflebtn:hover {
+    background-color: var(--off_grey);
+}
+
+.shufflebtn:active {
+    background-color: var(--accent_color);
+    transition: background-color 0ms;
+}
+
+#shufflebtn {
+    /* Shuffle button */
+    left: calc(50vw - 12rem);
+}
+
+#repeatbtn {
+    /* repeat button */
+    right: calc(50vw - 12rem);
+}
+
+#songTitle {
+    /* Song title in playbar */
+    position: absolute;
+    height: 2rem;
+    font-size: 2rem;
+    width: auto;
+    text-align: left;
+    line-height: 100%;
+    left: 2vw;
+    bottom: 1.5rem;
+}
+
+#songArtist {
+    /* Song artist below song title in playbar */
+    position: absolute;
+    left: 5vw;
+    height: 1.25rem;
+    font-size: 1.25rem;
+    width: auto;
+    text-align: left;
+    line-height: 100%;
+    left: 5vw;
+    bottom: 0rem;
+}
+
+#song_progress_bar {
+    /* Song progression bar/slider in playbar */
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 0.8em;
+    background: none;
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+}
+
+#song_progress_bar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.6em !important;
+    height: 1.6em !important;
+    /*background: none;*/
+    border-radius: 50%;
+    cursor: pointer;
+    background-color: var(--accent_color)
+}
+
+/* Main library view */
+.library_view {
+    position: absolute;
+    top: 30px;
+    height: calc(100% - 30px - 7em);
+    width: 100%;
+    display: none;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+.song_bar,
+.song_bar_active {
+    /* Representation of a single song file */
+    position: relative;
+    width: 100%;
+    font-size: 1rem;
+    height: fit-content;
+    padding: 1rem;
+    cursor: pointer;
+    transition: background-color 300ms;
+    user-select: none;
+    box-sizing: border-box;
+    background-color: var(--half_background-color);
+}
+
+.song_bar_active {
+    background-color: var(--accent_color);
+}
+
+.song_bar:hover {
+    background-color: var(--off_grey);
+}
+
+.song_bar:active {
+    background-color: var(--accent_color);
+    transition: background-color 0ms;
+}
+
 
 
 /* First setup screen */
@@ -217,187 +508,6 @@ body {
     transition: transform 0ms, background-color 300ms;
 }
 
-
-
-/* Playback control pannel */
-.Playbar {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    height: 7rem;
-    background: var(--half_background-color);
-    box-shadow: 0 0 1em 0 var(--accent_color);
-}
-
-.playbtn {
-    /* Play/pause, next and Previous button */
-    position: absolute;
-    bottom: 1.25rem;
-    height: 4.5rem;
-    width: 4.5rem;
-    background-color: var(--background-color);
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background-color 300ms;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: contain;
-}
-
-.playbtn:hover {
-    background-color: var(--off_grey);
-}
-
-.playbtn:active {
-    background-color: var(--accent_color);
-    transition: background-color 0ms;
-}
-
-#playbtn {
-    /* Playbutton */
-    right: calc(50vw - 2.25rem);
-    background-image: var(--play_icon);
-    background-size: 80%;
-    background-position: 90% 50%;
-}
-
-#nextbtn {
-    /* Next track button */
-    right: calc(50vw - 7.5rem);
-    transform: rotate(180deg);
-    background-image: var(--previous_icon);
-    background-size: 75%;
-    background-position: 20% 50%;
-}
-
-#previousbtn {
-    /* Previous track button */
-    left: calc(50vw - 7.5rem);
-    background-image: var(--previous_icon);
-    background-size: 75%;
-    background-position: 20% 50%;
-}
-
-.shufflebtn {
-    /* Shuffle and Repeat button */
-    position: absolute;
-    bottom: 1.25rem;
-    height: 3.5rem;
-    width: 3.5rem;
-    background-color: var(--background-color);
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background-color 300ms;
-    user-select: none;
-    white-space: wrap;
-    text-align: center;
-}
-
-.shufflebtn:hover {
-    background-color: var(--off_grey);
-}
-
-.shufflebtn:active {
-    background-color: var(--accent_color);
-    transition: background-color 0ms;
-}
-
-#shufflebtn {
-    /* Shuffle button */
-    left: calc(50vw - 12rem);
-}
-
-#repeatbtn {
-    /* repeat button */
-    right: calc(50vw - 12rem);
-}
-
-#songTitle {
-    /* Song title in playbar */
-    position: absolute;
-    height: 2rem;
-    font-size: 2rem;
-    width: auto;
-    text-align: left;
-    line-height: 100%;
-    left: 2vw;
-    bottom: 1.5rem;
-}
-
-#songArtist {
-    /* Song artist below song title in playbar */
-    position: absolute;
-    left: 5vw;
-    height: 1.25rem;
-    font-size: 1.25rem;
-    width: auto;
-    text-align: left;
-    line-height: 100%;
-    left: 5vw;
-    bottom: 0rem;
-}
-
-#song_progress_bar {
-    /* Song progression bar/slider in playbar */
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100%;
-    height: 0.8em;
-    background: none;
-    -webkit-appearance: none;
-    appearance: none;
-    outline: none;
-}
-
-#song_progress_bar::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 1.6em !important;
-    height: 1.6em !important;
-    /*background: none;*/
-    border-radius: 50%;
-    cursor: pointer;
-    background-color: var(--accent_color)
-}
-
-/* Main library view */
-.library_view {
-    position: absolute;
-    top: 30px;
-    height: calc(100% - 30px - 7em);
-    width: 100%;
-    display: none;
-    overflow-x: hidden;
-    overflow-y: scroll;
-}
-
-.song_bar {
-    /* Representation of a single song file */
-    position: relative;
-    width: 100%;
-    font-size: 1em;
-    height: 1em;
-    line-height: 100%;
-    padding-left: 0.5em;
-    padding-right: 0.5em;
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-    cursor: pointer;
-    transition: background-color 300ms;
-    user-select: none;
-    box-sizing: border-box;
-    background-color: var(--half_background-color);
-}
-
-.song_bar:hover {
-    background-color: var(--off_grey);
-}
-
-.song_bar:active {
-    background-color: var(--accent_color);
-    transition: background-color 0ms;
-}
 
 @media screen and (min-aspect-ratio: 1/1) and (min-width:400px) {
 

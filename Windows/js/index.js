@@ -1,32 +1,37 @@
-const { ipcRenderer, remote, Main } = require('electron');
+const { ipcRenderer, remote } = require('electron');
 const main = remote.require('./main');//access export functions in main
 const { dialog, Menu, MenuItem, nativeTheme, clipboard, shell } = remote;
-
 const fs = require('fs');//file system
 const path = require('path');//path
 const wallpaper = require('wallpaper');//Desktop wallpaper
-
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
-//const { Howl, Howler } = require('howler');
+//const {Howl, Howler} = require('howler');
+//import {Howl, Howler} from 'howler';
+
+//  Taskbar buttons for frameless window
+document.getElementById('x-button').addEventListener('click', function () { main.x_button() })
+document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
+document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })
+
+const playbtn = document.getElementById('playbtn');
+const nextbtn = document.getElementById('nextbtn');
 
 window.addEventListener('load', function () {//window loads
     console.log('Running from:', process.resourcesPath)
     create_body_menu()
     //create_text_menus()
-    player.getfiles(main.get.musicfolders())
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
 
-    if (localStorage.getItem("Anthonymcfg")) {//check if storage has the item
-        config.load()
-        maininitalizer()
-    }
+    if (localStorage.getItem("Anthonymcfg")) { config.load() }
+    player.initalize()
+    UI.initalize()
+    maininitalizer()
 })
 
 function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
 }
 
-//text box menus
 async function create_text_menus() {
     const text_box_menu = new Menu.buildFromTemplate([//Text box menu (for convinience)
         { role: 'cut' },
@@ -48,7 +53,6 @@ async function create_text_menus() {
     }
 }
 
-//Body menu
 async function create_body_menu() {
     const menu_body = new Menu.buildFromTemplate([//Main body menu
         { role: 'reload' },
@@ -69,7 +73,11 @@ async function create_body_menu() {
     }, false);
 }
 
-let config = {//Application configuration object
+window.addEventListener('keydown',function(e){//keyboard actions
+    console.log(e.key)
+})
+
+let config = {
     data: {//application data
         key: "Anthonymcfg",
     },
@@ -196,15 +204,38 @@ let config = {//Application configuration object
 }
 
 let player = {//Playback control
-    files: [],//path and 
-    playlist_files: [],
-    playlists: [],//playlist arrays
+    files: [],//path and other details of song files
+    playlists: [],//playlist files and details
     queue: [],//Play queue randomized from playlist/library
     stream1: null,//
     stream2: null,//
     playstate: false,//is (should be) playing music
     now_playing: null,//Song thats currently playing
+    initalize: async function () {
+        player.getfiles(main.get.musicfolders())
 
+        //  Play\pause button
+        playbtn.addEventListener('click', function () {
+            console.log('Pause button Pressed')
+            player.play()
+        })
+        ipcRenderer.on('tray_play_pause', () => { player.play() })//listening on channel 'tray_play_pause'
+
+        //  Next button
+        nextbtn.addEventListener('click', function () {
+            console.log('next button Pressed')
+            player.next()
+        })
+        ipcRenderer.on('tray_next', () => { player.next() })//listening on channel 'tray_next'
+
+        //  Previous button
+        document.getElementById('previousbtn').addEventListener('click', function () {
+            console.log('Previous button Pressed')
+            player.previous()
+        })
+        ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
+        
+    },
     getfiles: async function (muzicpaths) {//gets files form array of music folder paths
         console.log('Searching directory: ', muzicpaths)
 
@@ -230,7 +261,7 @@ let player = {//Playback control
                                 break;
 
                             case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
-                                player.playlist_files.push(fullfilepath);
+                                player.playlists.push({ path: fullfilepath });
                                 break;
 
                             default: console.warn('Cannot handle (not supported): ', fullfilepath);//not supported music file
@@ -240,79 +271,7 @@ let player = {//Playback control
                 })
             })
         })
-        player.build_library();
-    },
-
-    strip_file_details: function (pamth) {//get metadata from music files
-        let filename = path.parse(pamth).name;
-        return { filename: filename, path: pamth }
-    },
-    play: function (fileindex) {
-        /* If something is playing resumes playback,
-        if nothing is playing plays from the player.files[fileindex],
-        if not fileindex assumes playback of the last song
-        */
-        console.log('Attempt to play: ', player.files[fileindex]);
-
-        if (player.playstate != false) {//is playing something
-            if (fileindex == undefined) {
-                player.pause()
-                return 0;
-            } else {
-                player.stream1.unload();
-            }
-        }
-
-        if (fileindex == undefined && player.now_playing != null) {
-            player.stream1.play()
-            return 0;
-        }
-
-        player.stream1 = new Howl({
-            src: player.files[fileindex].path,//takes an array, or single path
-            autoplay: true,
-            loop: false,
-            volume: 1,
-            onend: function () {//Playback ends
-                console.log('Finished playing', player.files[fileindex]);
-                player.playstate = false;
-            },
-            onplayerror: function () {//Playback fails
-                stream1.once('unlock', function () {//wait for unlock
-                    player.play(fileindex);// try to play again
-                });
-            },
-            onplay: function () {//playback of loaded song file sucessfull
-                player.playstate = true;//now playing and play pause functionality
-                player.now_playing = fileindex;
-            }
-        });
-
-        player.stream1.play()//play the sound that was just loaded
-
-        ipcRenderer.send('Play_msg', player.files[fileindex].filename)//Send file name of playing song to main
-
-        document.getElementById('songTitle').innerHTML = player.files[fileindex].filename;
-
-    },
-    pause: function () {
-        console.log('Pause functionaliy');
-        if (player.playstate != false) {
-            player.stream1.pause()
-            player.playstate = false;
-        } else {//assume error
-            console.warn('Tried pause functionality with no playback');
-        }
-    },
-    next: function () {//Play next song in que if any
-        console.log('Play Next')
-    },
-    previous: function () {
-        console.log('Play Previous')
-    },
-    mute:function(){
-        mute(true)
-        
+        player.build_library();//make after get of files, get of files must be async
     },
     build_library: function () {
         document.getElementById('main_library_view').innerHTML = "";
@@ -324,7 +283,7 @@ let player = {//Playback control
             var song_bar = document.createElement('div')
             song_bar.classList = "song_bar"
             song_bar.innerHTML = player.files[fileindex].filename;
-            song_bar.title = player.files[fileindex].filename;
+            song_bar.title = `Play ${player.files[fileindex].filename}`
 
             document.getElementById('main_library_view').appendChild(song_bar)
             song_bar.addEventListener('click', function () {//hand source to player
@@ -332,11 +291,102 @@ let player = {//Playback control
             })
         }
     },
+    strip_file_details: function (pamth) {//get metadata from music files
+        let filename = path.parse(pamth).name;
+        return { filename: filename, path: pamth }
+    },
+    play: function (fileindex) {
+        /* If something is playing resumes playback,
+        if nothing is playing plays from the player.files[fileindex],
+        if no fileindex assumes playback of the last song, if no last song, unloads playr
+        */
 
+        if (player.playstate != false) {//if is playing something
+            if (fileindex == undefined) {//pause playback
+                player.pause()
+                return 0;
+            } else {
+                player.stream1.unload();//unlock the stream thats gonna be used
+            }
+        }
+
+        if (fileindex == undefined && player.now_playing != null) {
+            player.stream1.play()
+            console.log('resume : ', player.files[player.now_playing]);
+            return 0;
+        }
+
+        if(fileindex == player.now_playing){
+            if(player.playstate == true){
+                player.pause()
+            }else{
+                player.stream1.play()
+            }
+            return 0;
+        }
+
+        console.log('Attempt to play: ', player.files[fileindex]);
+        player.stream1 = new Howl({
+            src: player.files[fileindex].path,//takes an array, or single path
+            autoplay: true,
+            loop: false,
+            volume: 1,
+            onend: function () {//Playback ends
+                console.log('Finished playing', player.files[fileindex]);
+                player.playstate = false;
+            },
+            onplayerror: function () {//Playback fails
+                console.warn('fail to play ', player.files[fileindex])
+                stream1.once('unlock', function () {//wait for unlock
+                    player.play(fileindex);// try to play again
+                });
+            },
+            onplay: function () {
+                //playback of loaded song file sucessfull
+                player.playstate = true;//now playing and play pause functionality
+                player.now_playing = fileindex;
+                ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
+                document.getElementById('songTitle').innerHTML = player.files[fileindex].filename;
+                
+                playbtn.classList = "pausebtn"
+                playbtn.title="pause"
+                console.log('Playing: ', player.files[fileindex]);
+            }
+        });
+        player.stream1.play()//play the sound that was just loaded
+    },
+    pause: function () {
+        console.log('Pause functionaliy');
+        if (player.playstate != false) {
+            player.stream1.pause()
+            player.playstate = false;
+            playbtn.classList = "playbtn"
+            playbtn.title="play"
+            ipcRenderer.send('Play_msg', player.files[player.now_playing].filename, 'Play')
+        } else {//assume error
+            console.warn('Tried pause functionality with no playback');
+        }
+    },
+    next: function () {//Play next song in que if any
+        console.log('Play Next')
+    },
+    previous: function () {
+        console.log('Play Previous')
+    },
+    mute: function () {
+        if (player.stream1.mute == true) {
+            player.stream1.mute(false)
+        } else {
+            player.stream1.mute(true)
+        }
+    },
 }
 
 let UI = {
     initalize: function () {
+
+    },
+    settings: {
 
     },
     get_desktop_wallpaper: async function () {
@@ -357,29 +407,3 @@ let UI = {
     },
 
 }
-
-//  Play\pause button
-document.getElementById('playbtn').addEventListener('click', function () {
-    console.log('Pause button Pressed')
-    player.play()
-})
-ipcRenderer.on('tray_play_pause', () => { player.play() })//listening on channel 'tray_play_pause'
-
-//  Next button
-document.getElementById('nextbtn').addEventListener('click', function () {
-    console.log('next button Pressed')
-    player.next()
-})
-ipcRenderer.on('tray_next', () => { player.next() })//listening on channel 'tray_next'
-
-//  Previous button
-document.getElementById('previousbtn').addEventListener('click', function () {
-    console.log('Previous button Pressed')
-    player.previous()
-})
-ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
-
-//  Taskbar buttons for frameless window
-document.getElementById('x-button').addEventListener('click', function () { main.x_button() })
-document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
-document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })

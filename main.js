@@ -13,12 +13,8 @@ let config = {
 		quiton_X: true,
 		music_folders: [],
 	},
-	save: async function () {
-		storeinator.set('default', JSON.stringify(config.data))
-	},
-	load: function () {
-		config.data = JSON.parse(storeinator.get('default'))
-	}
+	save: async function () { storeinator.set('default', JSON.stringify(config.data)) },
+	load: function () { config.data = JSON.parse(storeinator.get('default')) }
 }
 
 if (storeinator.get('default')) { config.load() }//load config
@@ -82,9 +78,13 @@ let mainWindow = {
 	},
 	show: async function () {
 		console.log('Show main window')
-		mainWindow.body.show();
-		mainWindow.body.focusOnWebView()
-		mainWindow.body.setSkipTaskbar(false);
+		if (mainWindow.body != undefined) {
+			mainWindow.body.show();
+			mainWindow.body.focusOnWebView()
+			mainWindow.body.setSkipTaskbar(false);
+		} else {
+			mainWindow.create()
+		}
 
 		//if (process.platform == 'linux') { tray.destroy(); }
 	}
@@ -92,24 +92,24 @@ let mainWindow = {
 
 let tray = {
 	body: null,//tray value
-	Play_msg:
-		ipcMain.on('Play_msg', (event, now_playing) => {//Receive Song data from mainwindow and apply to tray
-			console.log('Set tray now playing to: ', now_playing, event);
-			tray.update(now_playing)
-		}),
+	Play_msg: ipcMain.on('Play_msg', (event, now_playing, state) => {//Receive Song data from mainwindow and apply to tray
+		console.log('Set tray now playing to: ', now_playing, state, /*event*/);
+		tray.update(now_playing, state)
+	}),
 	create: async function () {
 		console.log('Create tray')
 		tray.body = new Tray('icon.png')
 		tray.body.on('click', function () { console.log('tray clicked'); mainWindow.show() })//Single click
-		tray.update('Click to open')//First menu
+		tray.update('Click to open','Play')//First menu
 	},
-	update: async function (now_playing) {
+	update: async function (now_playing, state) {
 		let contextMenu = new Menu()//menu
 
 		contextMenu.append(new MenuItem({ label: `Playing: ${now_playing}`, toolTip: 'Open Player', click() { mainWindow.show() } }))
 		contextMenu.append(new MenuItem({ type: 'separator' }))
 		contextMenu.append(new MenuItem({ label: 'Next', click() { tray.next() } }))
-		contextMenu.append(new MenuItem({ label: 'Play/Pause', click() { tray.playpause() } }))
+		//contextMenu.append(new MenuItem({ label: state ? 'Play' : 'Pause', click() { tray.playpause() } }))
+		contextMenu.append(new MenuItem({ label: state, click() { tray.playpause() } }))
 		contextMenu.append(new MenuItem({ label: 'Previous', click() { tray.previous() } }))
 		contextMenu.append(new MenuItem({ type: 'separator' }))
 		contextMenu.append(new MenuItem({ role: 'quit' }))

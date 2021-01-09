@@ -146,7 +146,8 @@ body {
     background-image: var(--search_icon);
 }
 
-.titlcon{
+.titlcon,
+.titlcon_active {
     height: 30px;
     width: 30px;
     background-size: 85%;
@@ -154,6 +155,24 @@ body {
     background-repeat: no-repeat;
     background-image: url('../img/icon.png');
     -webkit-app-region: drag;
+}
+
+.titlcon_active {
+    animation: spinnn 3s linear infinite;
+}
+
+@keyframes spinnn {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(180deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /*Scrollbar*/
@@ -181,6 +200,14 @@ body {
     height: 7rem;
     background: var(--half_background-color);
     box-shadow: 0 0 1rem 0 var(--accent_color);
+}
+
+#coverartsmall {
+    position: absolute;
+    bottom: 0rem;
+    left: 0rem;
+    height: 7rem;
+    width: 7rem;
 }
 
 .playbtn,
@@ -323,8 +350,9 @@ body {
 .library_view {
     position: absolute;
     top: 30px;
-    height: calc(100% - 30px - 7em);
-    width: 100%;
+    right: 0;
+    height: calc(100% - 30px - 7rem);/*top and bottom*/
+    width: calc(100% - 12rem);
     display: none;
     overflow-x: hidden;
     overflow-y: scroll;

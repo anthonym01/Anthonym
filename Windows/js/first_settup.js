@@ -21,7 +21,7 @@ async function first_settup() {
         //folders.forEach(folder => { individual_folder(folder) })
 
         function individual_folder(index) {
-            let parsed_folder = path.parse(folders[index] + slash)
+            let parsed_folder = path.parse(folders[index])
 
             let folder_first = document.createElement('div')
             folder_first.classList = "folder_first"

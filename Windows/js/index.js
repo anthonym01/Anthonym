@@ -5,6 +5,8 @@ const fs = require('fs');//file system
 const path = require('path');//path
 const wallpaper = require('wallpaper');//Desktop wallpaper
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
+const util = require('util');
+const mm = require('music-metadata');
 //const {Howl, Howler} = require('howler');
 //import {Howl, Howler} from 'howler';
 
@@ -73,7 +75,7 @@ async function create_body_menu() {
     }, false);
 }
 
-window.addEventListener('keydown',function(e){//keyboard actions
+window.addEventListener('keydown', function (e) {//keyboard actions
     console.log(e.key)
 })
 
@@ -234,7 +236,7 @@ let player = {//Playback control
             player.previous()
         })
         ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
-        
+
     },
     getfiles: async function (muzicpaths) {//gets files form array of music folder paths
         console.log('Searching directory: ', muzicpaths)
@@ -295,7 +297,7 @@ let player = {//Playback control
         let filename = path.parse(pamth).name;
         return { filename: filename, path: pamth }
     },
-    play: function (fileindex) {
+    play: async function (fileindex) {
         /* If something is playing resumes playback,
         if nothing is playing plays from the player.files[fileindex],
         if no fileindex assumes playback of the last song, if no last song, unloads playr
@@ -306,33 +308,41 @@ let player = {//Playback control
                 player.pause()
                 return 0;
             } else {
+                if (fileindex != player.now_playing) {
                 player.stream1.unload();//unlock the stream thats gonna be used
+                }
+            }
+        } else {
+            if (fileindex == player.now_playing) {
+                player.stream1.play()
+                console.log('resume : ', player.files[player.now_playing].path);
+                return 0;
             }
         }
 
         if (fileindex == undefined && player.now_playing != null) {
             player.stream1.play()
-            console.log('resume : ', player.files[player.now_playing]);
+            console.log('resume : ', player.files[player.now_playing].path);
             return 0;
         }
 
-        if(fileindex == player.now_playing){
-            if(player.playstate == true){
+        if (fileindex == player.now_playing) {
+            if (player.playstate == true) {
                 player.pause()
-            }else{
+            } else {
                 player.stream1.play()
             }
             return 0;
         }
 
-        console.log('Attempt to play: ', player.files[fileindex]);
+        console.log('Attempt to play: ', player.files[fileindex].path);
         player.stream1 = new Howl({
             src: player.files[fileindex].path,//takes an array, or single path
             autoplay: true,
             loop: false,
             volume: 1,
             onend: function () {//Playback ends
-                console.log('Finished playing', player.files[fileindex]);
+                console.log('Finished playing', player.files[fileindex].path);
                 player.playstate = false;
             },
             onplayerror: function () {//Playback fails
@@ -341,15 +351,34 @@ let player = {//Playback control
                     player.play(fileindex);// try to play again
                 });
             },
-            onplay: function () {
+            onplay: async function () {
                 //playback of loaded song file sucessfull
                 player.playstate = true;//now playing and play pause functionality
                 player.now_playing = fileindex;
+
+                //set meta properties
+                const metadata = await mm.parseFile(player.files[fileindex].path);
+                console.log(metadata)
+                //console.log(util.inspect(metadata, { showHidden: false, depth: null }));
+
+                const picture = mm.selectCover(metadata.common.picture)
+                if (typeof (picture) != 'undefined' && picture != null) {
+                    console.log('Cover art info: ', picture)
+                    document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                    document.getElementById('coverartsmall').name="notvibecat"
+                } else {
+                    //use placeholder image
+                    document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
+                    document.getElementById('coverartsmall').name="vibecat"
+                }
+
+
                 ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
                 document.getElementById('songTitle').innerHTML = player.files[fileindex].filename;
-                
+
                 playbtn.classList = "pausebtn"
-                playbtn.title="pause"
+                playbtn.title = "pause"
+                document.getElementById('titlcon').classList = "titlcon_active"
                 console.log('Playing: ', player.files[fileindex]);
             }
         });
@@ -361,8 +390,12 @@ let player = {//Playback control
             player.stream1.pause()
             player.playstate = false;
             playbtn.classList = "playbtn"
-            playbtn.title="play"
-            ipcRenderer.send('Play_msg', player.files[player.now_playing].filename, 'Play')
+            playbtn.title = "play"
+            document.getElementById('titlcon').classList = "titlcon"
+            if(document.getElementById('coverartsmall').name=="vibecat"){
+                document.getElementById('coverartsmall').src = "img/memes/Cats/sad kajit.png"
+            }
+            ipcRenderer.send('Play_msg', player.files[player.now_playing].filename, 'Play');
         } else {//assume error
             console.warn('Tried pause functionality with no playback');
         }
@@ -380,6 +413,9 @@ let player = {//Playback control
             player.stream1.mute(true)
         }
     },
+    display_metadata: async function(){
+        
+    }
 }
 
 let UI = {

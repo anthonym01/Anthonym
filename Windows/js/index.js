@@ -309,7 +309,7 @@ let player = {//Playback control
                 return 0;
             } else {
                 if (fileindex != player.now_playing) {
-                player.stream1.unload();//unlock the stream thats gonna be used
+                    player.stream1.unload();//unlock the stream thats gonna be used
                 }
             }
         } else {
@@ -336,11 +336,13 @@ let player = {//Playback control
         }
 
         console.log('Attempt to play: ', player.files[fileindex].path);
+
         player.stream1 = new Howl({
             src: player.files[fileindex].path,//takes an array, or single path
             autoplay: true,
             loop: false,
             volume: 1,
+            preload:true,
             onend: function () {//Playback ends
                 console.log('Finished playing', player.files[fileindex].path);
                 player.playstate = false;
@@ -350,6 +352,9 @@ let player = {//Playback control
                 stream1.once('unlock', function () {//wait for unlock
                     player.play(fileindex);// try to play again
                 });
+            },
+            onload: function () {
+                player.stream1.play()//play the sound that was just loaded
             },
             onplay: async function () {
                 //playback of loaded song file sucessfull
@@ -365,11 +370,11 @@ let player = {//Playback control
                 if (typeof (picture) != 'undefined' && picture != null) {
                     console.log('Cover art info: ', picture)
                     document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                    document.getElementById('coverartsmall').name="notvibecat"
+                    document.getElementById('coverartsmall').name = "notvibecat"
                 } else {
                     //use placeholder image
-                    document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
-                    document.getElementById('coverartsmall').name="vibecat"
+                    //document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
+                    document.getElementById('coverartsmall').name = "vibecat"
                 }
 
 
@@ -378,11 +383,11 @@ let player = {//Playback control
 
                 playbtn.classList = "pausebtn"
                 playbtn.title = "pause"
-                document.getElementById('titlcon').classList = "titlcon_active"
+                //document.getElementById('titlcon').classList = "titlcon_active"
                 console.log('Playing: ', player.files[fileindex]);
             }
         });
-        player.stream1.play()//play the sound that was just loaded
+
     },
     pause: function () {
         console.log('Pause functionaliy');
@@ -391,9 +396,9 @@ let player = {//Playback control
             player.playstate = false;
             playbtn.classList = "playbtn"
             playbtn.title = "play"
-            document.getElementById('titlcon').classList = "titlcon"
-            if(document.getElementById('coverartsmall').name=="vibecat"){
-                document.getElementById('coverartsmall').src = "img/memes/Cats/sad kajit.png"
+            //document.getElementById('titlcon').classList = "titlcon"
+            if (document.getElementById('coverartsmall').name == "vibecat") {
+                //document.getElementById('coverartsmall').src = "img/memes/Cats/sad kajit.png"
             }
             ipcRenderer.send('Play_msg', player.files[player.now_playing].filename, 'Play');
         } else {//assume error
@@ -413,8 +418,8 @@ let player = {//Playback control
             player.stream1.mute(true)
         }
     },
-    display_metadata: async function(){
-        
+    display_metadata: async function () {
+
     }
 }
 

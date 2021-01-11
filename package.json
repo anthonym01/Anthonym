@@ -17,7 +17,7 @@
     "Audio",
     "Player"
   ],
-  "icon": "icon.png",
+  "icon": "build/icons/256x256.png",
   "license": "ISC",
   "bin": "AA01",
   "scripts": {
@@ -29,29 +29,31 @@
   },
   "build": {
     "appId": "com.anthonym.music",
-    "icon": "icon.png",
+    "icon": "build/icons/256x256.png",
     "productName": "anthonym",
     "copyright": "none",
     "buildVersion": "1.0.0",
     "remoteBuild": "true",
     "asar": "true",
     "mac": {
-      "category": "utility",
-      "icon": "icon.png"
+      "category": "music",
+      "icon": "build/icons/256x256.png"
     },
     "win": {
       "target": "nsis",
-      "icon": "assets/icons/icon.ico"
+      "icon": "build/icons/256x256.png"
     },
     "linux": {
       "category": "Music",
-      "icon": "icon.png"
+      "icon": "build/icons/256x256.png"
     }
   },
   "files": [
     "**/*",
-    "assets/icon.ico",
-    "assets/icon.png"
+    "build/256x256.png",
+    "build/512x512.png",
+    "build/1024x1024.png",
+    "build/icon.ico"
   ],
   "devDependencies": {
     "asar": "^1.0.0",

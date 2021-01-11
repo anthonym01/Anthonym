@@ -46,7 +46,7 @@ let mainWindow = {
 			frame: false,
 			center: true,//center the window
 			alwaysOnTop: false,
-			icon: path.join(__dirname, '/icon.png'),//some linux window managers cant process due to bug
+			icon: path.join(__dirname, '/build/icons/256x256.png'),//some linux window managers cant process due to bug
 			title: 'Anthonym',
 			show: true,
 			skipTaskbar: false,
@@ -98,7 +98,7 @@ let tray = {
 	}),
 	create: async function () {
 		console.log('Create tray')
-		tray.body = new Tray('icon.png')
+		tray.body = new Tray('build/icons/256x256.png')
 		tray.body.on('click', function () { console.log('tray clicked'); mainWindow.show() })//Single click
 		tray.update('Click to open','Play')//First menu
 	},

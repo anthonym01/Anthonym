@@ -373,7 +373,7 @@ let player = {//Playback control
                     document.getElementById('coverartsmall').name = "notvibecat"
                 } else {
                     //use placeholder image
-                    //document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
+                    document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
                     document.getElementById('coverartsmall').name = "vibecat"
                 }
 
@@ -383,7 +383,7 @@ let player = {//Playback control
 
                 playbtn.classList = "pausebtn"
                 playbtn.title = "pause"
-                //document.getElementById('titlcon').classList = "titlcon_active"
+                document.getElementById('titlcon').classList = "titlcon_active"
                 console.log('Playing: ', player.files[fileindex]);
             }
         });
@@ -396,9 +396,9 @@ let player = {//Playback control
             player.playstate = false;
             playbtn.classList = "playbtn"
             playbtn.title = "play"
-            //document.getElementById('titlcon').classList = "titlcon"
+            document.getElementById('titlcon').classList = "titlcon"
             if (document.getElementById('coverartsmall').name == "vibecat") {
-                //document.getElementById('coverartsmall').src = "img/memes/Cats/sad kajit.png"
+                document.getElementById('coverartsmall').src = "img/memes/Cats/sad kajit.png"
             }
             ipcRenderer.send('Play_msg', player.files[player.now_playing].filename, 'Play');
         } else {//assume error

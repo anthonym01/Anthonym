@@ -98,7 +98,7 @@ let tray = {
 	}),
 	create: async function () {
 		console.log('Create tray')
-		tray.body = new Tray('build/icons/256x256.png')
+		tray.body = new Tray(path.join(__dirname, '/build/icons/256x256.png'))
 		tray.body.on('click', function () { console.log('tray clicked'); mainWindow.show() })//Single click
 		tray.update('Click to open','Play')//First menu
 	},

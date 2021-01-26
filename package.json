@@ -4,11 +4,13 @@
   "description": "An electron based Music player",
   "main": "main.js",
   "category": "Multimedia",
+  "homepage": "https://github.com/anthonym01/Anthonym",
+  "license": "ISC",
+  "bin": "AA01",
   "author": {
     "name": "Anthonym",
     "email": "samuelmatheson20@gmail.com"
   },
-  "homepage": "https://github.com/anthonym01/Anthonym",
   "repository": {
     "type": "git",
     "url": "https://github.com/anthonym01/Anthonym"
@@ -18,9 +20,6 @@
     "Audio",
     "Player"
   ],
-  "icon": "build/icons/icon.png",
-  "license": "ISC",
-  "bin": "AA01",
   "scripts": {
     "start": "electron main.js",
     "postinstall": "electron-builder install-app-deps",
@@ -30,23 +29,23 @@
   },
   "build": {
     "appId": "com.anthonym.music",
-    "icon": "build/icons/icon.png",
+    "icon": "build/icons/256x256.png",
     "productName": "anthonym",
     "copyright": "none",
     "buildVersion": "1.0.0",
     "remoteBuild": "true",
     "asar": "true",
-    "mac": {
-      "category": "music",
-      "icon": "build/icons/icon.png"
-    },
     "win": {
       "target": "nsis",
-      "icon": "build/icons/icon.png"
+      "icon": "build/icons/256x256.png"
     },
-    "linux": {                                         
-      "icon": "build/icons/icon.png",
-      "category": "Multimedia"
+    "linux": {
+      "category": "Multimedia",
+      "icon": "build/icons/256x256.png"
+    },
+    "mac": {
+      "category": "music",
+      "icon": "build/icons/256x256.png"
     },
     "directories": {
       "buildResources": "build"

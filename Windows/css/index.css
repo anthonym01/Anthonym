@@ -19,6 +19,7 @@
     --play_icon: url('../img/play-svgrepo-com-dark.webp');
     --pause_icon: url('../img/pause-svgrepo-com-dark.webp');
     --previous_icon: url('../img/backward-svgrepo-com-dark.webp');
+    --vynal_icon:url('../img/vinyl-record-pngrepo-com.png');
 }
 
 @media (prefers-color-scheme: dark) {
@@ -38,6 +39,7 @@
         --play_icon: url('../img/play-svgrepo-com-light.webp');
         --pause_icon: url('../img/pause-svgrepo-com-light.webp');
         --previous_icon: url('../img/backward-svgrepo-com-light.webp');
+        --vynal_icon:url('../img/vinyl-record-pngrepo-com-white.png');
     }
 }
 
@@ -305,7 +307,7 @@ body {
     width: auto;
     text-align: left;
     line-height: 100%;
-    left: 2vw;
+    left: calc(1vw + 7rem);
     bottom: 1.5rem;
 }
 
@@ -363,7 +365,6 @@ body {
     /* Representation of a single song file */
     position: relative;
     width: 100%;
-    font-size: 1rem;
     height: fit-content;
     margin: 0.25rem;
     height: 3.5rem;
@@ -386,14 +387,29 @@ body {
     background-color: var(--accent_color);
     transition: background-color 0ms;
 }
-.songicon{
+
+.song_title{
+    position: absolute;
+    top:0;
+    left: 3.8rem;
+    width: calc(100% - 4rem);
+    font-size: 1rem;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.songicon,.songicon_dfault{
     height: 3.5rem;
     width: 3.5rem;
     top:0;
     left: 0;
     position: absolute;
 }
-
+.songicon_dfault{
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-image: var(--vynal_icon);
+}
 
 /* First setup screen */
 #first_setup_screen {

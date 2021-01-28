@@ -1,3 +1,8 @@
+/*
+    By samuel A. Matheson
+    samuelmatheson20@gmail.com
+*/
+
 const { ipcRenderer, remote } = require('electron');
 const main = remote.require('./main');//access export functions in main
 const { dialog, Menu, MenuItem, nativeTheme, clipboard, shell } = remote;
@@ -5,7 +10,7 @@ const fs = require('fs');//file system
 const path = require('path');//path
 const wallpaper = require('wallpaper');//Desktop wallpaper
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
-const util = require('util');
+//const util = require('util');
 const mm = require('music-metadata');
 //const {Howl, Howler} = require('howler');
 
@@ -283,28 +288,70 @@ let player = {//Playback control
         async function buildsong(fileindex) {
             var song_bar = document.createElement('div')
             song_bar.classList = "song_bar"
-            song_bar.innerHTML = player.files[fileindex].filename;
+            var song_title = document.createElement('div')
+            song_title.className = "song_title"
+            song_title.innerHTML = player.files[fileindex].filename;
             song_bar.title = `Play ${player.files[fileindex].filename}`
+            song_bar.appendChild(song_title)
             document.getElementById('main_library_view').appendChild(song_bar)
+
             song_bar.addEventListener('click', function () {//hand source to player
                 player.play(fileindex)
             })
-            fillmetadata(song_bar,fileindex)
+
+            let contextMenu = new Menu()//menu
+            contextMenu.append(new MenuItem({ label: "Play", click() { console.log('context play function') } }))
+            contextMenu.append(new MenuItem({ label: "open file location", click() { shell.openPath(player.files[fileindex].path) } }))
+            song_bar.addEventListener('contextmenu', (e) => {//Body menu attached to window
+                e.preventDefault();
+                console.log(contextMenu)
+                contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
+            }, false);
+            fillmetadata(song_bar, fileindex, song_title)
         }
-        async function fillmetadata(eliment,fileindex){
-            var songicon = document.createElement("img")
-            songicon.classList= "songicon"
-            //set meta properties
-            const metadata = await mm.parseFile(player.files[fileindex].path);
-            //console.log(metadata)
-            const picture = mm.selectCover(metadata.common.picture)
-            if (typeof (picture) != 'undefined' && picture != null) {
-                songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-            } else {
-                //use placeholder image
-                songicon.src = "img/vinyl-record-pngrepo-com-white.png"
+
+        async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
+            try {
+                var song_duration = document.createElement('div')
+                song_duration.className = "song_duration"
+                mm.parseFile(player.files[fileindex].path).then((metadata) => {
+                    console.log(metadata)
+
+                    //metadata song title
+                    setTimeout(() => {
+                        if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
+                    }, 2000);
+
+                    //file duration
+                    player.files[fileindex].duration = metadata.format.duration;//raw duration
+                    song_duration.title = metadata.format.duration;
+                    if (Number(metadata.format.duration % 60) > 10) {
+                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
+                    } else {
+                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1)}`;//seconds to representation of minutes and seconds
+                    }
+                    eliment.appendChild(song_duration)
+
+                    //cover art
+                    const picture = mm.selectCover(metadata.common.picture)
+                    if (typeof (picture) != 'undefined' && picture != null) {
+                        var songicon = document.createElement("img")
+                        songicon.className = "songicon"
+                        songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                        eliment.appendChild(songicon)
+                    }
+                    else {
+                        //use placeholder image
+                        var songicon = document.createElement("div")
+                        songicon.className = "songicon_dfault"
+                        eliment.appendChild(songicon)
+                    }
+
+
+                });
+            } catch (err) {
+                console.warn("Metadata error : ", err)
             }
-            eliment.appendChild(songicon)
         }
     },
     strip_file_details: function (pamth) {//get metadata from music files

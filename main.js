@@ -2,6 +2,7 @@ const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain } = require('e
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
+//const os = require('os-utils')
 const windowStateKeeper = require('electron-window-state');
 const Store = require('electron-store'); const storeinator = new Store;
 //const tray = require('./tray.js');

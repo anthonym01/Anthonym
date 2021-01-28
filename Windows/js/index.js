@@ -8,7 +8,6 @@ const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my web
 const util = require('util');
 const mm = require('music-metadata');
 //const {Howl, Howler} = require('howler');
-//import {Howl, Howler} from 'howler';
 
 //  Taskbar buttons for frameless window
 document.getElementById('x-button').addEventListener('click', function () { main.x_button() })
@@ -281,16 +280,31 @@ let player = {//Playback control
         for (let fileindex in player.files) { buildsong(fileindex) }
         //player.files.forEach(file => { buildsong(file) })
 
-        function buildsong(fileindex) {
+        async function buildsong(fileindex) {
             var song_bar = document.createElement('div')
             song_bar.classList = "song_bar"
             song_bar.innerHTML = player.files[fileindex].filename;
             song_bar.title = `Play ${player.files[fileindex].filename}`
-
             document.getElementById('main_library_view').appendChild(song_bar)
             song_bar.addEventListener('click', function () {//hand source to player
                 player.play(fileindex)
             })
+            fillmetadata(song_bar,fileindex)
+        }
+        async function fillmetadata(eliment,fileindex){
+            var songicon = document.createElement("img")
+            songicon.classList= "songicon"
+            //set meta properties
+            const metadata = await mm.parseFile(player.files[fileindex].path);
+            //console.log(metadata)
+            const picture = mm.selectCover(metadata.common.picture)
+            if (typeof (picture) != 'undefined' && picture != null) {
+                songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+            } else {
+                //use placeholder image
+                songicon.src = "img/vinyl-record-pngrepo-com-white.png"
+            }
+            eliment.appendChild(songicon)
         }
     },
     strip_file_details: function (pamth) {//get metadata from music files
@@ -342,7 +356,7 @@ let player = {//Playback control
             autoplay: true,
             loop: false,
             volume: 1,
-            preload:true,
+            preload: true,
             onend: function () {//Playback ends
                 console.log('Finished playing', player.files[fileindex].path);
                 player.playstate = false;

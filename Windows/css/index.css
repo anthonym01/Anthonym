@@ -16,10 +16,12 @@
     --add_icon: url('../img/plus-dark.webp');
     --setting_icon: url('../img/setting-dark.webp');
     --search_icon: url('../img/search-pngrepo-com-dark.png');
-    --play_icon: url('../img/play-svgrepo-com-dark.webp');
-    --pause_icon: url('../img/pause-svgrepo-com-dark.webp');
-    --previous_icon: url('../img/backward-svgrepo-com-dark.webp');
-    --vynal_icon:url('../img/vinyl-record-pngrepo-com.png');
+    --play_icon: url('../img/play-bck-controls/play-svgrepo-com-dark.webp');
+    --pause_icon: url('../img/play-bck-controls/pause-svgrepo-com-dark.webp');
+    --previous_icon: url('../img/play-bck-controls/backward-svgrepo-com-dark.webp');
+    --shuffle_icon: url('../img/play-bck-controls/shuffle-pngrepo-com-dark.webp');
+    --repeat_icon: url('../img/play-bck-controls/repeat-dark.webp');
+    --vynal_icon: url('../img/vinyl-record-pngrepo-com.png');
 }
 
 @media (prefers-color-scheme: dark) {
@@ -36,10 +38,12 @@
         --add_icon: url('../img/plus-light.webp');
         --setting_icon: url('../img/setting-light.webp');
         --search_icon: url('../img/search-pngrepo-com-light.png');
-        --play_icon: url('../img/play-svgrepo-com-light.webp');
-        --pause_icon: url('../img/pause-svgrepo-com-light.webp');
-        --previous_icon: url('../img/backward-svgrepo-com-light.webp');
-        --vynal_icon:url('../img/vinyl-record-pngrepo-com-white.png');
+        --play_icon: url('../img/play-bck-controls/play-svgrepo-com-light.webp');
+        --pause_icon: url('../img/play-bck-controls/pause-svgrepo-com-light.webp');
+        --previous_icon: url('../img/play-bck-controls/backward-svgrepo-com-light.webp');
+        --shuffle_icon: url('../img/play-bck-controls/shuffle-pngrepo-com-light.webp');
+        --repeat_icon: url('../img/play-bck-controls/repeat-light.webp');
+        --vynal_icon: url('../img/vinyl-record-pngrepo-com-white.png');
     }
 }
 
@@ -278,6 +282,9 @@ body {
     user-select: none;
     white-space: wrap;
     text-align: center;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 90%;
 }
 
 .shufflebtn:hover {
@@ -292,11 +299,13 @@ body {
 #shufflebtn {
     /* Shuffle button */
     left: calc(50vw - 12rem);
+    background-image: var(--shuffle_icon);
 }
 
 #repeatbtn {
     /* repeat button */
     right: calc(50vw - 12rem);
+    background-image: var(--repeat_icon);
 }
 
 #songTitle {
@@ -353,7 +362,8 @@ body {
     position: absolute;
     top: 30px;
     right: 0;
-    height: calc(100% - 30px - 7rem);/*top and bottom*/
+    height: calc(100% - 30px - 7rem);
+    /*top and bottom*/
     width: calc(100% - 12rem);
     display: none;
     overflow-x: hidden;
@@ -388,27 +398,38 @@ body {
     transition: background-color 0ms;
 }
 
-.song_title{
+.song_title {
     position: absolute;
-    top:0;
+    top: 0;
     left: 3.8rem;
     width: calc(100% - 4rem);
-    font-size: 1rem;
+    font-size: 1.2rem;
     white-space: nowrap;
     text-align: left;
 }
 
-.songicon,.songicon_dfault{
+.songicon,
+.songicon_dfault {
     height: 3.5rem;
     width: 3.5rem;
-    top:0;
+    top: 0;
     left: 0;
     position: absolute;
 }
-.songicon_dfault{
+
+.songicon_dfault {
     background-size: contain;
     background-repeat: no-repeat;
     background-image: var(--vynal_icon);
+}
+
+.song_duration {
+    position: absolute;
+    left: 3.8rem;
+    width: 3.5rem;
+    bottom: 0.2rem;
+    font-size: 1rem;
+    text-align: center;
 }
 
 /* First setup screen */

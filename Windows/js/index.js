@@ -2,15 +2,12 @@
     By samuel A. Matheson
     samuelmatheson20@gmail.com
 */
-
 const { ipcRenderer, remote } = require('electron');
 const main = remote.require('./main');//access export functions in main
 const { dialog, Menu, MenuItem, nativeTheme, clipboard, shell } = remote;
 const fs = require('fs');//file system
 const path = require('path');//path
 const wallpaper = require('wallpaper');//Desktop wallpaper
-const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
-//const util = require('util');
 const mm = require('music-metadata');
 //const {Howl, Howler} = require('howler');
 
@@ -19,8 +16,10 @@ document.getElementById('x-button').addEventListener('click', function () { main
 document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
 document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })
 
+const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
 const playbtn = document.getElementById('playbtn');
 const nextbtn = document.getElementById('nextbtn');
+const main_library_view = document.getElementById('main_library_view');
 
 window.addEventListener('load', function () {//window loads
     console.log('Running from:', process.resourcesPath)
@@ -280,12 +279,12 @@ let player = {//Playback control
         player.build_library();//make after get of files, get of files must be async
     },
     build_library: function () {
-        document.getElementById('main_library_view').innerHTML = "";
+        main_library_view.innerHTML = "";
 
         for (let fileindex in player.files) { buildsong(fileindex) }
         //player.files.forEach(file => { buildsong(file) })
 
-        async function buildsong(fileindex) {
+        function buildsong(fileindex) {
             var song_bar = document.createElement('div')
             song_bar.classList = "song_bar"
             var song_title = document.createElement('div')
@@ -293,20 +292,9 @@ let player = {//Playback control
             song_title.innerHTML = player.files[fileindex].filename;
             song_bar.title = `Play ${player.files[fileindex].filename}`
             song_bar.appendChild(song_title)
-            document.getElementById('main_library_view').appendChild(song_bar)
+            main_library_view.appendChild(song_bar)
 
-            song_bar.addEventListener('click', function () {//hand source to player
-                player.play(fileindex)
-            })
-
-            let contextMenu = new Menu()//menu
-            contextMenu.append(new MenuItem({ label: "Play", click() { console.log('context play function') } }))
-            contextMenu.append(new MenuItem({ label: "open file location", click() { shell.openPath(player.files[fileindex].path) } }))
-            song_bar.addEventListener('contextmenu', (e) => {//Body menu attached to window
-                e.preventDefault();
-                console.log(contextMenu)
-                contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
-            }, false);
+            functionality(song_bar, fileindex)
             fillmetadata(song_bar, fileindex, song_title)
         }
 
@@ -318,17 +306,15 @@ let player = {//Playback control
                     console.log(metadata)
 
                     //metadata song title
-                    setTimeout(() => {
-                        if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
-                    }, 2000);
+                    if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
 
                     //file duration
                     player.files[fileindex].duration = metadata.format.duration;//raw duration
-                    song_duration.title = metadata.format.duration;
-                    if (Number(metadata.format.duration % 60) > 10) {
+                    song_duration.title = `${metadata.format.duration.toPrecision(4)} seconds`;
+                    if (Number(metadata.format.duration % 60) >= 10) {
                         song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
                     } else {
-                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1)}`;//seconds to representation of minutes and seconds
+                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
                     }
                     eliment.appendChild(song_duration)
 
@@ -352,6 +338,28 @@ let player = {//Playback control
             } catch (err) {
                 console.warn("Metadata error : ", err)
             }
+        }
+
+        async function functionality(eliment, fileindex) {
+            /*
+                        let contextMenu = new Menu()//menu
+                        contextMenu.append(new MenuItem({ label: "Play", click() { console.log('context play function') } }))
+                        contextMenu.append(new MenuItem({ label: "open file location", click() { shell.openPath(player.files[fileindex].path) } }))
+            */
+            let contextMenu = new Menu.buildFromTemplate([//Main body menu
+                { role: 'zoomIn' },
+                { role: 'resetZoom' },
+                { role: 'zoomOut' },
+            ]);
+
+            eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
+                e.preventDefault();
+                console.log(contextMenu)
+                contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
+            }, false);
+            eliment.addEventListener('click', function () {//hand source to player
+                player.play(fileindex)
+            })
         }
     },
     strip_file_details: function (pamth) {//get metadata from music files

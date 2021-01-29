@@ -2,9 +2,9 @@
     By samuel A. Matheson
     samuelmatheson20@gmail.com
 */
-const { ipcRenderer, remote } = require('electron');
+const { ipcRenderer, remote, clipboard } = require('electron');
 const main = remote.require('./main');//access export functions in main
-const { dialog, Menu, MenuItem, nativeTheme, clipboard, shell } = remote;
+const { dialog, Menu, MenuItem, nativeTheme, shell } = remote;
 const fs = require('fs');//file system
 const path = require('path');//path
 const wallpaper = require('wallpaper');//Desktop wallpaper
@@ -217,7 +217,6 @@ let player = {//Playback control
     playstate: false,//is (should be) playing music
     now_playing: null,//Song thats currently playing
     initalize: async function () {
-        player.getfiles(main.get.musicfolders())
 
         //  Play\pause button
         playbtn.addEventListener('click', function () {
@@ -239,7 +238,7 @@ let player = {//Playback control
             player.previous()
         })
         ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
-
+        player.getfiles(main.get.musicfolders()).then(()=>{player.build_library()})
     },
     getfiles: async function (muzicpaths) {//gets files form array of music folder paths
         console.log('Searching directory: ', muzicpaths)
@@ -255,6 +254,7 @@ let player = {//Playback control
                     var fullfilepath = path.join(folder, file);
                     if (fs.statSync(fullfilepath).isDirectory()) {//sud-directory to search
                         player.getfiles([fullfilepath]);
+                        return 0;
                     } else {//file to handle
 
                         switch (path.parse(fullfilepath).ext) {//check file types
@@ -262,7 +262,7 @@ let player = {//Playback control
                             case ".mp3": case ".m4a": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
                             case ".aac": case ".caf": case ".m4b": case ".mp4": case ".weba":
                             case ".webm": case ".dolby": case ".flac": //playable as music files
-                                player.files.push(player.strip_file_details(fullfilepath));
+                                player.files.push({ filename: path.parse(fullfilepath).name, path: fullfilepath });
                                 break;
 
                             case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
@@ -276,17 +276,19 @@ let player = {//Playback control
                 })
             })
         })
-        player.build_library();//make after get of files, get of files must be async
+        //player.build_library();//make after get of files, get of files must be async
     },
     build_library: function () {
         main_library_view.innerHTML = "";
 
-        for (let fileindex in player.files) { buildsong(fileindex) }
+        for (let fileindex in 
+            .files) { buildsong(fileindex) }
         //player.files.forEach(file => { buildsong(file) })
 
         function buildsong(fileindex) {
             var song_bar = document.createElement('div')
             song_bar.classList = "song_bar"
+            song_bar.id = fileindex
             var song_title = document.createElement('div')
             song_title.className = "song_title"
             song_title.innerHTML = player.files[fileindex].filename;
@@ -303,14 +305,14 @@ let player = {//Playback control
                 var song_duration = document.createElement('div')
                 song_duration.className = "song_duration"
                 mm.parseFile(player.files[fileindex].path).then((metadata) => {
-                    console.log(metadata)
+                    //console.log(metadata)
 
                     //metadata song title
                     if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
 
                     //file duration
                     player.files[fileindex].duration = metadata.format.duration;//raw duration
-                    song_duration.title = `${metadata.format.duration.toPrecision(4)} seconds`;
+                    song_duration.title = `${metadata.format.duration.toPrecision(2)} seconds`;
                     if (Number(metadata.format.duration % 60) >= 10) {
                         song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
                     } else {
@@ -340,37 +342,49 @@ let player = {//Playback control
             }
         }
 
-        async function functionality(eliment, fileindex) {
-            /*
-                        let contextMenu = new Menu()//menu
-                        contextMenu.append(new MenuItem({ label: "Play", click() { console.log('context play function') } }))
-                        contextMenu.append(new MenuItem({ label: "open file location", click() { shell.openPath(player.files[fileindex].path) } }))
-            */
-            let contextMenu = new Menu.buildFromTemplate([//Main body menu
-                { role: 'zoomIn' },
-                { role: 'resetZoom' },
-                { role: 'zoomOut' },
-            ]);
+        async function functionality(eliment, fileindex) {//context menu and playback on click
+
+            let contextMenu = new Menu.buildFromTemplate([
+                {//play button
+                    label: "Play",
+                    type: "normal",
+                    id: "pp01",
+                    click() { player.play(fileindex) }
+                },
+                { type: "separator" },
+                {//open song file in default external application
+                    label: "open file location",
+                    id: "ooo1",
+                    click() { shell.showItemInFolder(player.files[fileindex].path) }
+                },
+                {//copy file path
+                    label: "copy file location",
+                    toolTip: `${player.files[fileindex].path}`,
+                    id: "ooo1",
+                    click() { clipboard.write(player.files[fileindex].path); }
+                }
+            ])
 
             eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
                 e.preventDefault();
-                console.log(contextMenu)
+                e.stopPropagation();//important
                 contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
             }, false);
-            eliment.addEventListener('click', function () {//hand source to player
+
+            eliment.addEventListener('click', function () {
                 player.play(fileindex)
-            })
+                document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
+                this.className = 'song_bar_active'
+            })//click to play
         }
-    },
-    strip_file_details: function (pamth) {//get metadata from music files
-        let filename = path.parse(pamth).name;
-        return { filename: filename, path: pamth }
     },
     play: async function (fileindex) {
         /* If something is playing resumes playback,
         if nothing is playing plays from the player.files[fileindex],
         if no fileindex assumes playback of the last song, if no last song, unloads playr
         */
+
+        console.log('Attempt to play: ', fileindex);
 
         if (player.playstate != false) {//if is playing something
             if (fileindex == undefined) {//pause playback
@@ -404,8 +418,6 @@ let player = {//Playback control
             return 0;
         }
 
-        console.log('Attempt to play: ', player.files[fileindex].path);
-
         player.stream1 = new Howl({
             src: player.files[fileindex].path,//takes an array, or single path
             autoplay: true,
@@ -415,6 +427,8 @@ let player = {//Playback control
             onend: function () {//Playback ends
                 console.log('Finished playing', player.files[fileindex].path);
                 player.playstate = false;
+                //place repeat chck here
+                player.next()
             },
             onplayerror: function () {//Playback fails
                 console.warn('fail to play ', player.files[fileindex])
@@ -423,12 +437,13 @@ let player = {//Playback control
                 });
             },
             onload: function () {
-                player.stream1.play()//play the sound that was just loaded
+                console.log('loaded: ', player.files[fileindex].path)
+                //player.stream1.play()//play the sound that was just loaded
             },
             onplay: async function () {
                 //playback of loaded song file sucessfull
                 player.playstate = true;//now playing and play pause functionality
-                player.now_playing = fileindex;
+                player.now_playing = Number(fileindex);//ha ha yes types, remove if you want a brain ache
 
                 //set meta properties
                 const metadata = await mm.parseFile(player.files[fileindex].path);
@@ -462,7 +477,7 @@ let player = {//Playback control
         console.log('Pause functionaliy');
         if (player.playstate != false) {
             player.stream1.pause()
-            player.playstate = false;
+            player.playstate = false;//stop playstate 
             playbtn.classList = "playbtn"
             playbtn.title = "play"
             document.getElementById('titlcon').classList = "titlcon"
@@ -475,10 +490,13 @@ let player = {//Playback control
         }
     },
     next: function () {//Play next song in que if any
-        console.log('Play Next')
+        console.log('Play Next');
+        //check shuffle and skip
+        player.play(player.now_playing + 1)
     },
     previous: function () {
-        console.log('Play Previous')
+        console.log('Play Previous');
+        player.play(player.now_playing - 1)
     },
     mute: function () {
         if (player.stream1.mute == true) {
@@ -487,9 +505,6 @@ let player = {//Playback control
             player.stream1.mute(true)
         }
     },
-    display_metadata: async function () {
-
-    }
 }
 
 let UI = {

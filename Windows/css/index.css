@@ -383,10 +383,12 @@ body {
     box-sizing: border-box;
     text-align: right;
     background-color: var(--half_background-color);
+    cursor: pointer;
 }
 
 .song_bar_active {
     background-color: var(--accent_color);
+    color: var(--background-color);
 }
 
 .song_bar:hover {

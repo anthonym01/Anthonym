@@ -216,7 +216,7 @@ let player = {//Playback control
     stream2: null,//
     playstate: false,//is (should be) playing music
     now_playing: null,//Song thats currently playing
-    initalize: async function () {
+    initalize:async function () {
 
         //  Play\pause button
         playbtn.addEventListener('click', function () {
@@ -238,9 +238,10 @@ let player = {//Playback control
             player.previous()
         })
         ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
-        player.getfiles(main.get.musicfolders()).then(()=>{player.build_library()})
+        await player.getfiles(main.get.musicfolders())//.finally(()=>{player.build_library()})
+         player.build_library()
     },
-    getfiles: async function (muzicpaths) {//gets files form array of music folder paths
+    getfiles:async function (muzicpaths) {//gets files form array of music folder paths
         console.log('Searching directory: ', muzicpaths)
 
         muzicpaths.forEach(folder => {//for each folder in the array
@@ -272,7 +273,6 @@ let player = {//Playback control
                             default: console.warn('Cannot handle (not supported): ', fullfilepath);//not supported music file
                         }
                     }
-
                 })
             })
         })
@@ -281,8 +281,7 @@ let player = {//Playback control
     build_library: function () {
         main_library_view.innerHTML = "";
 
-        for (let fileindex in 
-            .files) { buildsong(fileindex) }
+        for (let fileindex in player.files) { buildsong(fileindex) }
         //player.files.forEach(file => { buildsong(file) })
 
         function buildsong(fileindex) {

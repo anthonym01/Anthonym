@@ -7,8 +7,8 @@ async function first_settup() {
     document.getElementById('first_finish_btn').addEventListener('click', function () {//finish button in first settup screen
         main.set.musicfolders(folders);//save selected music folders
         document.getElementById('first_setup_screen').style.display = "none";//hide first settup screen
+        player.getfiles(folders);
         maininitalizer();
-        player.initalize()
     })
     buildfirst_folders()
 

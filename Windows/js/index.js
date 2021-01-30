@@ -9,6 +9,7 @@ const fs = require('fs');//file system
 const path = require('path');//path
 const wallpaper = require('wallpaper');//Desktop wallpaper
 const mm = require('music-metadata');
+//const console = require('console');
 //const {Howl, Howler} = require('howler');
 
 //  Taskbar buttons for frameless window
@@ -20,6 +21,7 @@ const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my web
 const playbtn = document.getElementById('playbtn');
 const nextbtn = document.getElementById('nextbtn');
 const main_library_view = document.getElementById('main_library_view');
+const song_progress_bar = document.getElementById('song_progress_bar');
 
 window.addEventListener('load', function () {//window loads
     console.log('Running from:', process.resourcesPath)
@@ -28,13 +30,14 @@ window.addEventListener('load', function () {//window loads
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
 
     if (localStorage.getItem("Anthonymcfg")) { config.load() }
-    player.initalize()
     UI.initalize()
+    player.initalize()
     maininitalizer()
 })
 
-function maininitalizer() {//Used to start re-startable app functions
+async function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
+
 }
 
 async function create_text_menus() {
@@ -61,7 +64,7 @@ async function create_text_menus() {
 async function create_body_menu() {
     const menu_body = new Menu.buildFromTemplate([//Main body menu
         { role: 'reload' },
-        { label: 'Refresh Library', click() { player.getfiles(main.get.musicfolders()); maininitalizer() } },
+        { label: 'Refresh Library', click() { maininitalizer() } },
         { label: 'Contact developer', click() { shell.openExternal(my_website) } },
         { role: 'toggledevtools' },
         { type: 'separator' },
@@ -214,9 +217,10 @@ let player = {//Playback control
     queue: [],//Play queue randomized from playlist/library
     stream1: null,//
     stream2: null,//
+    seekterval: null,
     playstate: false,//is (should be) playing music
     now_playing: null,//Song thats currently playing
-    initalize:async function () {
+    initalize: async function () {
 
         //  Play\pause button
         playbtn.addEventListener('click', function () {
@@ -238,10 +242,37 @@ let player = {//Playback control
             player.previous()
         })
         ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
-        await player.getfiles(main.get.musicfolders())//.finally(()=>{player.build_library()})
-         player.build_library()
+
+        //seek controls
+        song_progress_bar.addEventListener('change', function (e) {
+            console.log('seek to :', this.value)
+            e.preventDefault();
+            player.stream1.seek(this.value);
+        })
+        song_progress_bar.addEventListener('mouseenter', function(){player.stop_seeking})
+        song_progress_bar.addEventListener('mouseleave', function (e) {
+            if (player.playstate == true) { player.start_seeking() }
+        })
+
+        //build library inteligentlly
+        if (main.get.musicfolders() == []) { first_settup() } else {
+            await player.getfiles(main.get.musicfolders())//wait for file checks
+            setTimeout(() => { player.build_library() }, 0)//imediatly after file checks
+            var hold = setInterval(() => {
+                if (main_library_view.childElementCount < player.files.length) {
+                    player.build_library()
+                    console.warn('recheck library');
+                    notify.new(
+                        'Slow disk',
+                        'Your songs are stored on a slow storage media, you may have a bad expeience using this application'
+                    );
+                } else {
+                    clearInterval(hold)
+                }
+            }, 1000);//retry again and again
+        }
     },
-    getfiles:async function (muzicpaths) {//gets files form array of music folder paths
+    getfiles: async function (muzicpaths) {//gets files form array of music folder paths
         console.log('Searching directory: ', muzicpaths)
 
         muzicpaths.forEach(folder => {//for each folder in the array
@@ -456,17 +487,22 @@ let player = {//Playback control
                     document.getElementById('coverartsmall').name = "notvibecat"
                 } else {
                     //use placeholder image
-                    document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
+                    //document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
+                    document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
                     document.getElementById('coverartsmall').name = "vibecat"
                 }
+                //seek and time
+                console.log('Meta duration ', metadata.format.duration)
+                song_progress_bar.max = metadata.format.duration;
+                player.start_seeking()
 
-
+                //Ui state chamges
                 ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
                 document.getElementById('songTitle').innerHTML = player.files[fileindex].filename;
 
                 playbtn.classList = "pausebtn"
                 playbtn.title = "pause"
-                document.getElementById('titlcon').classList = "titlcon_active"
+                //document.getElementById('titlcon').classList = "titlcon_active"
                 console.log('Playing: ', player.files[fileindex]);
             }
         });
@@ -476,13 +512,14 @@ let player = {//Playback control
         console.log('Pause functionaliy');
         if (player.playstate != false) {
             player.stream1.pause()
+            player.stop_seeking()
             player.playstate = false;//stop playstate 
             playbtn.classList = "playbtn"
             playbtn.title = "play"
-            document.getElementById('titlcon').classList = "titlcon"
+            /*document.getElementById('titlcon').classList = "titlcon"
             if (document.getElementById('coverartsmall').name == "vibecat") {
                 document.getElementById('coverartsmall').src = "img/memes/Cats/sad kajit.png"
-            }
+            }*/
             ipcRenderer.send('Play_msg', player.files[player.now_playing].filename, 'Play');
         } else {//assume error
             console.warn('Tried pause functionality with no playback');
@@ -492,10 +529,26 @@ let player = {//Playback control
         console.log('Play Next');
         //check shuffle and skip
         player.play(player.now_playing + 1)
+        document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
+        document.getElementById(`${player.now_playing + 1}`).className = "song_bar_active"
+        window.location.href = `#${player.now_playing - 1}`;
+        song_progress_bar.value = 0;//reset seek value
     },
     previous: function () {
         console.log('Play Previous');
+
+        if (player.playstate == true) {
+            if (player.stream1.seek() > 3) {//reset seek on back if less 
+                player.stream1.seek(0)
+                return 0;
+            }
+        }
+
         player.play(player.now_playing - 1)
+        document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
+        document.getElementById(`${player.now_playing - 1}`).className = "song_bar_active"
+        window.location.href = `#${player.now_playing - 1}`
+        song_progress_bar.value = 0;//reset seek value
     },
     mute: function () {
         if (player.stream1.mute == true) {
@@ -504,6 +557,16 @@ let player = {//Playback control
             player.stream1.mute(true)
         }
     },
+    start_seeking: function () {
+        console.log('start seeking')
+        player.stop_seeking();
+        player.seekterval = setInterval(() => { song_progress_bar.value = player.stream1.seek(); }, 1000)
+    },
+    stop_seeking: function () {
+        console.log('stop seeking')
+        clearInterval(player.seekterval)
+        player.seekterval == null;
+    }
 }
 
 let UI = {
@@ -530,4 +593,79 @@ let UI = {
         })
     },
 
+}
+
+let notify = {//notification function house
+    clap: window.addEventListener('resize', () => { notify.clearall() }),
+    new: function (title, body, hover_title, ifunction) {
+
+        let notification = document.createElement("div")
+        notification.classList = "notification"
+
+        let notification_title = document.createElement("div")//title
+        notification_title.classList = "title"
+        notification_title.innerHTML = title
+
+        let nbody = document.createElement("div")//body
+        nbody.classList = "notifbody"
+        nbody.innerHTML = body;
+
+        if (hover_title != undefined) {
+            notification.title = hover_title
+        } else {
+            notification.title = 'click to dismiss'
+        }
+
+        notification.appendChild(notification_title)
+        notification.appendChild(nbody)
+        document.body.appendChild(notification)
+
+        if (typeof (ifunction) == 'function') { //imbedded function
+            notification.addEventListener('click', ifunction);
+            //Close button
+            let xbutton = document.createElement('div')
+            xbutton.setAttribute('class', 'x-button')
+            notification.appendChild(xbutton)
+            xbutton.title = 'click to dismiss';
+            xbutton.addEventListener('click', function (e) { removethis(e, notification) })
+        } else {
+            notification.addEventListener('click', function (e) { removethis(e, notification) })
+        }
+
+        //Timing effects
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)'
+            //notify.shove()
+        }, 50);
+
+        setTimeout(() => { notification.style.opacity = '0.0' }, 10000); //dissapear
+
+        setTimeout(() => { try { document.body.removeChild(notification) } catch (err) { console.warn(err) } }, 11000); //remove from document
+
+        function removethis(e, rnotification) {
+            e.stopImmediatePropagation();
+            rnotification.style.transform = 'translateX(22rem)';
+            setTimeout(() => { rnotification.style.opacity = '0.0'; }, 100)
+            setTimeout(() => { try { document.body.removeChild(notification) } catch (err) { console.warn(err) } }, 1000)
+        }
+
+    },
+    shove: function () {
+        var notifications = document.querySelectorAll(".notification")
+        var reverse = notifications.length - 1;
+        for (let i in notifications) {
+            notifications[i].style.transform = 'translateY(' + -reverse * 9 + 'rem)';//9 rem., height of notification
+            reverse--;//get it, because oposite
+        }
+    },
+    clearall: function () {
+        document.querySelectorAll(".notification").forEach((notification) => {
+            try {
+                notification.style.opacity = '0.0';
+                notification.style.transform = 'translate(0,0)'
+            } catch (err) {
+                console.warn(err)
+            }
+        })
+    }
 }

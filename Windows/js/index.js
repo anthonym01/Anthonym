@@ -245,14 +245,18 @@ let player = {//Playback control
 
         //seek controls
         song_progress_bar.addEventListener('change', function (e) {
-            console.log('seek to :', this.value)
             e.preventDefault();
+            player.stop_seeking()
+            console.log('seek to :', this.value)
             player.stream1.seek(this.value);
+            player.start_seeking()
         })
-        song_progress_bar.addEventListener('mouseenter', function(){player.stop_seeking})
-        song_progress_bar.addEventListener('mouseleave', function (e) {
-            if (player.playstate == true) { player.start_seeking() }
-        })
+
+        /*song_progress_bar.addEventListener('focus', function(){player.stop_seeking})
+        song_progress_bar.addEventListener('click', function(){player.stop_seeking})
+        song_progress_bar.addEventListener('blur', function (e) {
+            if (player.playstate == true && player.seekterval == null) { player.start_seeking() }
+        })*/
 
         //build library inteligentlly
         if (main.get.musicfolders() == []) { first_settup() } else {
@@ -383,7 +387,7 @@ let player = {//Playback control
                 },
                 { type: "separator" },
                 {//open song file in default external application
-                    label: "open file location",
+                    label: "show in folder",
                     id: "ooo1",
                     click() { shell.showItemInFolder(player.files[fileindex].path) }
                 },
@@ -498,7 +502,7 @@ let player = {//Playback control
 
                 //Ui state chamges
                 ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
-                document.getElementById('songTitle').innerHTML = player.files[fileindex].filename;
+                document.getElementById('songTitle').innerText = player.files[fileindex].filename;
 
                 playbtn.classList = "pausebtn"
                 playbtn.title = "pause"
@@ -558,14 +562,14 @@ let player = {//Playback control
         }
     },
     start_seeking: function () {
-        console.log('start seeking')
+        console.warn('start seeking')
         player.stop_seeking();
         player.seekterval = setInterval(() => { song_progress_bar.value = player.stream1.seek(); }, 1000)
     },
     stop_seeking: function () {
-        console.log('stop seeking')
+        console.warn('stop seeking')
         clearInterval(player.seekterval)
-        player.seekterval == null;
+        player.seekterval = null;
     }
 }
 

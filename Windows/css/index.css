@@ -7,6 +7,7 @@
     --text-color: rgb(0, 0, 0);
     --background-color: rgb(255, 255, 255);
     --half_background-color: rgba(255, 255, 255, .5);
+    --playgradient:linear-gradient(0deg,rgba(255, 255, 255, 0.9),rgba(255, 255, 255, 0.4));
     --accent_color: rgb(0, 153, 255);
     --grey: rgb(122, 122, 122);
     --off_grey: rgb(205, 205, 205);
@@ -28,7 +29,8 @@
     :root {
         --text-color: rgb(255, 255, 255);
         --background-color: rgb(0, 0, 0);
-        --half_background-color: rgba(0, 0, 0, 0.5);
+        --half_background-color: rgba(0, 0, 0, 0.4);
+        --playgradient:linear-gradient(0deg,rgba(0, 0, 0, 0.9),rgba(0, 0, 0, 0.4));
         --accent_color: rgb(0, 153, 255);
         --grey: rgb(122, 122, 122);
         --off_grey: rgb(50, 50, 50);
@@ -55,6 +57,44 @@ body {
     font-family: Lexend_Deca, system-ui, 'Segoe UI', 'Roboto', sans-serif;
     overflow: auto;
     user-select: none;
+}
+
+/*.background_mask{
+    position: fixed;
+    top:30px;
+    left: 0;
+    width: 100vh;
+    height: calc(100vh - 30px);
+    filter: blur(1px);
+}*/
+.background_mask{
+    position: fixed;
+    top:30px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 30px);
+    /*filter: blur(1px);*/
+    background-size: contain;
+    background-position: center;
+    background-repeat: repeat;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+}
+.background_mask img{
+    height: 100vw;
+    width: 100vw;
+    min-width: 100vw;
+    position: relative;
+    filter: blur(4px);
+    /*
+    height: calc(100vh - 30px);
+    width: calc(100vh - 30px);
+    min-width: calc(100vh - 30px);
+    filter: blur(0px);*/
+    /*allow different background positions, sizes, behaviours and blurs*/
 }
 
 /* Title bar and frame*/
@@ -204,7 +244,7 @@ body {
     bottom: 0;
     width: 100%;
     height: 7rem;
-    background: var(--half_background-color);
+    background: var(--playgradient);
     box-shadow: 0 0 1rem 0 var(--accent_color);
 }
 
@@ -357,9 +397,22 @@ body {
     background-color: var(--accent_color)
 }
 
+
+/* sidemenu */
+.Menupannel_main{
+    position: fixed;
+    top:30px;
+    left: 0;
+    height: calc(100% - 30px - 7rem);
+    /*top and bottom*/
+    width: 15rem;
+    background-color: var(--half_background-color);
+}
+
+
 /* Main library view */
 .library_view {
-    position: absolute;
+    position: fixed; 
     top: 30px;
     right: 0;
     height: calc(100% - 30px - 7rem);
@@ -368,6 +421,7 @@ body {
     display: none;
     overflow-x: hidden;
     overflow-y: scroll;
+    background-color: var(--half_background-color);
 }
 
 .song_bar,
@@ -382,7 +436,7 @@ body {
     user-select: none;
     box-sizing: border-box;
     text-align: right;
-    background-color: var(--half_background-color);
+    background-color: rgba(0, 0, 0, 0);
     cursor: pointer;
 }
 

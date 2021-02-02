@@ -18,28 +18,19 @@
 </head>
 
 <body>
-    <!-- Titlebar for frameless windoww -->
-    <div id="Title_bar">
-        <div class="titlcon" id="titlcon"></div>
-        <div class="titlemenu">
-            <div class="titlemenu_btn" id="setting_btn" title="settings"></div>
-            <div class="titlemenu_btn" id="search_btn" title="Search"></div>
-        </div>
-        <div class="tbuttonholder">
-            <div class="tbutton" id="x-button" title="Close"></div>
-            <div class="tbutton" id="maximize-button" title="Maximize"></div>
-            <div class="tbutton" id="minimize-button" title="Minimize"></div>
-        </div>
+    
+    <div class="background_mask">
+        <img  id="backgroundmaskimg" src="">
     </div>
-
+    <!--<img src="img/icon.png" id="backgroundmask" class="background_mask"></img>-->
     <!-- (Prototype for) Main library view -->
     <div class="library_view" id="main_library_view" style="display: block;">
 
     </div>
-
+<div class="Menupannel_main"></div>
     <!-- Play back controls -->
     <div class="Playbar">
-        <img id="coverartsmall" src="img/memes/Cats/comfuz.jpg" alt="cover">
+        <img id="coverartsmall" height="auto"  src="img/memes/Cats/comfuz.jpg" alt="cover">
         <div id="songTitle">Ready to Vibe</div>
         <div id="songArtist"></div>
         <div id="eqilizerbtn"></div>
@@ -58,7 +49,20 @@
         <div id="first_setup_folders"></div>
         <button id="first_finish_btn">Finish</button>
     </div>
-    <a href="" id="scroll_locker"></a>
+
+    <!-- Titlebar for frameless windoww -->
+    <div id="Title_bar">
+        <div class="titlcon" id="titlcon"></div>
+        <div class="titlemenu">
+            <div class="titlemenu_btn" id="setting_btn" title="settings"></div>
+            <div class="titlemenu_btn" id="search_btn" title="Search"></div>
+        </div>
+        <div class="tbuttonholder">
+            <div class="tbutton" id="x-button" title="Close"></div>
+            <div class="tbutton" id="maximize-button" title="Maximize"></div>
+            <div class="tbutton" id="minimize-button" title="Minimize"></div>
+        </div>
+    </div>
     <script src="../node_modules/howler/dist/howler.js"></script>
     <script type="text/javascript" src="js/index.js"></script>
     <script type="text/javascript" src="js/first_settup.js"></script>

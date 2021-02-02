@@ -2,6 +2,8 @@
     By samuel A. Matheson
     samuelmatheson20@gmail.com
 */
+
+//dependancys, dont add howler
 const { ipcRenderer, remote, clipboard } = require('electron');
 const main = remote.require('./main');//access export functions in main
 const { dialog, Menu, MenuItem, nativeTheme, shell } = remote;
@@ -9,23 +11,54 @@ const fs = require('fs');//file system
 const path = require('path');//path
 const wallpaper = require('wallpaper');//Desktop wallpaper
 const mm = require('music-metadata');
-//const console = require('console');
-//const {Howl, Howler} = require('howler');
 
 //  Taskbar buttons for frameless window
 document.getElementById('x-button').addEventListener('click', function () { main.x_button() })
 document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
 document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })
 
+//constant elements
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
 const playbtn = document.getElementById('playbtn');
 const nextbtn = document.getElementById('nextbtn');
 const main_library_view = document.getElementById('main_library_view');
 const song_progress_bar = document.getElementById('song_progress_bar');
 
-window.addEventListener('load', function () {//window loads
+//Main body menu
+const menu_body = new Menu.buildFromTemplate([
+    { role: 'reload' },
+    { label: 'Refresh Library', click() { maininitalizer() } },
+    { label: 'Contact developer', click() { shell.openExternal(my_website) } },
+    { role: 'toggledevtools' },
+    { type: 'separator' },
+    { role: 'zoomIn' },
+    { role: 'resetZoom' },
+    { role: 'zoomOut' },
+]); Menu.setApplicationMenu(menu_body)
+window.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    menu_body.popup({ window: remote.getCurrentWindow() })
+}, false);
+
+//text box menu
+const text_box_menu = new Menu.buildFromTemplate([
+    { role: 'cut' },
+    { role: 'copy' },
+    { role: 'paste' },
+    { role: 'selectAll' },
+    { role: 'seperator' },
+    { role: 'undo' },
+    { role: 'redo' },
+]);
+//textbox.addEventListener('contextmenu', (event) => popupmenu, false)
+function popupmenu(event) {//Popup the menu in this window
+    event.preventDefault()
+    event.stopPropagation()
+    text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
+}
+
+window.addEventListener('load', function () {
     console.log('Running from:', process.resourcesPath)
-    create_body_menu()
     //create_text_menus()
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
 
@@ -40,50 +73,16 @@ async function maininitalizer() {//Used to start re-startable app functions
 
 }
 
-async function create_text_menus() {
-    const text_box_menu = new Menu.buildFromTemplate([//Text box menu (for convinience)
-        { role: 'cut' },
-        { role: 'copy' },
-        { role: 'paste' },
-        { role: 'selectAll' },
-        { role: 'seperator' },
-        { role: 'undo' },
-        { role: 'redo' },
-    ]);
-    //add events to text boxes
-    textbox.addEventListener('contextmenu', (event) => popupmenu, false)
-
-    //Popup the menu in this window
-    function popupmenu(event) {
-        event.preventDefault()
-        event.stopPropagation()
-        text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
-    }
-}
-
-async function create_body_menu() {
-    const menu_body = new Menu.buildFromTemplate([//Main body menu
-        { role: 'reload' },
-        { label: 'Refresh Library', click() { maininitalizer() } },
-        { label: 'Contact developer', click() { shell.openExternal(my_website) } },
-        { role: 'toggledevtools' },
-        { type: 'separator' },
-        { role: 'zoomIn' },
-        { role: 'resetZoom' },
-        { role: 'zoomOut' },
-    ]);
-
-    Menu.setApplicationMenu(menu_body)
-
-    window.addEventListener('contextmenu', (e) => {//Body menu attached to window
-        e.preventDefault();
-        menu_body.popup({ window: remote.getCurrentWindow() })//popup menu
-    }, false);
-}
-
 window.addEventListener('keydown', function (e) {//keyboard actions
-    console.log(e.key)
+    switch (e.key) {
+        case " ": case "p": case "enter": e.preventDefault(); player.play(); break;
+        case "n": e.preventDefault(); player.next(); break;
+        case "b": e.preventDefault(); player.previous(); break;
+        case "m": e.preventDefault(); player.mute(); break;
+        default: console.log(e.key)
+    }
 })
+
 
 let config = {
     data: {//application data
@@ -420,6 +419,8 @@ let player = {//Playback control
 
         console.log('Attempt to play: ', fileindex);
 
+        //if(fileindex!=undefined && player.files[fileindex]!=undefined){notify.new('File')}
+
         if (player.playstate != false) {//if is playing something
             if (fileindex == undefined) {//pause playback
                 player.pause()
@@ -452,65 +453,72 @@ let player = {//Playback control
             return 0;
         }
 
-        player.stream1 = new Howl({
-            src: player.files[fileindex].path,//takes an array, or single path
-            autoplay: true,
-            loop: false,
-            volume: 1,
-            preload: true,
-            onend: function () {//Playback ends
-                console.log('Finished playing', player.files[fileindex].path);
-                player.playstate = false;
-                //place repeat chck here
-                player.next()
-            },
-            onplayerror: function () {//Playback fails
-                console.warn('fail to play ', player.files[fileindex])
-                stream1.once('unlock', function () {//wait for unlock
-                    player.play(fileindex);// try to play again
-                });
-            },
-            onload: function () {
-                console.log('loaded: ', player.files[fileindex].path)
-                //player.stream1.play()//play the sound that was just loaded
-            },
-            onplay: async function () {
-                //playback of loaded song file sucessfull
-                player.playstate = true;//now playing and play pause functionality
-                player.now_playing = Number(fileindex);//ha ha yes types, remove if you want a brain ache
-
-                //set meta properties
-                const metadata = await mm.parseFile(player.files[fileindex].path);
-                console.log(metadata)
-                //console.log(util.inspect(metadata, { showHidden: false, depth: null }));
-
-                const picture = mm.selectCover(metadata.common.picture)
-                if (typeof (picture) != 'undefined' && picture != null) {
-                    console.log('Cover art info: ', picture)
-                    document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                    document.getElementById('coverartsmall').name = "notvibecat"
-                } else {
-                    //use placeholder image
-                    //document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
-                    document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
-                    document.getElementById('coverartsmall').name = "vibecat"
+        try{
+            player.stream1 = new Howl({
+                src: player.files[fileindex].path,//takes an array, or single path
+                autoplay: true,
+                loop: false,
+                volume: 1,
+                preload: true,
+                onend: function () {//Playback ends
+                    console.log('Finished playing', player.files[fileindex].path);
+                    player.playstate = false;
+                    //place repeat chck here
+                    player.next()
+                },
+                onplayerror: function () {//Playback fails
+                    console.warn('fail to play ', player.files[fileindex])
+                    stream1.once('unlock', function () {//wait for unlock
+                        player.play(fileindex);// try to play again
+                        notify.new('Error',`Could not access file: ${player.files[fileindex]}`,'a file access error occured for some reason, could be anything from a bad disk to improper file permissions')
+                    });
+                },
+                onload: function () {
+                    console.log('loaded: ', player.files[fileindex].path)
+                    //player.stream1.play()//play the sound that was just loaded
+                },
+                onplay: async function () {
+                    //playback of loaded song file sucessfull
+                    player.playstate = true;//now playing and play pause functionality
+                    player.now_playing = Number(fileindex);//ha ha yes types, remove if you want a brain ache
+    
+                    //set meta properties
+                    const metadata = await mm.parseFile(player.files[fileindex].path);
+                    console.log(metadata)
+                    //console.log(util.inspect(metadata, { showHidden: false, depth: null }));
+    
+                    const picture = mm.selectCover(metadata.common.picture)
+                    if (typeof (picture) != 'undefined' && picture != null) {
+                        console.log('Cover art info: ', picture)
+                        document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                        document.getElementById('backgroundmaskimg').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                        document.getElementById('coverartsmall').name = "notvibecat"
+                    } else {
+                        //use placeholder image
+                        //document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
+                        document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
+                        document.getElementById('backgroundmaskimg').src = ""
+                        document.getElementById('coverartsmall').name = "vibecat"
+                    }
+                    //seek and time
+                    console.log('Meta duration ', metadata.format.duration)
+                    song_progress_bar.max = metadata.format.duration;
+                    player.start_seeking()
+    
+                    //Ui state chamges
+                    ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
+                    document.getElementById('songTitle').innerText = player.files[fileindex].filename;
+    
+                    playbtn.classList = "pausebtn"
+                    playbtn.title = "pause"
+                    //document.getElementById('titlcon').classList = "titlcon_active"
+                    console.log('Playing: ', player.files[fileindex]);
                 }
-                //seek and time
-                console.log('Meta duration ', metadata.format.duration)
-                song_progress_bar.max = metadata.format.duration;
-                player.start_seeking()
-
-                //Ui state chamges
-                ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
-                document.getElementById('songTitle').innerText = player.files[fileindex].filename;
-
-                playbtn.classList = "pausebtn"
-                playbtn.title = "pause"
-                //document.getElementById('titlcon').classList = "titlcon_active"
-                console.log('Playing: ', player.files[fileindex]);
-            }
-        });
-
+            });
+        }catch(err){
+            console.warn('howl error ',err)
+        }
+        //player.stream1.play()
     },
     pause: function () {
         console.log('Pause functionaliy');
@@ -535,8 +543,9 @@ let player = {//Playback control
         player.play(player.now_playing + 1)
         document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
         document.getElementById(`${player.now_playing + 1}`).className = "song_bar_active"
-        window.location.href = `#${player.now_playing - 1}`;
+        window.location.href = `#${player.now_playing - 2}`;
         song_progress_bar.value = 0;//reset seek value
+        player.now_playing = player.now_playing + 1;
     },
     previous: function () {
         console.log('Play Previous');
@@ -551,8 +560,9 @@ let player = {//Playback control
         player.play(player.now_playing - 1)
         document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
         document.getElementById(`${player.now_playing - 1}`).className = "song_bar_active"
-        window.location.href = `#${player.now_playing - 1}`
+        window.location.href = `#${player.now_playing - 2}`
         song_progress_bar.value = 0;//reset seek value
+        player.now_playing = player.now_playing - 1;
     },
     mute: function () {
         if (player.stream1.mute == true) {
@@ -600,8 +610,8 @@ let UI = {
 }
 
 let notify = {//notification function house
-    clap: window.addEventListener('resize', () => { notify.clearall() }),
-    new: function (title, body, hover_title, ifunction) {
+    clap: window.addEventListener('resize', async () => { notify.clearall() }),
+    new: async function (title, body, hover_title, ifunction) {
 
         let notification = document.createElement("div")
         notification.classList = "notification"
@@ -631,22 +641,22 @@ let notify = {//notification function house
             xbutton.setAttribute('class', 'x-button')
             notification.appendChild(xbutton)
             xbutton.title = 'click to dismiss';
-            xbutton.addEventListener('click', function (e) { removethis(e, notification) })
+            xbutton.addEventListener('click', async function (e) { removethis(e, notification) })
         } else {
-            notification.addEventListener('click', function (e) { removethis(e, notification) })
+            notification.addEventListener('click', async function (e) { removethis(e, notification) })
         }
 
         //Timing effects
-        setTimeout(() => {
+        setTimeout(async () => {
             notification.style.transform = 'translateX(0)'
             //notify.shove()
         }, 50);
 
-        setTimeout(() => { notification.style.opacity = '0.0' }, 10000); //dissapear
+        setTimeout(async () => { notification.style.opacity = '0.0' }, 10000); //dissapear
 
-        setTimeout(() => { try { document.body.removeChild(notification) } catch (err) { console.warn(err) } }, 11000); //remove from document
+        setTimeout(async () => { try { document.body.removeChild(notification) } catch (err) { console.warn(err) } }, 11000); //remove from document
 
-        function removethis(e, rnotification) {
+        async function removethis(e, rnotification) {
             e.stopImmediatePropagation();
             rnotification.style.transform = 'translateX(22rem)';
             setTimeout(() => { rnotification.style.opacity = '0.0'; }, 100)
@@ -654,7 +664,7 @@ let notify = {//notification function house
         }
 
     },
-    shove: function () {
+    shove: async function () {
         var notifications = document.querySelectorAll(".notification")
         var reverse = notifications.length - 1;
         for (let i in notifications) {
@@ -662,7 +672,7 @@ let notify = {//notification function house
             reverse--;//get it, because oposite
         }
     },
-    clearall: function () {
+    clearall: async function () {
         document.querySelectorAll(".notification").forEach((notification) => {
             try {
                 notification.style.opacity = '0.0';

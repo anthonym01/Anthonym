@@ -23,6 +23,7 @@ const playbtn = document.getElementById('playbtn');
 const nextbtn = document.getElementById('nextbtn');
 const main_library_view = document.getElementById('main_library_view');
 const song_progress_bar = document.getElementById('song_progress_bar');
+const backgroundmaskimg = document.getElementById('backgroundmaskimg');
 
 //Main body menu
 const menu_body = new Menu.buildFromTemplate([
@@ -66,6 +67,17 @@ window.addEventListener('load', function () {
     UI.initalize()
     player.initalize()
     maininitalizer()
+    wallpaper.get().then((wallpaperpath) => {//set desktop wallpaper
+        if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
+            //use desktop wallpaper
+            wallpaperpath = wallpaperpath.replace(/\\/g, '/');// replace all \\ with /
+            document.getElementById('mainmaskcontainer').style.backgroundImage = `url('${wallpaperpath}')`;
+        } else {
+            console.error('Failed to get desktop wallpaper')
+        }
+    }).catch((err) => {
+        console.warn('wallpaper error ', err)
+    })
 })
 
 async function maininitalizer() {//Used to start re-startable app functions
@@ -87,6 +99,7 @@ window.addEventListener('keydown', function (e) {//keyboard actions
 let config = {
     data: {//application data
         key: "Anthonymcfg",
+        background_blur: 4,//pixels
     },
     save: async function () {//Save the config file
         console.table('Configuration is being saved', config.data)
@@ -220,6 +233,8 @@ let player = {//Playback control
     playstate: false,//is (should be) playing music
     now_playing: null,//Song thats currently playing
     initalize: async function () {
+        //set configurations
+        backgroundmaskimg.style.filter = config.data.background_blur ? `blur(${config.data.background_blur}px)` : `blur(0px)`
 
         //  Play\pause button
         playbtn.addEventListener('click', function () {
@@ -453,7 +468,7 @@ let player = {//Playback control
             return 0;
         }
 
-        try{
+        try {
             player.stream1 = new Howl({
                 src: player.files[fileindex].path,//takes an array, or single path
                 autoplay: true,
@@ -470,7 +485,7 @@ let player = {//Playback control
                     console.warn('fail to play ', player.files[fileindex])
                     stream1.once('unlock', function () {//wait for unlock
                         player.play(fileindex);// try to play again
-                        notify.new('Error',`Could not access file: ${player.files[fileindex]}`,'a file access error occured for some reason, could be anything from a bad disk to improper file permissions')
+                        notify.new('Error', `Could not access file: ${player.files[fileindex]}`, 'a file access error occured for some reason, could be anything from a bad disk to improper file permissions')
                     });
                 },
                 onload: function () {
@@ -481,42 +496,53 @@ let player = {//Playback control
                     //playback of loaded song file sucessfull
                     player.playstate = true;//now playing and play pause functionality
                     player.now_playing = Number(fileindex);//ha ha yes types, remove if you want a brain ache
-    
+
                     //set meta properties
                     const metadata = await mm.parseFile(player.files[fileindex].path);
                     console.log(metadata)
                     //console.log(util.inspect(metadata, { showHidden: false, depth: null }));
-    
+
                     const picture = mm.selectCover(metadata.common.picture)
                     if (typeof (picture) != 'undefined' && picture != null) {
                         console.log('Cover art info: ', picture)
                         document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                        document.getElementById('backgroundmaskimg').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                        backgroundmaskimg.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
                         document.getElementById('coverartsmall').name = "notvibecat"
                     } else {
                         //use placeholder image
                         //document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
                         document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
-                        document.getElementById('backgroundmaskimg').src = ""
                         document.getElementById('coverartsmall').name = "vibecat"
+                        backgroundmaskimg.src = undefined;
+                        wallpaper.get().then((wallpaperpath) => {//set desktop wallpaper
+                            if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
+                                //use desktop wallpaper
+                                wallpaperpath = wallpaperpath.replace(/\\/g, '/');// replace all \\ with /
+                                document.getElementById('mainmaskcontainer').style.backgroundImage = `url('${wallpaperpath}')`;
+                            } else {
+                                console.error('Failed to get desktop wallpaper')
+                            }
+                        }).catch((err) => {
+                            console.warn('wallpaper error ', err)
+                        })
                     }
                     //seek and time
                     console.log('Meta duration ', metadata.format.duration)
                     song_progress_bar.max = metadata.format.duration;
                     player.start_seeking()
-    
+
                     //Ui state chamges
                     ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
                     document.getElementById('songTitle').innerText = player.files[fileindex].filename;
-    
+
                     playbtn.classList = "pausebtn"
                     playbtn.title = "pause"
                     //document.getElementById('titlcon').classList = "titlcon_active"
                     console.log('Playing: ', player.files[fileindex]);
                 }
             });
-        }catch(err){
-            console.warn('howl error ',err)
+        } catch (err) {
+            console.warn('howl error ', err)
         }
         //player.stream1.play()
     },
@@ -537,7 +563,7 @@ let player = {//Playback control
             console.warn('Tried pause functionality with no playback');
         }
     },
-    next: function () {//Play next song in que if any
+    next: async function () {//Play next song in que if any
         console.log('Play Next');
         //check shuffle and skip
         player.play(player.now_playing + 1)
@@ -547,7 +573,7 @@ let player = {//Playback control
         song_progress_bar.value = 0;//reset seek value
         player.now_playing = player.now_playing + 1;
     },
-    previous: function () {
+    previous: async function () {
         console.log('Play Previous');
 
         if (player.playstate == true) {
@@ -595,15 +621,12 @@ let UI = {
             if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
                 //use desktop wallpaper
                 wallpaperpath = wallpaperpath.replace(/\\/g, '/');// replace all \\ with /
-                console.log('Got desktop wallpaper: ', wallpaperpath)
                 return wallpaperpath;
             } else {
-                console.log('Failed to get desktop wallpaper')
-                return 0;
+                console.error('Failed to get desktop wallpaper')
             }
         }).catch((err) => {
             console.warn('wallpaper error ', err)
-            return err;
         })
     },
 

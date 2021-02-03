@@ -59,14 +59,6 @@ body {
     user-select: none;
 }
 
-/*.background_mask{
-    position: fixed;
-    top:30px;
-    left: 0;
-    width: 100vh;
-    height: calc(100vh - 30px);
-    filter: blur(1px);
-}*/
 .background_mask{
     position: fixed;
     top:30px;
@@ -74,7 +66,7 @@ body {
     width: 100vw;
     height: calc(100vh - 30px);
     /*filter: blur(1px);*/
-    background-size: contain;
+    background-size: cover;
     background-position: center;
     background-repeat: repeat;
     display: flex;
@@ -88,13 +80,6 @@ body {
     width: 100vw;
     min-width: 100vw;
     position: relative;
-    filter: blur(4px);
-    /*
-    height: calc(100vh - 30px);
-    width: calc(100vh - 30px);
-    min-width: calc(100vh - 30px);
-    filter: blur(0px);*/
-    /*allow different background positions, sizes, behaviours and blurs*/
 }
 
 /* Title bar and frame*/

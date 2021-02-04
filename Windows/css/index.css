@@ -7,12 +7,13 @@
     --text-color: rgb(0, 0, 0);
     --background-color: rgb(255, 255, 255);
     --half_background-color: rgba(255, 255, 255, .5);
-    --playgradient:linear-gradient(0deg,rgba(255, 255, 255, 0.9),rgba(255, 255, 255, 0.4));
     --accent_color: rgb(0, 153, 255);
+    --accent_color_t: rgba(0, 153, 255, 0.5);
     --grey: rgb(122, 122, 122);
     --off_grey: rgb(205, 205, 205);
     --half_grey: rgb(165, 165, 165);
-    --Playbar_grade: linear-gradient(0deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, .2));
+    --Playbar_grade: linear-gradient(0deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, .3));
+    --Playbar_gradereverse: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.4));
     --file_icon: url('../img/filecons/folder_black.webp');
     --add_icon: url('../img/plus-dark.webp');
     --setting_icon: url('../img/setting-dark.webp');
@@ -30,12 +31,13 @@
         --text-color: rgb(255, 255, 255);
         --background-color: rgb(0, 0, 0);
         --half_background-color: rgba(0, 0, 0, 0.4);
-        --playgradient:linear-gradient(0deg,rgba(0, 0, 0, 0.9),rgba(0, 0, 0, 0.4));
         --accent_color: rgb(0, 153, 255);
+        --accent_color_t: rgba(0, 153, 255, 0.5);
         --grey: rgb(122, 122, 122);
         --off_grey: rgb(50, 50, 50);
         --half_grey: rgb(90, 90, 90);
-        --Playbar_grade: linear-gradient(0deg, rgba(0, 0, 0, .8), rgba(0, 0, 0, .2));
+        --Playbar_grade: linear-gradient(0deg, rgba(0, 0, 0, .8), rgba(0, 0, 0, .3));
+        --Playbar_gradereverse: linear-gradient(180deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
         --file_icon: url('../img/filecons/folder_white.webp');
         --add_icon: url('../img/plus-light.webp');
         --setting_icon: url('../img/setting-light.webp');
@@ -59,12 +61,12 @@ body {
     user-select: none;
 }
 
-.background_mask{
+.background_mask {
     position: fixed;
-    top:30px;
+    top: 0px;
     left: 0;
     width: 100vw;
-    height: calc(100vh - 30px);
+    height: 100vh;
     /*filter: blur(1px);*/
     background-size: cover;
     background-position: center;
@@ -75,18 +77,31 @@ body {
     justify-content: center;
     flex-wrap: nowrap;
 }
-.background_mask img{
+
+.background_mask img {
     height: 100vw;
     width: 100vw;
     min-width: 100vw;
     position: relative;
 }
-.background_mask video{
-    top:0;
+
+.background_mask video {
+    top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    min-width: 100vw;
+    position: fixed;
+    object-fit: cover;
+}
+
+.background_shade {
+    position: fixed;
+    top: 30px;
+    right: 0;
+    height: calc(100% - 30px - 7rem);
+    width: 100vw;
+    background-color: var(--half_background-color);
 }
 
 /* Title bar and frame*/
@@ -95,24 +110,26 @@ body {
     top: 0;
     left: 0;
     height: 30px;
-    width: 100%;
-    background-color: var(--off_grey);
+    width: calc(100% - 215px);
+    background: var(--Playbar_gradereverse);
     -webkit-app-region: drag;
 }
 
 .tbuttonholder {
     /* Task buttons container*/
-    position: absolute;
+    position: fixed;
     top: 0;
     right: 0;
     width: 135px;
-    height: 100%;
+    height: 30px;
     -webkit-app-region: no-drag;
+    background: var(--Playbar_gradereverse);
+    z-index: 500;
 }
 
 .tbutton {
     /* Task buttons */
-    background-color: var(--half_grey);
+    background-color: transparent;
     position: absolute;
     top: 0;
     right: 0;
@@ -142,12 +159,14 @@ body {
 
 /* Title bar menu */
 .titlemenu {
-    position: absolute;
+    position: fixed;
     top: 0;
     right: 135px;
     width: 80px;
-    height: 100%;
+    height: 30px;
     -webkit-app-region: no-drag;
+    background: var(--Playbar_gradereverse);
+    z-index: 500;
 }
 
 .titlemenu_btn {
@@ -156,7 +175,7 @@ body {
     height: 30px;
     width: 40px;
     right: 0;
-    background-color: var(--off_grey);
+    background-color: transparent;
     cursor: pointer;
     transition: background-color 300ms;
     background-size: contain;
@@ -236,7 +255,7 @@ body {
     bottom: 0;
     width: 100%;
     height: 7rem;
-    background: var(--playgradient);
+    background: var(--Playbar_grade);
     box-shadow: 0 0 1rem 0 var(--accent_color);
 }
 
@@ -389,31 +408,33 @@ body {
     background-color: var(--accent_color)
 }
 
-
 /* sidemenu */
-.Menupannel_main{
+.Menupannel_main {
     position: fixed;
-    top:30px;
+    top: 30px;
     left: 0;
     height: calc(100% - 30px - 7rem);
     /*top and bottom*/
     width: 15rem;
-    background-color: var(--half_background-color);
+    z-index: 5;
 }
 
 
 /* Main library view */
 .library_view {
-    position: fixed; 
-    top: 30px;
+    position: fixed;
+    top: 0px;
+    padding-top: 30px;
     right: 0;
     height: calc(100% - 30px - 7rem);
     /*top and bottom*/
     width: calc(100% - 15rem);
+    padding-left:15rem ;
     display: none;
     overflow-x: hidden;
     overflow-y: scroll;
-    background-color: var(--half_background-color);
+    background-origin: content-box;
+    z-index: 2;
 }
 
 .song_bar,

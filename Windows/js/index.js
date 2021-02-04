@@ -262,11 +262,11 @@ let player = {//Playback control
         //seek controls
         song_progress_bar.addEventListener('change', function (e) {
             e.preventDefault();
-            player.stop_seeking()
+            //player.stop_seeking()
             console.log('seek to :', this.value)
             player.stream1.seek(this.value);
             backgroundvideo.currentTime = this.value
-            player.start_seeking()
+            //player.start_seeking()
         })
 
         /*song_progress_bar.addEventListener('focus', function(){player.stop_seeking})
@@ -447,7 +447,7 @@ let player = {//Playback control
             } else {
                 if (fileindex != player.now_playing) {
                     player.stream1.unload();//unlock the stream thats gonna be used
-                    backgroundvideo.src = undefined;
+                    backgroundvideo.src = "";
                 }
             }
         } else {
@@ -501,8 +501,14 @@ let player = {//Playback control
                     console.log('loaded: ', player.files[fileindex].path)
                     //player.stream1.play()//play the sound that was just loaded
                     //Handle background video (if any)
-                    backgroundvideo.src = player.files[fileindex].path;
-                    backgroundvideo.play();
+                    switch (path.parse(player.files[fileindex].path).ext) {//check file types
+
+                        case ".mp4": case ".webm": case ".mov"://playable as music files
+                            backgroundvideo.src = player.files[fileindex].path;
+                            backgroundvideo.play();
+                            break;
+                        default:
+                    }
                     //backgroundvideo.currentTime = 0;
                 },
                 onplay: async function () {

@@ -68,6 +68,7 @@
     "electron-store": "^6.0.1",
     "electron-window-state": "^5.0.3",
     "howler": "^2.2.1",
+    "image-size": "^0.9.3",
     "music-metadata": "^7.6.2",
     "wallpaper": "^4.4.1"
   }

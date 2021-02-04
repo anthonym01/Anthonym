@@ -11,6 +11,7 @@ const fs = require('fs');//file system
 const path = require('path');//path
 const wallpaper = require('wallpaper');//Desktop wallpaper
 const mm = require('music-metadata');
+const sizeof = require('image-size');
 
 //  Taskbar buttons for frameless window
 document.getElementById('x-button').addEventListener('click', function () { main.x_button() })
@@ -24,6 +25,7 @@ const nextbtn = document.getElementById('nextbtn');
 const main_library_view = document.getElementById('main_library_view');
 const song_progress_bar = document.getElementById('song_progress_bar');
 const backgroundmaskimg = document.getElementById('backgroundmaskimg');
+const backgroundvideo = document.getElementById('backgroundvideo');
 
 //Main body menu
 const menu_body = new Menu.buildFromTemplate([
@@ -263,6 +265,7 @@ let player = {//Playback control
             player.stop_seeking()
             console.log('seek to :', this.value)
             player.stream1.seek(this.value);
+            backgroundvideo.currentTime = this.value
             player.start_seeking()
         })
 
@@ -333,7 +336,7 @@ let player = {//Playback control
         for (let fileindex in player.files) { buildsong(fileindex) }
         //player.files.forEach(file => { buildsong(file) })
 
-        function buildsong(fileindex) {
+        async function buildsong(fileindex) {
             var song_bar = document.createElement('div')
             song_bar.classList = "song_bar"
             song_bar.id = fileindex
@@ -396,19 +399,20 @@ let player = {//Playback control
                 {//play button
                     label: "Play",
                     type: "normal",
-                    id: "pp01",
                     click() { player.play(fileindex) }
                 },
                 { type: "separator" },
+                {
+                    label: "copy file name",
+                    click() { clipboard.writeText(player.files[fileindex].filename) }
+                },
                 {//open song file in default external application
                     label: "show in folder",
-                    id: "ooo1",
                     click() { shell.showItemInFolder(player.files[fileindex].path) }
                 },
                 {//copy file path
                     label: "copy file location",
                     toolTip: `${player.files[fileindex].path}`,
-                    id: "ooo1",
                     click() { clipboard.write(player.files[fileindex].path); }
                 }
             ])
@@ -443,11 +447,14 @@ let player = {//Playback control
             } else {
                 if (fileindex != player.now_playing) {
                     player.stream1.unload();//unlock the stream thats gonna be used
+                    backgroundvideo.src = undefined;
                 }
             }
         } else {
             if (fileindex == player.now_playing) {
                 player.stream1.play()
+                backgroundvideo.play();
+                backgroundvideo.currentTime = player.stream1.seek()
                 console.log('resume : ', player.files[player.now_playing].path);
                 return 0;
             }
@@ -455,6 +462,8 @@ let player = {//Playback control
 
         if (fileindex == undefined && player.now_playing != null) {
             player.stream1.play()
+            backgroundvideo.play();
+            backgroundvideo.currentTime = player.stream1.seek()
             console.log('resume : ', player.files[player.now_playing].path);
             return 0;
         }
@@ -491,29 +500,48 @@ let player = {//Playback control
                 onload: function () {
                     console.log('loaded: ', player.files[fileindex].path)
                     //player.stream1.play()//play the sound that was just loaded
+                    //Handle background video (if any)
+                    backgroundvideo.src = player.files[fileindex].path;
+                    backgroundvideo.play();
+                    //backgroundvideo.currentTime = 0;
                 },
                 onplay: async function () {
                     //playback of loaded song file sucessfull
                     player.playstate = true;//now playing and play pause functionality
                     player.now_playing = Number(fileindex);//ha ha yes types, remove if you want a brain ache
 
-                    //set meta properties
+                    //Ui state chamges
+                    ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
+                    document.getElementById('songTitle').innerText = player.files[fileindex].filename;
+
+                    playbtn.classList = "pausebtn"
+                    playbtn.title = "pause"
+                    //document.getElementById('titlcon').classList = "titlcon_active"
+                    console.log('Playing: ', player.files[fileindex]);
+
+                    /*      set meta properties     */
                     const metadata = await mm.parseFile(player.files[fileindex].path);
                     console.log(metadata)
-                    //console.log(util.inspect(metadata, { showHidden: false, depth: null }));
-
+                    //seek and time
+                    console.log('Meta duration ', metadata.format.duration)
+                    song_progress_bar.max = metadata.format.duration;
+                    player.start_seeking()
+                    //picture
                     const picture = mm.selectCover(metadata.common.picture)
                     if (typeof (picture) != 'undefined' && picture != null) {
                         console.log('Cover art info: ', picture)
                         document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
                         backgroundmaskimg.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                        document.getElementById('coverartsmall').name = "notvibecat"
+                        backgroundmaskimg.style.display = "block";
+                        var dimensions = sizeof(picture.data);//scales height of image by width of window
+                        backgroundmaskimg.style.height = `${Number(dimensions.height / dimensions.width * 100)}vw`;
                     } else {
                         //use placeholder image
                         //document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
                         document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
                         document.getElementById('coverartsmall').name = "vibecat"
                         backgroundmaskimg.src = undefined;
+                        backgroundmaskimg.style.display = "none";
                         wallpaper.get().then((wallpaperpath) => {//set desktop wallpaper
                             if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
                                 //use desktop wallpaper
@@ -526,19 +554,8 @@ let player = {//Playback control
                             console.warn('wallpaper error ', err)
                         })
                     }
-                    //seek and time
-                    console.log('Meta duration ', metadata.format.duration)
-                    song_progress_bar.max = metadata.format.duration;
-                    player.start_seeking()
 
-                    //Ui state chamges
-                    ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
-                    document.getElementById('songTitle').innerText = player.files[fileindex].filename;
 
-                    playbtn.classList = "pausebtn"
-                    playbtn.title = "pause"
-                    //document.getElementById('titlcon').classList = "titlcon_active"
-                    console.log('Playing: ', player.files[fileindex]);
                 }
             });
         } catch (err) {
@@ -550,6 +567,7 @@ let player = {//Playback control
         console.log('Pause functionaliy');
         if (player.playstate != false) {
             player.stream1.pause()
+            backgroundvideo.pause();
             player.stop_seeking()
             player.playstate = false;//stop playstate 
             playbtn.classList = "playbtn"

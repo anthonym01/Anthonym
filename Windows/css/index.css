@@ -79,10 +79,11 @@ body {
 }
 
 .background_mask img {
-    height: 100vw;
+    height: 100vh !important;
     width: 100vw;
     min-width: 100vw;
     position: relative;
+    object-fit: cover;
 }
 
 .background_mask video {
@@ -274,7 +275,7 @@ body {
     bottom: 1.25rem;
     height: 4.5rem;
     width: 4.5rem;
-    background-color: var(--background-color);
+    background-color: transparent;
     border-radius: 50%;
     cursor: pointer;
     transition: background-color 300ms, background-image 300ms, background-size 300ms, background-position 300ms;
@@ -283,6 +284,7 @@ body {
     background-size: contain;
     right: calc(50vw - 2.25rem);
     background-image: var(--play_icon);
+    filter: blur(1px);
     background-size: 80%;
     background-position: 90% 50%;
 }
@@ -294,7 +296,7 @@ body {
 
 .playbtn:hover,
 .pausebtn:hover {
-    background-color: var(--off_grey);
+    filter: blur(0px);
 }
 
 .playbtn:active,
@@ -326,7 +328,7 @@ body {
     bottom: 1.25rem;
     height: 3.5rem;
     width: 3.5rem;
-    background-color: var(--background-color);
+    background-color: transparent;
     border-radius: 50%;
     cursor: pointer;
     transition: background-color 300ms;
@@ -336,10 +338,11 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     background-size: 90%;
+    filter: blur(1px);
 }
 
 .shufflebtn:hover {
-    background-color: var(--off_grey);
+    filter: blur(0px);
 }
 
 .shufflebtn:active {
@@ -429,7 +432,7 @@ body {
     height: calc(100% - 30px - 7rem);
     /*top and bottom*/
     width: calc(100% - 15rem);
-    padding-left:15rem ;
+    padding-left: 15rem;
     display: none;
     overflow-x: hidden;
     overflow-y: scroll;

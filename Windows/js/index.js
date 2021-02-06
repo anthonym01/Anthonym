@@ -11,7 +11,7 @@ const fs = require('fs');//file system
 const path = require('path');//path
 const wallpaper = require('wallpaper');//Desktop wallpaper
 const mm = require('music-metadata');
-const sizeof = require('image-size');
+//const sizeof = require('image-size');
 
 //  Taskbar buttons for frameless window
 document.getElementById('x-button').addEventListener('click', function () { main.x_button() })
@@ -31,13 +31,14 @@ const backgroundvideo = document.getElementById('backgroundvideo');
 const menu_body = new Menu.buildFromTemplate([
     { role: 'reload' },
     { label: 'Refresh Library', click() { maininitalizer() } },
-    { label: 'Contact developer', click() { shell.openExternal(my_website) } },
-    { role: 'toggledevtools' },
     { type: 'separator' },
     { role: 'zoomIn' },
     { role: 'resetZoom' },
     { role: 'zoomOut' },
-]); Menu.setApplicationMenu(menu_body)
+    { type: 'separator' },
+    { label: 'Contact developer', click() { shell.openExternal(my_website) } },
+    { role: 'toggledevtools' },
+]); Menu.setApplicationMenu(menu_body);
 window.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     menu_body.popup({ window: remote.getCurrentWindow() })
@@ -59,6 +60,8 @@ function popupmenu(event) {//Popup the menu in this window
     event.stopPropagation()
     text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
 }
+
+//navigator.mediaSession.setActionHandler('skipad', function () { /* Code excerpted. */ });
 
 window.addEventListener('load', function () {
     console.log('Running from:', process.resourcesPath)
@@ -85,6 +88,14 @@ window.addEventListener('load', function () {
 async function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
 
+    //reset players state to default
+    player.pause()
+    player.stop_seeking()
+    player.files = []//path and other details of song files
+    player.playlists = []//playlist files and details
+    player.queue = []//Play queue randomized from playlist/library
+    player.playstate = false//is (should be) playing music
+    player.fetch_library()
 }
 
 window.addEventListener('keydown', function (e) {//keyboard actions
@@ -260,21 +271,20 @@ let player = {//Playback control
         ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
 
         //seek controls
-        song_progress_bar.addEventListener('change', function (e) {
+        song_progress_bar.addEventListener('click', function (e) {
             e.preventDefault();
-            //player.stop_seeking()
+            player.stop_seeking()
             console.log('seek to :', this.value)
             player.stream1.seek(this.value);
             backgroundvideo.currentTime = this.value
             //player.start_seeking()
         })
-
-        /*song_progress_bar.addEventListener('focus', function(){player.stop_seeking})
-        song_progress_bar.addEventListener('click', function(){player.stop_seeking})
-        song_progress_bar.addEventListener('blur', function (e) {
+        song_progress_bar.addEventListener('mouseenter', function () { player.stop_seeking() })
+        song_progress_bar.addEventListener('mouseleave', function (e) {
             if (player.playstate == true && player.seekterval == null) { player.start_seeking() }
-        })*/
-
+        })
+    },
+    fetch_library: async function () {
         //build library inteligentlly
         if (main.get.musicfolders() == []) { first_settup() } else {
             await player.getfiles(main.get.musicfolders())//wait for file checks
@@ -330,7 +340,7 @@ let player = {//Playback control
         })
         //player.build_library();//make after get of files, get of files must be async
     },
-    build_library: function () {
+    build_library: async function () {
         main_library_view.innerHTML = "";
 
         for (let fileindex in player.files) { buildsong(fileindex) }
@@ -483,7 +493,7 @@ let player = {//Playback control
                 autoplay: true,
                 loop: false,
                 volume: 1,
-                preload: true,
+                preload: false,
                 onend: function () {//Playback ends
                     console.log('Finished playing', player.files[fileindex].path);
                     player.playstate = false;
@@ -501,13 +511,14 @@ let player = {//Playback control
                     console.log('loaded: ', player.files[fileindex].path)
                     //player.stream1.play()//play the sound that was just loaded
                     //Handle background video (if any)
+                    song_progress_bar.value = 0;
                     switch (path.parse(player.files[fileindex].path).ext) {//check file types
 
                         case ".mp4": case ".webm": case ".mov"://playable as music files
                             backgroundvideo.src = player.files[fileindex].path;
                             backgroundvideo.play();
                             break;
-                        default:
+                        default: backgroundvideo.src = "";
                     }
                     //backgroundvideo.currentTime = 0;
                 },
@@ -517,7 +528,7 @@ let player = {//Playback control
                     player.now_playing = Number(fileindex);//ha ha yes types, remove if you want a brain ache
 
                     //Ui state chamges
-                    ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
+                    ipcRenderer.send('Play_msg', player.files[fileindex].path, 'pause')//Send file name of playing song to main
                     document.getElementById('songTitle').innerText = player.files[fileindex].filename;
 
                     playbtn.classList = "pausebtn"
@@ -539,14 +550,14 @@ let player = {//Playback control
                         document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
                         backgroundmaskimg.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
                         backgroundmaskimg.style.display = "block";
-                        var dimensions = sizeof(picture.data);//scales height of image by width of window
-                        backgroundmaskimg.style.height = `${Number(dimensions.height / dimensions.width * 100)}vw`;
+                        /*var dimensions = sizeof(picture.data);//scales height of image by width of window
+                        backgroundmaskimg.style.height = `${Number(dimensions.height / dimensions.width * 100)}vw`;*/
                     } else {
                         //use placeholder image
                         //document.getElementById('coverartsmall').src = "img/memes/Cats/vib cat.gif"
                         document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
                         document.getElementById('coverartsmall').name = "vibecat"
-                        backgroundmaskimg.src = undefined;
+                        backgroundmaskimg.src = "";
                         backgroundmaskimg.style.display = "none";
                         wallpaper.get().then((wallpaperpath) => {//set desktop wallpaper
                             if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
@@ -561,9 +572,54 @@ let player = {//Playback control
                         })
                     }
 
+                    //mediaSession metadata/*
+                    /*navigator.mediaSession.metadata = new MediaMetadata({
+                        title: player.files[fileindex].filename,
+                        artist: 'unknown',
+                        album: 'unknown',
+                        artwork: [
+                            { src: `data:${picture.format};base64,${picture.data.toString('base64')}` },
+                        ]
+                    });
+                    navigator.mediaSession.playbackState = "playing";
+                    navigator.mediaSession.setActionHandler('play', function () { console.log('External play command') });
+                    navigator.mediaSession.setActionHandler('pause', function () {  });
+                    navigator.mediaSession.setActionHandler('stop', function () {  });
+                    navigator.mediaSession.setActionHandler('seekbackward', function () {  });
+                    navigator.mediaSession.setActionHandler('seekforward', function () {  });
+                    navigator.mediaSession.setActionHandler('seekto', function () {  });
+                    navigator.mediaSession.setActionHandler('previoustrack', function () {  });
+                    navigator.mediaSession.setActionHandler('nexttrack', function () {  });
+                    console.log(mediaSession,navigator.mediaSession)*/
+
+                    // After media (video or audio) starts playing
+                    if ('mediaSession' in navigator) {
+
+                        navigator.mediaSession.metadata = new MediaMetadata({
+                            title: 'Never Gonna Give You Up',
+                            artist: 'Rick Astley',
+                            album: 'Whenever You Need Somebody',
+                            artwork: [
+                                { src: 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
+                                { src: 'https://dummyimage.com/128x128', sizes: '128x128', type: 'image/png' },
+                                { src: 'https://dummyimage.com/192x192', sizes: '192x192', type: 'image/png' },
+                                { src: 'https://dummyimage.com/256x256', sizes: '256x256', type: 'image/png' },
+                                { src: 'https://dummyimage.com/384x384', sizes: '384x384', type: 'image/png' },
+                                { src: 'https://dummyimage.com/512x512', sizes: '512x512', type: 'image/png' },
+                            ]
+                        });
+
+                        navigator.mediaSession.setActionHandler('play', function () { });
+                        navigator.mediaSession.setActionHandler('pause', function () { });
+                        navigator.mediaSession.setActionHandler('seekbackward', function () { });
+                        navigator.mediaSession.setActionHandler('seekforward', function () { });
+                        navigator.mediaSession.setActionHandler('previoustrack', function () { });
+                        navigator.mediaSession.setActionHandler('nexttrack', function () { });
+                    }
 
                 }
             });
+            player.stream1.load()//load stream
         } catch (err) {
             console.warn('howl error ', err)
         }
@@ -576,6 +632,8 @@ let player = {//Playback control
             backgroundvideo.pause();
             player.stop_seeking()
             player.playstate = false;//stop playstate 
+            navigator.mediaSession.playbackState = "paused";
+
             playbtn.classList = "playbtn"
             playbtn.title = "play"
             /*document.getElementById('titlcon').classList = "titlcon"
@@ -614,19 +672,19 @@ let player = {//Playback control
         song_progress_bar.value = 0;//reset seek value
         player.now_playing = player.now_playing - 1;
     },
-    mute: function () {
+    mute: async function () {
         if (player.stream1.mute == true) {
             player.stream1.mute(false)
         } else {
             player.stream1.mute(true)
         }
     },
-    start_seeking: function () {
+    start_seeking: async function () {
         console.warn('start seeking')
         player.stop_seeking();
         player.seekterval = setInterval(() => { song_progress_bar.value = player.stream1.seek(); }, 1000)
     },
-    stop_seeking: function () {
+    stop_seeking: async function () {
         console.warn('stop seeking')
         clearInterval(player.seekterval)
         player.seekterval = null;

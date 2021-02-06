@@ -94,7 +94,7 @@ let mainWindow = {
 let tray = {
 	body: null,//tray value
 	Play_msg: ipcMain.on('Play_msg', (event, now_playing, state) => {//Receive Song data from mainwindow and apply to tray
-		console.log('Set tray now playing to: ', now_playing, state, /*event*/);
+		console.log('now playing: ', now_playing, state, /*event*/);
 		tray.update(now_playing, state)
 	}),
 	create: async function () {

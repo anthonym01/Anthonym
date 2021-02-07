@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "asar": "^1.0.0",
-    "electron": "^11.2.1",
+    "electron": "^11.2.3",
     "electron-builder": "^22.9.1"
   },
   "dependencies": {

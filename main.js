@@ -55,9 +55,9 @@ let mainWindow = {
 			webPreferences: {
 				nodeIntegration: true,
 				enableRemoteModule: true,
-				nodeIntegrationInWorker: true,
+				/*nodeIntegrationInWorker: true,
 				worldSafeExecuteJavaScript: true,
-				contextIsolation: false
+				contextIsolation: false*/
 			},
 			minWidth: 400,
 			minHeight: 300,

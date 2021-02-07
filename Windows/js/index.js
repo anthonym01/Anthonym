@@ -11,13 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const wallpaper = require('wallpaper');
 const mm = require('music-metadata');
-
-//  Taskbar buttons for frameless window
-document.getElementById('x-button').addEventListener('click', function () { main.x_button() })
-document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
-document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })
-
-//constant elements
+//const {Howl, Howler} = require('howler');
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
 const playbtn = document.getElementById('playbtn');
 const nextbtn = document.getElementById('nextbtn');
@@ -26,51 +20,55 @@ const song_progress_bar = document.getElementById('song_progress_bar');
 const backgroundmaskimg = document.getElementById('backgroundmaskimg');
 const backgroundvideo = document.getElementById('backgroundvideo');
 
-//Main body menu
-const menu_body = new Menu.buildFromTemplate([
-    { role: 'reload' },
-    { label: 'Refresh Library', click() { maininitalizer() } },
-    { type: 'separator' },
-    { role: 'zoomIn' },
-    { role: 'resetZoom' },
-    { role: 'zoomOut' },
-    { type: 'separator' },
-    { label: 'Contact developer', click() { shell.openExternal(my_website) } },
-    { role: 'toggledevtools' },
-]); Menu.setApplicationMenu(menu_body);
-window.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    menu_body.popup({ window: remote.getCurrentWindow() })
-}, false);
-
-//text box menu
-const text_box_menu = new Menu.buildFromTemplate([
-    { role: 'cut' },
-    { role: 'copy' },
-    { role: 'paste' },
-    { role: 'selectAll' },
-    { role: 'seperator' },
-    { role: 'undo' },
-    { role: 'redo' },
-]);
-//textbox.addEventListener('contextmenu', (event) => popupmenu, false)
-function popupmenu(event) {//Popup the menu in this window
-    event.preventDefault()
-    event.stopPropagation()
-    text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
-}
-
-//navigator.mediaSession.setActionHandler('skipad', function () { /* Code excerpted. */ });
+//  Taskbar buttons for frameless window
+document.getElementById('x-button').addEventListener('click', function () { main.x_button() })
+document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
+document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })
 
 window.addEventListener('load', function () {
     console.log('Running from:', process.resourcesPath)
-    //create_text_menus()
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
+
+    //Main body menu
+    const menu_body = new Menu.buildFromTemplate([
+        { role: 'reload' },
+        { label: 'Refresh Library', click() { maininitalizer() } },
+        { type: 'separator' },
+        { role: 'zoomIn' },
+        { role: 'resetZoom' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { label: 'Contact developer', click() { shell.openExternal(my_website) } },
+        { role: 'toggledevtools' },
+    ]);
+    Menu.setApplicationMenu(menu_body);
+    window.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        menu_body.popup({ window: remote.getCurrentWindow() })
+    }, false);
+
+    //text box menu
+    const text_box_menu = new Menu.buildFromTemplate([
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' },
+        { role: 'seperator' },
+        { role: 'undo' },
+        { role: 'redo' },
+    ]);
+    //textbox.addEventListener('contextmenu', (event) => popupmenu, false)
+    function popupmenu(event) {//Popup the menu in this window
+        event.preventDefault()
+        event.stopPropagation()
+        text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
+    }
 
     if (localStorage.getItem("Anthonymcfg")) { config.load() }
     UI.initalize()
     player.initalize()
     maininitalizer()
+
     wallpaper.get().then((wallpaperpath) => {//set desktop wallpaper
         if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
             //use desktop wallpaper
@@ -79,9 +77,19 @@ window.addEventListener('load', function () {
         } else {
             console.error('Failed to get desktop wallpaper')
         }
-    }).catch((err) => {
-        console.warn('wallpaper error ', err)
-    })
+    }).catch((err) => { console.warn('wallpaper error ', err) })
+})
+
+window.addEventListener('keydown', function (e) {//keyboard actions
+    switch (e.key) {
+        case " ": case "p": case "enter": e.preventDefault(); player.play(); break;
+        case "n": e.preventDefault(); player.next(); break;
+        case "b": e.preventDefault(); player.previous(); break;
+        case "m": e.preventDefault(); player.mute(); break;
+        case "ArrowRight": e.preventDefault(); player.seekforward(); break;
+        case "ArrowLeft": e.preventDefault(); player.seekbackward(); break;
+        default: console.log(e.key)
+    }
 })
 
 async function maininitalizer() {//Used to start re-startable app functions
@@ -96,17 +104,6 @@ async function maininitalizer() {//Used to start re-startable app functions
     player.playstate = false//is (should be) playing music
     player.fetch_library()
 }
-
-window.addEventListener('keydown', function (e) {//keyboard actions
-    switch (e.key) {
-        case " ": case "p": case "enter": e.preventDefault(); player.play(); break;
-        case "n": e.preventDefault(); player.next(); break;
-        case "b": e.preventDefault(); player.previous(); break;
-        case "m": e.preventDefault(); player.mute(); break;
-        default: console.log(e.key)
-    }
-})
-
 
 let config = {
     data: {//application data
@@ -239,54 +236,46 @@ let player = {//Playback control
     files: [],//path and other details of song files
     playlists: [],//playlist files and details
     queue: [],//Play queue randomized from playlist/library
-    stream1: null,//
-    stream2: null,//
-    seekterval: null,
-    playstate: false,//is (should be) playing music
+    stream1: null,//stream for howler
+    seekterval: null,//looping seek time update
+    playstate: false,//is (should be) playing music or video
     now_playing: null,//Song thats currently playing
     initalize: async function () {
         //set configurations
         backgroundmaskimg.style.filter = config.data.background_blur ? `blur(${config.data.background_blur}px)` : `blur(0px)`
 
         //  Play\pause button
-        playbtn.addEventListener('click', function () {
-            console.log('Pause button Pressed')
-            player.play()
-        })
+        playbtn.addEventListener('click', function () { player.play() })
         ipcRenderer.on('tray_play_pause', () => { player.play() })//listening on channel 'tray_play_pause'
 
         //  Next button
-        nextbtn.addEventListener('click', function () {
-            console.log('next button Pressed')
-            player.next()
-        })
+        nextbtn.addEventListener('click', function () { player.next() })
         ipcRenderer.on('tray_next', () => { player.next() })//listening on channel 'tray_next'
 
         //  Previous button
-        document.getElementById('previousbtn').addEventListener('click', function () {
-            console.log('Previous button Pressed')
-            player.previous()
-        })
+        document.getElementById('previousbtn').addEventListener('click', function () { player.previous() })
         ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
 
         //seek controls
         song_progress_bar.addEventListener('click', function (e) {
             e.preventDefault();
-            player.stop_seeking()
-            console.log('seek to :', this.value)
+            console.log('seek to :', this.value);
+            player.stop_seeking();
             player.stream1.seek(this.value);
-            backgroundvideo.currentTime = this.value
-            document.getElementById('audiodoot').currentTime = this.value
-            //player.start_seeking()
+            backgroundvideo.currentTime = this.value;
         })
         song_progress_bar.addEventListener('mouseenter', function () { player.stop_seeking() })
         song_progress_bar.addEventListener('mouseleave', function (e) {
-            if (player.playstate == true && player.seekterval == null) { player.start_seeking() }
+            if (player.playstate == true && player.seekterval == null) {
+                player.start_seeking()
+            }
         })
     },
     fetch_library: async function () {
         //build library inteligentlly
-        if (main.get.musicfolders() == []) { first_settup() } else {
+        if (main.get.musicfolders() == []) {
+            first_settup()
+        } else {
             await player.getfiles(main.get.musicfolders())//wait for file checks
             setTimeout(() => { player.build_library() }, 0)//imediatly after file checks
             var hold = setInterval(() => {
@@ -440,6 +429,76 @@ let player = {//Playback control
             })//click to play
         }
     },
+    updatemetadata: async function (fileindex) {
+        /*      set meta properties     */
+        const metadata = await mm.parseFile(player.files[fileindex].path);
+        console.log(metadata)
+        //seek and time
+        if (metadata.common.title != undefined) { document.getElementById('songTitle').innerText = metadata.common.title; }
+        console.log('Meta duration ', metadata.format.duration)
+        song_progress_bar.max = metadata.format.duration;
+        player.start_seeking()
+        //picture
+        const picture = mm.selectCover(metadata.common.picture)
+        if (typeof (picture) != 'undefined' && picture != null) {
+            console.log('Cover art info: ', picture)
+            document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+            backgroundmaskimg.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+            backgroundmaskimg.style.display = "block";
+
+            //let blobdata = new Uint8Array(picture.data)
+            //updatemetadata(fileindex,new Blob(Float64Array.from(picture.data), {type: picture.format}));
+            // updatemetadata(fileindex, Float64Array.from(picture.data));
+            //updatemetadata(fileindex, picture.data);
+            /*const base64Data = picture.data.toString('base64');
+            const base64Response = await fetch(`data:${picture.format};base64,${base64Data}`);
+            //const blobdata = `data:${picture.format};base64,${picture.data.toString('base64')}`
+            updatemetadata(fileindex, await base64Response.blob());*/
+            /*var dimensions = sizeof(picture.data);//scales height of image by width of window
+            backgroundmaskimg.style.height = `${Number(dimensions.height / dimensions.width * 100)}vw`;*/
+
+        } else {
+            //use placeholder image
+            document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
+            document.getElementById('coverartsmall').name = "vibecat"
+            backgroundmaskimg.src = "";
+            backgroundmaskimg.style.display = "none";
+            wallpaper.get().then((wallpaperpath) => {//set desktop wallpaper
+                if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
+                    //use desktop wallpaper
+                    wallpaperpath = wallpaperpath.replace(/\\/g, '/');// replace all \\ with /
+                    document.getElementById('mainmaskcontainer').style.backgroundImage = `url('${wallpaperpath}')`;
+                } else {
+                    console.error('Failed to get desktop wallpaper')
+                }
+            }).catch((err) => {
+                console.warn('wallpaper error ', err)
+            })
+        }
+
+        navigator.mediaSession.playbackState = "playing";
+        //mediaSession metadata
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: player.files[fileindex].filename,
+            artist: 'unknown',
+            album: 'unknown',
+            /*artwork: [{ src: image },]*/
+        });
+        navigator.mediaSession.playbackState = "playing";
+        navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
+        navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
+        //navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
+        navigator.mediaSession.setActionHandler('seekbackward', function () { });
+        navigator.mediaSession.setActionHandler('seekforward', function () { });
+        navigator.mediaSession.setActionHandler('seekto', function () { });
+        navigator.mediaSession.setActionHandler('previoustrack', function () { console.log('External previous command'); player.previous() });
+        navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
+        console.log(navigator.mediaSession)
+
+        // After media (video or audio) starts playing
+
+
+    },
     play: async function (fileindex) {
         /* If something is playing resumes playback,
         if nothing is playing plays from the player.files[fileindex],
@@ -494,6 +553,7 @@ let player = {//Playback control
                 loop: false,
                 volume: 1,
                 preload: false,
+                html5: true,
                 onend: function () {//Playback ends
                     console.log('Finished playing', player.files[fileindex].path);
                     player.playstate = false;
@@ -509,6 +569,7 @@ let player = {//Playback control
                 },
                 onload: function () {
                     console.log('loaded: ', player.files[fileindex].path)
+                    document.getElementById('songTitle').innerText = player.files[fileindex].filename;
                     //player.stream1.play()//play the sound that was just loaded
                     //Handle background video (if any)
                     song_progress_bar.value = 0;
@@ -519,7 +580,7 @@ let player = {//Playback control
                             backgroundvideo.play();
                             break;
                         default: backgroundvideo.src = "";
-                        
+
                     }
                     //backgroundvideo.currentTime = 0;
                 },
@@ -528,60 +589,12 @@ let player = {//Playback control
                     player.playstate = true;//now playing and play pause functionality
                     player.now_playing = Number(fileindex);//ha ha yes types, remove if you want a brain ache
 
-                    //Ui state chamges
                     ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
-                    document.getElementById('songTitle').innerText = player.files[fileindex].filename;
-
                     playbtn.classList = "pausebtn"
                     playbtn.title = "pause"
                     //document.getElementById('titlcon').classList = "titlcon_active"
                     console.log('Playing: ', player.files[fileindex]);
-
-                    /*      set meta properties     */
-                    const metadata = await mm.parseFile(player.files[fileindex].path);
-                    console.log(metadata)
-                    //seek and time
-                    console.log('Meta duration ', metadata.format.duration)
-                    song_progress_bar.max = metadata.format.duration;
-                    player.start_seeking()
-                    //picture
-                    const picture = mm.selectCover(metadata.common.picture)
-                    if (typeof (picture) != 'undefined' && picture != null) {
-                        console.log('Cover art info: ', picture)
-                        document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                        backgroundmaskimg.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                        backgroundmaskimg.style.display = "block";
-
-                        //let blobdata = new Uint8Array(picture.data)
-                        //updatemetadata(fileindex,new Blob(Float64Array.from(picture.data), {type: picture.format}));
-                        // updatemetadata(fileindex, Float64Array.from(picture.data));
-                        //updatemetadata(fileindex, picture.data);
-                        /*const base64Data = picture.data.toString('base64');
-                        const base64Response = await fetch(`data:${picture.format};base64,${base64Data}`);
-                        //const blobdata = `data:${picture.format};base64,${picture.data.toString('base64')}`
-                        updatemetadata(fileindex, await base64Response.blob());*/
-                        /*var dimensions = sizeof(picture.data);//scales height of image by width of window
-                        backgroundmaskimg.style.height = `${Number(dimensions.height / dimensions.width * 100)}vw`;*/
-                        updatemetadata(fileindex, null);
-                    } else {
-                        //use placeholder image
-                        document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
-                        document.getElementById('coverartsmall').name = "vibecat"
-                        backgroundmaskimg.src = "";
-                        updatemetadata(fileindex, null);
-                        backgroundmaskimg.style.display = "none";
-                        wallpaper.get().then((wallpaperpath) => {//set desktop wallpaper
-                            if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
-                                //use desktop wallpaper
-                                wallpaperpath = wallpaperpath.replace(/\\/g, '/');// replace all \\ with /
-                                document.getElementById('mainmaskcontainer').style.backgroundImage = `url('${wallpaperpath}')`;
-                            } else {
-                                console.error('Failed to get desktop wallpaper')
-                            }
-                        }).catch((err) => {
-                            console.warn('wallpaper error ', err)
-                        })
-                    }
+                    player.updatemetadata(fileindex);
 
                 }
             });
@@ -595,7 +608,6 @@ let player = {//Playback control
         console.log('Pause functionaliy');
         if (player.playstate != false) {
             player.stream1.pause();
-            document.getElementById('audiodoot').pause()
             backgroundvideo.pause();
             player.stop_seeking()
             player.playstate = false;//stop playstate 
@@ -652,11 +664,24 @@ let player = {//Playback control
         player.stop_seeking();
         player.seekterval = setInterval(() => { song_progress_bar.value = player.stream1.seek(); }, 1000)
     },
-    stop_seeking: async function () {
+    stop_seeking: function () {
         console.warn('stop seeking')
         clearInterval(player.seekterval)
         player.seekterval = null;
-    }
+    },
+    seekforward: function () {
+        console.log('seek forward')
+        var seeked = player.stream1.seek() + 5
+        player.stream1.seek(seeked)
+        backgroundvideo.currentTime = seeked
+
+    },
+    seekbackward: function () {
+        console.log('seek backwards')
+        var seeked = player.stream1.seek() - 5
+        player.stream1.seek(seeked)
+        backgroundvideo.currentTime = seeked
+    },
 }
 
 let UI = {
@@ -755,34 +780,4 @@ let notify = {//notification function house
             }
         })
     }
-}
-
-function updatemetadata(fileindex, image) {
-
-    document.getElementById('audiodoot').src = player.files[fileindex].path;
-    document.getElementById('audiodoot').play()
-    document.getElementById("audiodoot").volume = 0
-    //document.getElementById('audiodoot').mute()
-    navigator.mediaSession.playbackState = "playing";
-    //mediaSession metadata
-    navigator.mediaSession.metadata = new MediaMetadata({
-        title: player.files[fileindex].filename,
-        artist: 'unknown',
-        album: 'unknown',
-        artwork: [{ src: image },]
-    });
-    navigator.mediaSession.playbackState = "playing";
-    navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
-    navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
-    navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
-    navigator.mediaSession.setActionHandler('seekbackward', function () { });
-    navigator.mediaSession.setActionHandler('seekforward', function () { });
-    navigator.mediaSession.setActionHandler('seekto', function () { });
-    navigator.mediaSession.setActionHandler('previoustrack', function () { console.log('External previous command'); player.previous() });
-    navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
-    console.log(navigator.mediaSession)
-
-    // After media (video or audio) starts playing
-
-
 }

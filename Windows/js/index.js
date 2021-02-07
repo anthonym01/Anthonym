@@ -430,14 +430,25 @@ let player = {//Playback control
         }
     },
     updatemetadata: async function (fileindex) {
-        /*      set meta properties     */
+
+        navigator.mediaSession.playbackState = "playing";
+        navigator.mediaSession.metadata = new MediaMetadata({ title: player.files[fileindex].filename });
+
+        navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
+        navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
+        //navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
+        //navigator.mediaSession.setActionHandler('seekbackward', function () { });
+        //navigator.mediaSession.setActionHandler('seekforward', function () { });
+        navigator.mediaSession.setActionHandler('seekto', function () { });
+        navigator.mediaSession.setActionHandler('previoustrack', function () { console.log('External previous command'); player.previous() });
+        navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
+        console.log(navigator.mediaSession)
+
+        /* pull file data */
         const metadata = await mm.parseFile(player.files[fileindex].path);
         console.log(metadata)
-        //seek and time
-        if (metadata.common.title != undefined) { document.getElementById('songTitle').innerText = metadata.common.title; }
-        console.log('Meta duration ', metadata.format.duration)
-        song_progress_bar.max = metadata.format.duration;
-        player.start_seeking()
+        document.getElementById('songTitle').innerText = metadata.common.title ? metadata.common.title : player.files[fileindex].filename;
+
         //picture
         const picture = mm.selectCover(metadata.common.picture)
         if (typeof (picture) != 'undefined' && picture != null) {
@@ -445,18 +456,6 @@ let player = {//Playback control
             document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
             backgroundmaskimg.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
             backgroundmaskimg.style.display = "block";
-
-            //let blobdata = new Uint8Array(picture.data)
-            //updatemetadata(fileindex,new Blob(Float64Array.from(picture.data), {type: picture.format}));
-            // updatemetadata(fileindex, Float64Array.from(picture.data));
-            //updatemetadata(fileindex, picture.data);
-            /*const base64Data = picture.data.toString('base64');
-            const base64Response = await fetch(`data:${picture.format};base64,${base64Data}`);
-            //const blobdata = `data:${picture.format};base64,${picture.data.toString('base64')}`
-            updatemetadata(fileindex, await base64Response.blob());*/
-            /*var dimensions = sizeof(picture.data);//scales height of image by width of window
-            backgroundmaskimg.style.height = `${Number(dimensions.height / dimensions.width * 100)}vw`;*/
-
         } else {
             //use placeholder image
             document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
@@ -476,36 +475,31 @@ let player = {//Playback control
             })
         }
 
-        navigator.mediaSession.playbackState = "playing";
-        //mediaSession metadata
         navigator.mediaSession.metadata = new MediaMetadata({
-            title: player.files[fileindex].filename,
-            artist: 'unknown',
-            album: 'unknown',
-            /*artwork: [{ src: image },]*/
+            title: metadata.common.title ? metadata.common.title : player.files[fileindex].filename,
+            artist: metadata.common.artist ? metadata.common.artist : "unknown",
+            album: metadata.common.album ? metadata.common.album : "unknown",
+            //artwork: picture ? [{ src: new Blob(`base64,${picture.data.toString('base64')}`, { type: picture.format }) },] : null,
         });
-        navigator.mediaSession.playbackState = "playing";
-        navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
-        navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
-        //navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
-        navigator.mediaSession.setActionHandler('seekbackward', function () { });
-        navigator.mediaSession.setActionHandler('seekforward', function () { });
-        navigator.mediaSession.setActionHandler('seekto', function () { });
-        navigator.mediaSession.setActionHandler('previoustrack', function () { console.log('External previous command'); player.previous() });
-        navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
-        console.log(navigator.mediaSession)
-
-        // After media (video or audio) starts playing
-
-
     },
     play: async function (fileindex) {
         /* If something is playing resumes playback,
         if nothing is playing plays from the player.files[fileindex],
         if no fileindex assumes playback of the last song, if no last song, unloads playr
         */
-
         console.log('Attempt to play: ', fileindex);
+        switch (player.playstate) {
+            case "audio":
+
+                break;
+            case "video":
+
+                break;
+            case false:
+
+                break;
+            default:
+        }
 
         //if(fileindex!=undefined && player.files[fileindex]!=undefined){notify.new('File')}
 
@@ -519,7 +513,7 @@ let player = {//Playback control
                     backgroundvideo.src = "";
                 }
             }
-        } else {
+        } else {//playing something
             if (fileindex == player.now_playing) {
                 player.stream1.play()
                 backgroundvideo.play();
@@ -529,7 +523,7 @@ let player = {//Playback control
             }
         }
 
-        if (fileindex == undefined && player.now_playing != null) {
+        if (fileindex == undefined && player.now_playing != null) {//resume playback
             player.stream1.play()
             backgroundvideo.play();
             backgroundvideo.currentTime = player.stream1.seek()
@@ -537,7 +531,7 @@ let player = {//Playback control
             return 0;
         }
 
-        if (fileindex == player.now_playing) {
+        if (fileindex == player.now_playing) {//pause playback
             if (player.playstate == true) {
                 player.pause()
             } else {
@@ -573,6 +567,7 @@ let player = {//Playback control
                     //player.stream1.play()//play the sound that was just loaded
                     //Handle background video (if any)
                     song_progress_bar.value = 0;
+                    song_progress_bar.max = player.files[fileindex].duration;
                     switch (path.parse(player.files[fileindex].path).ext) {//check file types
 
                         case ".mp4": case ".webm": case ".mov"://playable as music files
@@ -587,15 +582,13 @@ let player = {//Playback control
                 onplay: async function () {
                     //playback of loaded song file sucessfull
                     player.playstate = true;//now playing and play pause functionality
-                    player.now_playing = Number(fileindex);//ha ha yes types, remove if you want a brain ache
-
+                    player.now_playing = Number(fileindex);//remove if you want a brain ache
+                    player.updatemetadata(fileindex);
                     ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
                     playbtn.classList = "pausebtn"
                     playbtn.title = "pause"
-                    //document.getElementById('titlcon').classList = "titlcon_active"
+                    player.start_seeking()
                     console.log('Playing: ', player.files[fileindex]);
-                    player.updatemetadata(fileindex);
-
                 }
             });
             player.stream1.load()//load stream

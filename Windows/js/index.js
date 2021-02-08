@@ -21,7 +21,7 @@ const backgroundmaskimg = document.getElementById('backgroundmaskimg');
 const backgroundvideo = document.getElementById('backgroundvideo');
 
 //  Taskbar buttons for frameless window
-document.getElementById('x-button').addEventListener('click', function () { main.x_button() })
+document.getElementById('x-button').addEventListener('click', function () { player.pause(); main.x_button() })
 document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
 document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })
 
@@ -262,7 +262,7 @@ let player = {//Playback control
             console.log('seek to :', this.value);
             player.stop_seeking();
             player.stream1.seek(this.value);
-            backgroundvideo.currentTime = this.value;
+            //backgroundvideo.currentTime = this.value;
         })
         song_progress_bar.addEventListener('mouseenter', function () { player.stop_seeking() })
         song_progress_bar.addEventListener('mouseleave', function (e) {
@@ -273,6 +273,7 @@ let player = {//Playback control
     },
     fetch_library: async function () {
         //build library inteligentlly
+        player.files=[];
         if (main.get.musicfolders() == []) {
             first_settup()
         } else {
@@ -400,6 +401,16 @@ let player = {//Playback control
                     type: "normal",
                     click() { player.play(fileindex) }
                 },
+                {
+                    label: "add to favourites",
+                    type: "normal",
+                    click() { }
+                },
+                {
+                    label: "add to playlist",
+                    type: "normal",
+                    click() { }
+                },
                 { type: "separator" },
                 {
                     label: "copy file name",
@@ -433,7 +444,6 @@ let player = {//Playback control
 
         navigator.mediaSession.playbackState = "playing";
         navigator.mediaSession.metadata = new MediaMetadata({ title: player.files[fileindex].filename });
-
         navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
         navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
         //navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
@@ -442,7 +452,6 @@ let player = {//Playback control
         navigator.mediaSession.setActionHandler('seekto', function () { });
         navigator.mediaSession.setActionHandler('previoustrack', function () { console.log('External previous command'); player.previous() });
         navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
-        console.log(navigator.mediaSession)
 
         /* pull file data */
         const metadata = await mm.parseFile(player.files[fileindex].path);
@@ -475,11 +484,14 @@ let player = {//Playback control
             })
         }
 
+        // artblob = new Blob([picture.data], { type: picture.format })
+        //let artblob = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+
         navigator.mediaSession.metadata = new MediaMetadata({
             title: metadata.common.title ? metadata.common.title : player.files[fileindex].filename,
             artist: metadata.common.artist ? metadata.common.artist : "unknown",
             album: metadata.common.album ? metadata.common.album : "unknown",
-            //artwork: picture ? [{ src: new Blob(`base64,${picture.data.toString('base64')}`, { type: picture.format }) },] : null,
+            artwork: picture ? [{ src: new Blob([picture.data], { type: picture.format }) }] : null,
         });
     },
     play: async function (fileindex) {
@@ -501,23 +513,16 @@ let player = {//Playback control
             default:
         }
 
-        //if(fileindex!=undefined && player.files[fileindex]!=undefined){notify.new('File')}
-
         if (player.playstate != false) {//if is playing something
             if (fileindex == undefined) {//pause playback
                 player.pause()
                 return 0;
-            } else {
-                if (fileindex != player.now_playing) {
-                    player.stream1.unload();//unlock the stream thats gonna be used
-                    backgroundvideo.src = "";
-                }
             }
         } else {//playing something
             if (fileindex == player.now_playing) {
                 player.stream1.play()
-                backgroundvideo.play();
-                backgroundvideo.currentTime = player.stream1.seek()
+                //backgroundvideo.play();
+                //backgroundvideo.currentTime = player.stream1.seek()
                 console.log('resume : ', player.files[player.now_playing].path);
                 return 0;
             }
@@ -525,8 +530,8 @@ let player = {//Playback control
 
         if (fileindex == undefined && player.now_playing != null) {//resume playback
             player.stream1.play()
-            backgroundvideo.play();
-            backgroundvideo.currentTime = player.stream1.seek()
+            //backgroundvideo.play();
+            //backgroundvideo.currentTime = player.stream1.seek()
             console.log('resume : ', player.files[player.now_playing].path);
             return 0;
         }
@@ -538,6 +543,11 @@ let player = {//Playback control
                 player.stream1.play()
             }
             return 0;
+        }
+
+        if (fileindex != player.now_playing && player.playstate != false) {
+            await player.stream1.unload();//unlock the stream thats gonna be used
+            //backgroundvideo.src = "";
         }
 
         try {
@@ -571,10 +581,10 @@ let player = {//Playback control
                     switch (path.parse(player.files[fileindex].path).ext) {//check file types
 
                         case ".mp4": case ".webm": case ".mov"://playable as music files
-                            backgroundvideo.src = player.files[fileindex].path;
-                            backgroundvideo.play();
+                            //backgroundvideo.src = player.files[fileindex].path;
+                            //backgroundvideo.play();
                             break;
-                        default: backgroundvideo.src = "";
+                        default: //backgroundvideo.src = "";
 
                     }
                     //backgroundvideo.currentTime = 0;
@@ -601,7 +611,7 @@ let player = {//Playback control
         console.log('Pause functionaliy');
         if (player.playstate != false) {
             player.stream1.pause();
-            backgroundvideo.pause();
+            //backgroundvideo.pause();
             player.stop_seeking()
             player.playstate = false;//stop playstate 
             navigator.mediaSession.playbackState = "paused";
@@ -621,12 +631,13 @@ let player = {//Playback control
     next: async function () {//Play next song in que if any
         console.log('Play Next');
         //check shuffle and skip
-        player.play(player.now_playing + 1)
+        const nextsong = player.files[player.now_playing + 1] ? Number(player.now_playing + 1) : 0;
+        player.play(nextsong)
         document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
-        document.getElementById(`${player.now_playing + 1}`).className = "song_bar_active"
-        window.location.href = `#${player.now_playing - 2}`;
+        document.getElementById(`${nextsong}`).className = "song_bar_active"
         song_progress_bar.value = 0;//reset seek value
-        player.now_playing = player.now_playing + 1;
+        player.now_playing = nextsong;
+        window.location.href = `#${nextsong}`;
     },
     previous: async function () {
         console.log('Play Previous');
@@ -655,7 +666,15 @@ let player = {//Playback control
     start_seeking: async function () {
         console.warn('start seeking')
         player.stop_seeking();
-        player.seekterval = setInterval(() => { song_progress_bar.value = player.stream1.seek(); }, 1000)
+        player.seekterval = setInterval(() => {
+            let seeked = player.stream1.seek()
+            song_progress_bar.value = seeked;
+            navigator.mediaSession.setPositionState({
+                duration: player.files[player.now_playing].duration,//player.files[player.now_playing].duration,
+                playbackRate: 1,
+                position: seeked,
+            });
+        }, 1000)
     },
     stop_seeking: function () {
         console.warn('stop seeking')
@@ -666,14 +685,14 @@ let player = {//Playback control
         console.log('seek forward')
         var seeked = player.stream1.seek() + 5
         player.stream1.seek(seeked)
-        backgroundvideo.currentTime = seeked
+        //backgroundvideo.currentTime = seeked;
 
     },
     seekbackward: function () {
         console.log('seek backwards')
         var seeked = player.stream1.seek() - 5
         player.stream1.seek(seeked)
-        backgroundvideo.currentTime = seeked
+        //backgroundvideo.currentTime = seeked
     },
 }
 

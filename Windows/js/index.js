@@ -35,12 +35,12 @@ window.addEventListener('load', async function () {
     console.log('Running from:', process.resourcesPath)
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
 
-    if (localStorage.getItem("Anthonymcfg")) { await config_manage.load() }
+    if (localStorage.getItem("Anthonymcfg")) { config_manage.load() }
     UI.initalize()
     player.initalize()
     maininitalizer()
     UI.get_desktop_wallpaper().then((wallpaperpath) => { mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')` })
-    setTimeout(() => {
+    setTimeout(async () => {
 
         //last palyed song
         window.location.href = `#${config.last_played - 2}`;
@@ -112,10 +112,10 @@ async function maininitalizer() {//Used to start re-startable app functions
 }
 
 let config = {
-
     key: "Anthonymcfg",
     background_blur: 4,//pixels
     last_played: 0,
+    favourites: ["I can be the one"]
 }
 
 let config_manage = {
@@ -295,13 +295,13 @@ let player = {//Playback control
         //build library inteligentlly
         player.files = [];
         if (main.get.musicfolders() == []) {
-            first_settup()
+            first_settup()//run first settup
         } else {
-            await player.getfiles(main.get.musicfolders())//wait for file checks
-            setTimeout(() => { player.build_library() }, 0)//imediatly after file checks
-            var hold = setInterval(() => {
+            await getfiles(main.get.musicfolders())//wait for recursive file checks
+            setTimeout(() => { build_library() }, 0)//imediatly after file checks
+            /*var hold = setInterval(() => {
                 if (main_library_view.childElementCount < player.files.length) {
-                    player.build_library()
+                    build_library()
                     console.warn('recheck library');
                     notify.new(
                         'Slow disk',
@@ -310,156 +310,157 @@ let player = {//Playback control
                 } else {
                     clearInterval(hold)
                 }
-            }, 1000);//retry again and again
+            }, 1000);//retry over and over, again and again-gen*/
         }
-    },
-    getfiles: async function (muzicpaths) {//gets files form array of music folder paths
-        console.log('Searching directory: ', muzicpaths)
 
-        muzicpaths.forEach(folder => {//for each folder in the array
+        async function getfiles(muzicpaths) {//gets files form array of music folder paths
+            console.log('Searching directory: ', muzicpaths)
 
-            fs.readdir(folder, function (err, files) {//read the files within the directory
+            muzicpaths.forEach(folder => {//for each folder in the array
 
-                if (err) { console.warn('File error', err) }//error accessing directory due to it not existing or locked permissions
+                fs.readdir(folder, function (err, files) {//read the files within the directory
 
-                files.forEach(file => {//for each file in the folder
+                    if (err) { console.warn('File error', err) }//error accessing directory due to it not existing or locked permissions
 
-                    var fullfilepath = path.join(folder, file);
-                    if (fs.statSync(fullfilepath).isDirectory()) {//sud-directory to search
-                        player.getfiles([fullfilepath]);
-                        return 0;
-                    } else {//file to handle
+                    files.forEach(file => {//for each file in the folder
 
-                        switch (path.parse(fullfilepath).ext) {//check file types
+                        var fullfilepath = path.join(folder, file);
+                        if (fs.statSync(fullfilepath).isDirectory()) {//sud-directory to search
+                            getfiles([fullfilepath]);
+                            return 0;
+                        } else {//file to handle
 
-                            case ".mp3": case ".m4a": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
-                            case ".aac": case ".caf": case ".m4b": case ".mp4": case ".m4v": case ".weba":
-                            case ".webm": case ".dolby": case ".flac": //playable as music files
-                                player.files.push({ filename: path.parse(fullfilepath).name, path: fullfilepath });
-                                break;
+                            switch (path.parse(fullfilepath).ext) {//check file types
 
-                            case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
-                                player.playlists.push({ path: fullfilepath });
-                                break;
+                                case ".mp3": case ".m4a": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
+                                case ".aac": case ".caf": case ".m4b": case ".mp4": case ".m4v": case ".weba":
+                                case ".webm": case ".dolby": case ".flac": //playable as music files
+                                    player.files.push({ filename: path.parse(fullfilepath).name, path: fullfilepath });
+                                    break;
 
-                            default: console.warn('Cannot handle (not supported): ', fullfilepath);//not supported music file
+                                case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
+                                    player.playlists.push({ path: fullfilepath });
+                                    break;
+
+                                default: console.warn('Cannot handle (not supported): ', fullfilepath);//not supported music file
+                            }
                         }
-                    }
+                    })
                 })
             })
-        })
-        //player.build_library();//make after get of files, get of files must be async
-    },
-    build_library: async function () {
-        main_library_view.innerHTML = "";
-
-        for (let fileindex in player.files) { buildsong(fileindex); }
-
-        function buildsong(fileindex) {
-            var song_bar = document.createElement('div')
-            song_bar.classList = "song_bar"
-            song_bar.id = fileindex
-            var song_title = document.createElement('div')
-            song_title.className = "song_title"
-            song_title.innerHTML = player.files[fileindex].filename;
-            song_bar.title = `Play ${player.files[fileindex].filename}`
-            song_bar.appendChild(song_title)
-            main_library_view.appendChild(song_bar)
-            functionality(song_bar, fileindex);
-
-            /*if(process.platform == 'linux'){
- 
-            }*/
-            setTimeout(() => {//artificial delay to prevent all files from being accessed within 20ms of each other, will slow down webview when drawing images from metadata
-                fillmetadata(song_bar, fileindex, song_title)
-            }, fileindex * 5);
-
         }
+        
+        async function build_library() {
+            main_library_view.innerHTML = "";
 
-        async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
-            try {
-                var song_duration = document.createElement('div')
-                song_duration.className = "song_duration"
-                mm.parseFile(player.files[fileindex].path).then((metadata) => {
-                    //console.log(metadata)
+            for (let fileindex in player.files) { buildsong(fileindex); }
 
-                    //metadata song title
-                    if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
+            function buildsong(fileindex) {
+                var song_bar = document.createElement('div')
+                song_bar.classList = "song_bar"
+                song_bar.id = fileindex
+                var song_title = document.createElement('div')
+                song_title.className = "song_title"
+                song_title.innerHTML = player.files[fileindex].filename;
+                song_bar.title = `Play ${player.files[fileindex].filename}`
+                song_bar.appendChild(song_title)
+                main_library_view.appendChild(song_bar)
+                functionality(song_bar, fileindex);
 
-                    //file duration
-                    player.files[fileindex].duration = metadata.format.duration;//raw duration
-                    song_duration.title = `${metadata.format.duration.toPrecision(2)} seconds`;
-                    if (Number(metadata.format.duration % 60) >= 10) {
-                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
-                    } else {
-                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
+                /*if(process.platform == 'linux'){
+     
+                }*/
+                setTimeout(() => {//artificial delay to prevent all files from being accessed within 20ms of each other, will slow down webview when drawing images from metadata
+                    fillmetadata(song_bar, fileindex, song_title);
+                }, fileindex * 5);
+
+            }
+
+            async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
+                try {
+                    var song_duration = document.createElement('div')
+                    song_duration.className = "song_duration"
+                    mm.parseFile(player.files[fileindex].path, { duration: true }).then(async (metadata) => {
+
+                        //metadata song title
+                        if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
+
+                        //file duration
+                        player.files[fileindex].duration = metadata.format.duration;//raw duration
+                        song_duration.title = `${metadata.format.duration.toPrecision(2)} seconds`;
+                        if (Number(metadata.format.duration % 60) >= 10) {
+                            song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
+                        } else {
+                            song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
+                        }
+                        eliment.appendChild(song_duration)
+
+                        //cover art
+                        const picture = mm.selectCover(metadata.common.picture)
+                        if (typeof (picture) != 'undefined' && picture != null) {
+                            var songicon = document.createElement("img")
+                            songicon.className = "songicon"
+                            songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                            eliment.appendChild(songicon)
+                        }
+                        else {
+                            //use placeholder image
+                            var songicon = document.createElement("div")
+                            songicon.className = "songicon_dfault"
+                            eliment.appendChild(songicon)
+                        }
+
+
+                    });
+                } catch (err) {
+                    console.warn("Metadata error : ", err)
+                }
+            }
+
+            async function functionality(eliment, fileindex) {//context menu and playback on click
+
+                let contextMenu = new Menu.buildFromTemplate([
+                    {//play button
+                        label: "Play",
+                        type: "normal",
+                        click() { player.play(fileindex) }
+                    },
+                    {
+                        label: "add to favourites",
+                        type: "normal",
+                        click() { }
+                    },
+                    {
+                        label: "add to playlist",
+                        type: "normal",
+                        click() { }
+                    },
+                    { type: "separator" },
+                    {
+                        label: "copy file name",
+                        click() { clipboard.writeText(player.files[fileindex].filename) }
+                    },
+                    {//open song file in default external application
+                        label: "show in folder",
+                        click() { shell.showItemInFolder(player.files[fileindex].path) }
+                    },
+                    {//copy file path
+                        label: "copy file location",
+                        toolTip: `${player.files[fileindex].path}`,
+                        click() { clipboard.write(player.files[fileindex].path); }
                     }
-                    eliment.appendChild(song_duration)
+                ])
 
-                    //cover art
-                    const picture = mm.selectCover(metadata.common.picture)
-                    if (typeof (picture) != 'undefined' && picture != null) {
-                        var songicon = document.createElement("img")
-                        songicon.className = "songicon"
-                        songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                        eliment.appendChild(songicon)
-                    }
-                    else {
-                        //use placeholder image
-                        var songicon = document.createElement("div")
-                        songicon.className = "songicon_dfault"
-                        eliment.appendChild(songicon)
-                    }
+                eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
+                    e.preventDefault();
+                    e.stopPropagation();//important
+                    contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
+                }, false);
 
-
-                });
-            } catch (err) {
-                console.warn("Metadata error : ", err)
+                eliment.addEventListener('click', function () { player.play(fileindex) })//click to play
             }
         }
 
-        async function functionality(eliment, fileindex) {//context menu and playback on click
-
-            let contextMenu = new Menu.buildFromTemplate([
-                {//play button
-                    label: "Play",
-                    type: "normal",
-                    click() { player.play(fileindex) }
-                },
-                {
-                    label: "add to favourites",
-                    type: "normal",
-                    click() { }
-                },
-                {
-                    label: "add to playlist",
-                    type: "normal",
-                    click() { }
-                },
-                { type: "separator" },
-                {
-                    label: "copy file name",
-                    click() { clipboard.writeText(player.files[fileindex].filename) }
-                },
-                {//open song file in default external application
-                    label: "show in folder",
-                    click() { shell.showItemInFolder(player.files[fileindex].path) }
-                },
-                {//copy file path
-                    label: "copy file location",
-                    toolTip: `${player.files[fileindex].path}`,
-                    click() { clipboard.write(player.files[fileindex].path); }
-                }
-            ])
-
-            eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
-                e.preventDefault();
-                e.stopPropagation();//important
-                contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
-            }, false);
-
-            eliment.addEventListener('click', function () { player.play(fileindex) })//click to play
-        }
     },
     play: async function (fileindex, load) {
         /* If something is playing resumes playback,
@@ -467,7 +468,7 @@ let player = {//Playback control
         if no fileindex assumes playback of the last song, if no last song, unloads playr
         */
         console.log('Attempt to play: ', fileindex);
-        
+
 
         if (player.playstate != false) {//if is playing something
             if (fileindex == undefined) {//pause playback
@@ -477,7 +478,7 @@ let player = {//Playback control
         } else {//playing something
             if (fileindex == player.now_playing) {
                 player.stream1.play();
-                if(backgroundvideo.src!=""){
+                if (backgroundvideo.src != "") {
                     backgroundvideo.play();
                     backgroundvideo.currentTime = player.stream1.seek()
                 }
@@ -488,7 +489,7 @@ let player = {//Playback control
 
         if (fileindex == undefined && player.now_playing != null) {//resume playback
             player.stream1.play();
-            if(backgroundvideo.src!=""){
+            if (backgroundvideo.src != "") {
                 backgroundvideo.play();
                 backgroundvideo.currentTime = player.stream1.seek()
             }

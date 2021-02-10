@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "Electron Main",
             "program": "${workspaceFolder}/main.js",
@@ -13,15 +14,6 @@
                 "<node_internals>/**"
             ],
             "type": "pwa-node"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Launch Program",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "program": "electron main.js"
         }
     ]
 }

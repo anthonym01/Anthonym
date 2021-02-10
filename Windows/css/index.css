@@ -37,6 +37,7 @@
         --off_grey: rgb(50, 50, 50);
         --half_grey: rgb(90, 90, 90);
         --Playbar_grade: linear-gradient(0deg, rgba(0, 0, 0, .8), rgba(0, 0, 0, .3));
+        --Playbar_grade_a: linear-gradient(0deg, rgba(0, 0, 0, .9), rgba(0, 0, 0, .6));
         --Playbar_gradereverse: linear-gradient(180deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
         --file_icon: url('../img/filecons/folder_white.webp');
         --add_icon: url('../img/plus-light.webp');
@@ -257,7 +258,13 @@ body {
     width: 100%;
     height: 7rem;
     background: var(--Playbar_grade);
+    background-position: 0%;
     box-shadow: 0 0 1rem 0 var(--accent_color);
+    transition: background 300ms;
+}
+
+.Playbar:hover {
+    background: var(--Playbar_grade_a);
 }
 
 #coverartsmall {
@@ -284,7 +291,7 @@ body {
     background-size: contain;
     right: calc(50vw - 2.25rem);
     background-image: var(--play_icon);
-    filter: blur(1px);
+    /*filter: blur(1px);*/
     background-size: 80%;
     background-position: 90% 50%;
 }
@@ -338,7 +345,7 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     background-size: 90%;
-    filter: blur(1px);
+    /*filter: blur(0px);*/
 }
 
 .shufflebtn:hover {
@@ -656,15 +663,7 @@ body {
 
 /*  In page notification  */
 
-@keyframes stretch {
-    from {
-        width: 0%
-    }
-
-    to {
-        width: 100%
-    }
-}
+@keyframes stretch {from {width: 0%;} to { width: 100%; } }
 
 .notification {
     position: fixed;
@@ -674,20 +673,14 @@ body {
     width: 20rem;
     /*320px at default zoom*/
     transform: translateX(22rem);
-    background-color: rgba(0, 0, 0, 1);
-    color: rgb(255, 255, 255);
+    background-color: var(--background-color);
+    color: var(--text-color);
     overflow: hidden;
-    box-shadow: 0 0 0.2rem 0 #00ccff;
+    box-shadow: 0 0 0.2rem 0 var(--accent_color);
     cursor: pointer;
     transition: transform 500ms, box-shadow 200ms, opacity 200ms, height 300ms, width 300ms;
-    -webkit-user-select: none;
+    -webkit-user-select: text;
 }
-
-/*.notification:hover {
-    box-shadow: 0 0 1rem 0 #00ccff;
-    height: 18rem;
-    width: 40rem;
-}*/
 
 .notification .title {
     position: absolute;
@@ -708,7 +701,7 @@ body {
     top: 0;
     left: 0;
     z-index: 99;
-    background-color: rgb(255, 255, 255);
+    background-color: var(--text-color);
     height: 0.2rem;
     animation: stretch 11000ms;
     content: "";
@@ -745,7 +738,7 @@ body {
     height: 100%;
     width: 0.19rem;
     content: "";
-    background-color: #f00;
+    background-color: var(--accent_color);
     border-radius: 0.25rem;
     transition: transform 300ms, box-shadow 200ms;
 }
@@ -772,7 +765,7 @@ body {
 
 .x-button:hover::before,
 .x-button:hover::after {
-    box-shadow: 0 0 0.3rem 0 #fff;
+    box-shadow: 0 0 0.3rem 0 var(--text-color);
 }
 
 @media screen and (min-aspect-ratio: 1/1) and (min-width:400px) {

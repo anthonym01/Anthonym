@@ -12,6 +12,7 @@ const path = require('path');
 const wallpaper = require('wallpaper');
 const mm = require('music-metadata');
 //const {Howl, Howler} = require('howler');
+
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
 const playbtn = document.getElementById('playbtn');
 const nextbtn = document.getElementById('nextbtn');
@@ -19,15 +20,48 @@ const main_library_view = document.getElementById('main_library_view');
 const song_progress_bar = document.getElementById('song_progress_bar');
 const backgroundmaskimg = document.getElementById('backgroundmaskimg');
 const backgroundvideo = document.getElementById('backgroundvideo');
+const mainmaskcontainer = document.getElementById('mainmaskcontainer');
 
 //  Taskbar buttons for frameless window
-document.getElementById('x-button').addEventListener('click', function () { player.pause(); main.x_button() })
+document.getElementById('x-button').addEventListener('click', function () {
+    navigator.mediaSession.playbackState = "paused";
+    main.x_button();
+})
 document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
 document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })
 
-window.addEventListener('load', function () {
+window.addEventListener('load', async function () {
+    main_menus();
     console.log('Running from:', process.resourcesPath)
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
+
+    if (localStorage.getItem("Anthonymcfg")) { await config_manage.load() }
+    UI.initalize()
+    player.initalize()
+    maininitalizer()
+    UI.get_desktop_wallpaper().then((wallpaperpath) => { mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')` })
+    setTimeout(() => {
+
+        //last palyed song
+        window.location.href = `#${config.last_played - 2}`;
+        player.play(config.last_played, false);
+        player.pause();
+    }, 500);
+})
+
+window.addEventListener('keydown', function (e) {//keyboard actions
+    switch (e.key) {
+        case " ": case "p": case "enter": e.preventDefault(); player.play(); break;
+        case "n": e.preventDefault(); player.next(); break;
+        case "b": e.preventDefault(); player.previous(); break;
+        case "m": e.preventDefault(); player.mute(); break;
+        case "ArrowRight": e.preventDefault(); player.seekforward(); break;
+        case "ArrowLeft": e.preventDefault(); player.seekbackward(); break;
+        default: console.log(e.key)
+    }
+})
+
+async function main_menus() {
 
     //Main body menu
     const menu_body = new Menu.buildFromTemplate([
@@ -63,58 +97,33 @@ window.addEventListener('load', function () {
         event.stopPropagation()
         text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
     }
-
-    if (localStorage.getItem("Anthonymcfg")) { config.load() }
-    UI.initalize()
-    player.initalize()
-    maininitalizer()
-
-    wallpaper.get().then((wallpaperpath) => {//set desktop wallpaper
-        if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
-            //use desktop wallpaper
-            wallpaperpath = wallpaperpath.replace(/\\/g, '/');// replace all \\ with /
-            document.getElementById('mainmaskcontainer').style.backgroundImage = `url('${wallpaperpath}')`;
-        } else {
-            console.error('Failed to get desktop wallpaper')
-        }
-    }).catch((err) => { console.warn('wallpaper error ', err) })
-})
-
-window.addEventListener('keydown', function (e) {//keyboard actions
-    switch (e.key) {
-        case " ": case "p": case "enter": e.preventDefault(); player.play(); break;
-        case "n": e.preventDefault(); player.next(); break;
-        case "b": e.preventDefault(); player.previous(); break;
-        case "m": e.preventDefault(); player.mute(); break;
-        case "ArrowRight": e.preventDefault(); player.seekforward(); break;
-        case "ArrowLeft": e.preventDefault(); player.seekbackward(); break;
-        default: console.log(e.key)
-    }
-})
+}
 
 async function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
-
     //reset players state to default
-    player.pause()
-    player.stop_seeking()
-    player.files = []//path and other details of song files
-    player.playlists = []//playlist files and details
-    player.queue = []//Play queue randomized from playlist/library
-    player.playstate = false//is (should be) playing music
-    player.fetch_library()
+    player.pause();
+    player.stop_seeking();
+    player.files = [];//path and other details of song files
+    player.playlists = [];//playlist files and details
+    player.queue = [];//Play queue randomized from playlist/library
+    player.playstate = false;//is (should be) playing music
+    player.fetch_library();
 }
 
 let config = {
-    data: {//application data
-        key: "Anthonymcfg",
-        background_blur: 4,//pixels
-    },
+
+    key: "Anthonymcfg",
+    background_blur: 4,//pixels
+    last_played: 0,
+}
+
+let config_manage = {
     save: async function () {//Save the config file
-        console.table('Configuration is being saved', config.data)
-        var stringeddata = JSON.stringify(config.data)
-        localStorage.setItem("Anthonymcfg", stringeddata)
-        main.write_alt_storage_location(stringeddata)
+        console.table('Configuration is being saved', config);
+        var stringeddata = JSON.stringify(config);
+        localStorage.setItem("Anthonymcfg", stringeddata);
+        main.write_alt_storage_location(stringeddata);
     },
     load: function () {//Load the config file
         console.warn('Configuration is being loaded')
@@ -126,29 +135,29 @@ let config = {
                 console.warn('config Loaded from: ', alt_location, 'Data from fs read operation: ', fileout)
                 fileout = JSON.parse(fileout)//parse the json
                 if (fileout.key == "Anthonymcfg") {//check if file has key
-                    config.data = fileout;
+                    config = fileout;
                     console.warn('configuration applied from file')
                 } else {//no key, not correct file, load from application storage
                     console.warn('The file is not a config file, internal configuration will be used')
-                    config.data = JSON.parse(localStorage.getItem("Anthonymcfg"))
+                    config = JSON.parse(localStorage.getItem("Anthonymcfg"))
                 }
             } else {//file does not exist, was moved, deleted or is inaccesible
-                config.data = JSON.parse(localStorage.getItem("Anthonymcfg"))
+                config = JSON.parse(localStorage.getItem("Anthonymcfg"))
                 alert("file does not exist, was moved, deleted or is otherwise inaccesible, please select a new location to save app data ")
-                config.selectlocation();
+                config_manage.selectlocation();
             }
         } else {//load from application storage
-            config.data = JSON.parse(localStorage.getItem("Anthonymcfg"))
+            config = JSON.parse(localStorage.getItem("Anthonymcfg"))
             console.log('config Loaded from application storage')
         }
 
-        console.table(config.data)
+        console.table(config)
     },
     delete: function () {//Wjipe stowage
         localStorage.clear("Anthonymcfg")//yeet storage key
         main.set.alt_location(false)
         main.set.musicfolders([])
-        config.save()
+        config_manage.save()
     },
     backup: async function () {//backup configuration to a file
         console.warn('Configuration backup initiated')
@@ -162,7 +171,7 @@ let config = {
             if (filepath.canceled == true) {//the file save dialogue was canceled my the user
                 console.warn('The file dialogue was canceled by the user')
             } else {
-                main.write_file(filepath.filePath, JSON.stringify(config.data))//hand off writing the file to main process
+                main.write_file(filepath.filePath, JSON.stringify(config))//hand off writing the file to main process
             }
         }).catch((err) => {//catch error
             alert('An error occured ', err.message);
@@ -189,8 +198,8 @@ let config = {
                         console.log("The file content is : " + data);
                         var fileout = JSON.parse(data)
                         if (fileout.key == "Anthonymcfg") {//check if this file is a timetable backup file
-                            config.data = fileout
-                            config.save();
+                            config = fileout
+                            config_manage.save();
                             maininitalizer()
                         } else {
                             console.warn(filepath.filePaths[0] + ' is not a backup file')
@@ -204,11 +213,13 @@ let config = {
     },
     selectlocation: async function () {//select location for configuration storage
         console.log('Select config location')
+        var altpath
+
         var alt_location = main.get.alt_location()
         if (alt_location != false) {
-            var altpath = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'], defaultPath: alt_location })
+            altpath = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'], defaultPath: alt_location })
         } else {
-            var altpath = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'], })
+            altpath = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'], })
         }
 
         await altpath.then((altpath) => {
@@ -220,9 +231,9 @@ let config = {
                 main.set.alt_location(altpath.filePaths[0])
 
                 if (fs.existsSync(altpath + "/Anthonymcfg config.json")) {//config file already exist there
-                    config.load()
+                    config_manage.load()
                 } else {//no config file exist there
-                    config.save();
+                    config_manage.save();
                 }
             }
         }).catch((err) => {
@@ -233,8 +244,17 @@ let config = {
 }
 
 let player = {//Playback control
-    files: [],//path and other details of song files
-    playlists: [],//playlist files and details
+    files: [//path and other details of song files
+        { filename: "basename", path: "path in file system", duration: "song duration in seconds" }
+    ],
+    playlists: [//playlist files and details
+        {
+            path: "path  to playlist file, if any",
+            files: [
+                { name: "Name of file saved from last run", index: "index of file in current player.files array" },
+            ]
+        }
+    ],
     queue: [],//Play queue randomized from playlist/library
     stream1: null,//stream for howler
     seekterval: null,//looping seek time update
@@ -242,7 +262,7 @@ let player = {//Playback control
     now_playing: null,//Song thats currently playing
     initalize: async function () {
         //set configurations
-        backgroundmaskimg.style.filter = config.data.background_blur ? `blur(${config.data.background_blur}px)` : `blur(0px)`
+        backgroundmaskimg.style.filter = config.background_blur ? `blur(${config.background_blur}px)` : `blur(0px)`
 
         //  Play\pause button
         playbtn.addEventListener('click', function () { player.play() })
@@ -262,7 +282,7 @@ let player = {//Playback control
             console.log('seek to :', this.value);
             player.stop_seeking();
             player.stream1.seek(this.value);
-            //backgroundvideo.currentTime = this.value;
+            backgroundvideo.currentTime = this.value;
         })
         song_progress_bar.addEventListener('mouseenter', function () { player.stop_seeking() })
         song_progress_bar.addEventListener('mouseleave', function (e) {
@@ -273,7 +293,7 @@ let player = {//Playback control
     },
     fetch_library: async function () {
         //build library inteligentlly
-        player.files=[];
+        player.files = [];
         if (main.get.musicfolders() == []) {
             first_settup()
         } else {
@@ -313,7 +333,7 @@ let player = {//Playback control
                         switch (path.parse(fullfilepath).ext) {//check file types
 
                             case ".mp3": case ".m4a": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
-                            case ".aac": case ".caf": case ".m4b": case ".mp4": case ".weba":
+                            case ".aac": case ".caf": case ".m4b": case ".mp4": case ".m4v": case ".weba":
                             case ".webm": case ".dolby": case ".flac": //playable as music files
                                 player.files.push({ filename: path.parse(fullfilepath).name, path: fullfilepath });
                                 break;
@@ -333,10 +353,9 @@ let player = {//Playback control
     build_library: async function () {
         main_library_view.innerHTML = "";
 
-        for (let fileindex in player.files) { buildsong(fileindex) }
-        //player.files.forEach(file => { buildsong(file) })
+        for (let fileindex in player.files) { buildsong(fileindex); }
 
-        async function buildsong(fileindex) {
+        function buildsong(fileindex) {
             var song_bar = document.createElement('div')
             song_bar.classList = "song_bar"
             song_bar.id = fileindex
@@ -346,9 +365,15 @@ let player = {//Playback control
             song_bar.title = `Play ${player.files[fileindex].filename}`
             song_bar.appendChild(song_title)
             main_library_view.appendChild(song_bar)
+            functionality(song_bar, fileindex);
 
-            functionality(song_bar, fileindex)
-            fillmetadata(song_bar, fileindex, song_title)
+            /*if(process.platform == 'linux'){
+ 
+            }*/
+            setTimeout(() => {//artificial delay to prevent all files from being accessed within 20ms of each other, will slow down webview when drawing images from metadata
+                fillmetadata(song_bar, fileindex, song_title)
+            }, fileindex * 5);
+
         }
 
         async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
@@ -433,11 +458,7 @@ let player = {//Playback control
                 contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
             }, false);
 
-            eliment.addEventListener('click', function () {
-                player.play(fileindex)
-                document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
-                this.className = 'song_bar_active'
-            })//click to play
+            eliment.addEventListener('click', function () { player.play(fileindex) })//click to play
         }
     },
     updatemetadata: async function (fileindex) {
@@ -471,17 +492,7 @@ let player = {//Playback control
             document.getElementById('coverartsmall').name = "vibecat"
             backgroundmaskimg.src = "";
             backgroundmaskimg.style.display = "none";
-            wallpaper.get().then((wallpaperpath) => {//set desktop wallpaper
-                if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
-                    //use desktop wallpaper
-                    wallpaperpath = wallpaperpath.replace(/\\/g, '/');// replace all \\ with /
-                    document.getElementById('mainmaskcontainer').style.backgroundImage = `url('${wallpaperpath}')`;
-                } else {
-                    console.error('Failed to get desktop wallpaper')
-                }
-            }).catch((err) => {
-                console.warn('wallpaper error ', err)
-            })
+            UI.get_desktop_wallpaper().then((wallpaperpath) => { mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')` })
         }
 
         // artblob = new Blob([picture.data], { type: picture.format })
@@ -491,10 +502,10 @@ let player = {//Playback control
             title: metadata.common.title ? metadata.common.title : player.files[fileindex].filename,
             artist: metadata.common.artist ? metadata.common.artist : "unknown",
             album: metadata.common.album ? metadata.common.album : "unknown",
-            artwork: picture ? [{ src: new Blob([picture.data], { type: picture.format }) }] : null,
+            //artwork: picture ? [{ src: new Blob([picture.data], { type: picture.format }) }] : null,
         });
     },
-    play: async function (fileindex) {
+    play: async function (fileindex, load) {
         /* If something is playing resumes playback,
         if nothing is playing plays from the player.files[fileindex],
         if no fileindex assumes playback of the last song, if no last song, unloads playr
@@ -521,8 +532,8 @@ let player = {//Playback control
         } else {//playing something
             if (fileindex == player.now_playing) {
                 player.stream1.play()
-                //backgroundvideo.play();
-                //backgroundvideo.currentTime = player.stream1.seek()
+                backgroundvideo.play();
+                backgroundvideo.currentTime = player.stream1.seek()
                 console.log('resume : ', player.files[player.now_playing].path);
                 return 0;
             }
@@ -530,8 +541,8 @@ let player = {//Playback control
 
         if (fileindex == undefined && player.now_playing != null) {//resume playback
             player.stream1.play()
-            //backgroundvideo.play();
-            //backgroundvideo.currentTime = player.stream1.seek()
+            backgroundvideo.play();
+            backgroundvideo.currentTime = player.stream1.seek()
             console.log('resume : ', player.files[player.now_playing].path);
             return 0;
         }
@@ -547,7 +558,7 @@ let player = {//Playback control
 
         if (fileindex != player.now_playing && player.playstate != false) {
             await player.stream1.unload();//unlock the stream thats gonna be used
-            //backgroundvideo.src = "";
+            backgroundvideo.src = "";
         }
 
         try {
@@ -580,49 +591,47 @@ let player = {//Playback control
                     song_progress_bar.max = player.files[fileindex].duration;
                     switch (path.parse(player.files[fileindex].path).ext) {//check file types
 
-                        case ".mp4": case ".webm": case ".mov"://playable as music files
-                            //backgroundvideo.src = player.files[fileindex].path;
-                            //backgroundvideo.play();
+                        case ".mp4": case ".m4v": case ".webm": case ".mov"://playable as music files
+                            backgroundvideo.src = player.files[fileindex].path;
+                            backgroundvideo.play();
                             break;
-                        default: //backgroundvideo.src = "";
+                        default: backgroundvideo.src = "";
 
                     }
-                    //backgroundvideo.currentTime = 0;
+                    backgroundvideo.currentTime = 0;
                 },
                 onplay: async function () {
                     //playback of loaded song file sucessfull
                     player.playstate = true;//now playing and play pause functionality
                     player.now_playing = Number(fileindex);//remove if you want a brain ache
+                    config.last_played = Number(fileindex);
+                    config_manage.save();
                     player.updatemetadata(fileindex);
-                    ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send file name of playing song to main
+                    ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send playing song to main
                     playbtn.classList = "pausebtn"
                     playbtn.title = "pause"
                     player.start_seeking()
                     console.log('Playing: ', player.files[fileindex]);
                 }
             });
-            player.stream1.load()//load stream
+            if (load != false) { player.stream1.load() }
         } catch (err) {
             console.warn('howl error ', err)
+        } finally {
+            document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
+            document.getElementById(fileindex).className = 'song_bar_active'
         }
-        //player.stream1.play()
     },
     pause: function () {
         console.log('Pause functionaliy');
         if (player.playstate != false) {
             player.stream1.pause();
-            //backgroundvideo.pause();
+            backgroundvideo.pause();
             player.stop_seeking()
             player.playstate = false;//stop playstate 
             navigator.mediaSession.playbackState = "paused";
-
-
             playbtn.classList = "playbtn"
             playbtn.title = "play"
-            /*document.getElementById('titlcon').classList = "titlcon"
-            if (document.getElementById('coverartsmall').name == "vibecat") {
-                document.getElementById('coverartsmall').src = "img/memes/Cats/sad kajit.png"
-            }*/
             ipcRenderer.send('Play_msg', player.files[player.now_playing].filename, 'Play');
         } else {//assume error
             console.warn('Tried pause functionality with no playback');
@@ -637,7 +646,7 @@ let player = {//Playback control
         document.getElementById(`${nextsong}`).className = "song_bar_active"
         song_progress_bar.value = 0;//reset seek value
         player.now_playing = nextsong;
-        window.location.href = `#${nextsong}`;
+        window.location.href = `#${nextsong - 2}`;
     },
     previous: async function () {
         console.log('Play Previous');
@@ -685,14 +694,14 @@ let player = {//Playback control
         console.log('seek forward')
         var seeked = player.stream1.seek() + 5
         player.stream1.seek(seeked)
-        //backgroundvideo.currentTime = seeked;
+        backgroundvideo.currentTime = seeked;
 
     },
     seekbackward: function () {
         console.log('seek backwards')
         var seeked = player.stream1.seek() - 5
         player.stream1.seek(seeked)
-        //backgroundvideo.currentTime = seeked
+        backgroundvideo.currentTime = seeked
     },
 }
 
@@ -703,93 +712,87 @@ let UI = {
     settings: {
 
     },
-    get_desktop_wallpaper: async function () {
-        wallpaper.get().then((wallpaperpath) => {//gets desktop wallpaper
-            if (path.parse(wallpaperpath).ext !== undefined) {//check if file is usable
-                //use desktop wallpaper
-                wallpaperpath = wallpaperpath.replace(/\\/g, '/');// replace all \\ with /
-                return wallpaperpath;
+    notify: {//notification function house
+        clap: window.addEventListener('resize', async () => { UI.notify.clearall() }),
+        new: async function (title, body, hover_title, ifunction) {
+
+            let notification = document.createElement("div")
+            notification.classList = "notification"
+
+            let notification_title = document.createElement("div")
+            notification_title.classList = "title"
+            notification_title.innerHTML = title
+            notification.title = hover_title ? hover_title : "click to dismiss"
+
+            let nbody = document.createElement("div")//body
+            nbody.classList = "notifbody"
+            nbody.innerHTML = body;
+
+            notification.appendChild(notification_title)
+            notification.appendChild(nbody)
+            document.body.appendChild(notification)
+
+            if (typeof (ifunction) == 'function') { //imbedded function
+                notification.addEventListener('click', ifunction);
+                let xbutton = document.createElement('div');//Close button
+                xbutton.setAttribute('class', 'x-button')
+                notification.appendChild(xbutton)
+                xbutton.title = 'click to dismiss';
+                xbutton.addEventListener('click', async function (e) { removethis(e, notification) })
             } else {
-                console.error('Failed to get desktop wallpaper')
+                notification.addEventListener('click', async function (e) { removethis(e, notification) })
             }
-        }).catch((err) => {
-            console.warn('wallpaper error ', err)
-        })
-    },
 
-}
+            //Timing effects
+            setTimeout(async () => {
+                notification.style.transform = 'translateX(0)'
+                //UI.notify.shove()
+            }, 50);
 
-let notify = {//notification function house
-    clap: window.addEventListener('resize', async () => { notify.clearall() }),
-    new: async function (title, body, hover_title, ifunction) {
+            setTimeout(async () => { notification.style.opacity = '0.0' }, 10000); //dissapear
 
-        let notification = document.createElement("div")
-        notification.classList = "notification"
+            setTimeout(async () => { try { document.body.removeChild(notification) } catch (err) { console.warn(err) } }, 11000); //remove from document
 
-        let notification_title = document.createElement("div")//title
-        notification_title.classList = "title"
-        notification_title.innerHTML = title
-
-        let nbody = document.createElement("div")//body
-        nbody.classList = "notifbody"
-        nbody.innerHTML = body;
-
-        if (hover_title != undefined) {
-            notification.title = hover_title
-        } else {
-            notification.title = 'click to dismiss'
-        }
-
-        notification.appendChild(notification_title)
-        notification.appendChild(nbody)
-        document.body.appendChild(notification)
-
-        if (typeof (ifunction) == 'function') { //imbedded function
-            notification.addEventListener('click', ifunction);
-            //Close button
-            let xbutton = document.createElement('div')
-            xbutton.setAttribute('class', 'x-button')
-            notification.appendChild(xbutton)
-            xbutton.title = 'click to dismiss';
-            xbutton.addEventListener('click', async function (e) { removethis(e, notification) })
-        } else {
-            notification.addEventListener('click', async function (e) { removethis(e, notification) })
-        }
-
-        //Timing effects
-        setTimeout(async () => {
-            notification.style.transform = 'translateX(0)'
-            //notify.shove()
-        }, 50);
-
-        setTimeout(async () => { notification.style.opacity = '0.0' }, 10000); //dissapear
-
-        setTimeout(async () => { try { document.body.removeChild(notification) } catch (err) { console.warn(err) } }, 11000); //remove from document
-
-        async function removethis(e, rnotification) {
-            e.stopImmediatePropagation();
-            rnotification.style.transform = 'translateX(22rem)';
-            setTimeout(() => { rnotification.style.opacity = '0.0'; }, 100)
-            setTimeout(() => { try { document.body.removeChild(notification) } catch (err) { console.warn(err) } }, 1000)
-        }
-
-    },
-    shove: async function () {
-        var notifications = document.querySelectorAll(".notification")
-        var reverse = notifications.length - 1;
-        for (let i in notifications) {
-            notifications[i].style.transform = 'translateY(' + -reverse * 9 + 'rem)';//9 rem., height of notification
-            reverse--;//get it, because oposite
-        }
-    },
-    clearall: async function () {
-        document.querySelectorAll(".notification").forEach((notification) => {
-            try {
-                notification.style.opacity = '0.0';
-                notification.style.transform = 'translate(0,0)'
-            } catch (err) {
-                console.warn(err)
+            async function removethis(e, rnotification) {
+                e.stopImmediatePropagation();
+                rnotification.style.transform = 'translateX(22rem)';
+                setTimeout(() => { rnotification.style.opacity = '0.0'; }, 100)
+                setTimeout(() => { try { document.body.removeChild(notification) } catch (err) { console.warn(err) } }, 1000)
             }
-        })
-    }
+
+        },
+        shove: async function () {
+            var notifications = document.querySelectorAll(".notification")
+            var reverse = notifications.length - 1;
+            for (let i in notifications) {
+                notifications[i].style.transform = 'translateY(' + -reverse * 9 + 'rem)';//9 rem., height of notification
+                reverse--;//get it, because oposite
+            }
+        },
+        clearall: async function () {
+            document.querySelectorAll(".notification").forEach((notification) => {
+                try {
+                    notification.style.opacity = '0.0';
+                    notification.style.transform = 'translate(0,0)'
+                } catch (err) { console.warn(err) }
+            })
+        }
+    },
+    get_desktop_wallpaper: async function () {
+        let returned = await wallpaper.get()
+            .then((wallpaperpath) => {//gets desktop wallpaper
+                if (path.parse(wallpaperpath).ext !== undefined) {
+                    wallpaperpath = wallpaperpath.replace(/\\/g, '/');// replace all \\ with /
+                    return wallpaperpath;
+                } else {
+                    console.error('Failed to get desktop wallpaper')
+                    return 'fail'
+                }
+            }).catch((err) => {
+                console.warn('wallpaper error ', err)
+                return err;
+            })
+        return returned;
+    },
+
 }

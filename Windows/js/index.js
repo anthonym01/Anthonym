@@ -461,68 +461,13 @@ let player = {//Playback control
             eliment.addEventListener('click', function () { player.play(fileindex) })//click to play
         }
     },
-    updatemetadata: async function (fileindex) {
-
-        navigator.mediaSession.playbackState = "playing";
-        navigator.mediaSession.metadata = new MediaMetadata({ title: player.files[fileindex].filename });
-        navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
-        navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
-        //navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
-        //navigator.mediaSession.setActionHandler('seekbackward', function () { });
-        //navigator.mediaSession.setActionHandler('seekforward', function () { });
-        navigator.mediaSession.setActionHandler('seekto', function () { });
-        navigator.mediaSession.setActionHandler('previoustrack', function () { console.log('External previous command'); player.previous() });
-        navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
-
-        /* pull file data */
-        const metadata = await mm.parseFile(player.files[fileindex].path);
-        console.log(metadata)
-        document.getElementById('songTitle').innerText = metadata.common.title ? metadata.common.title : player.files[fileindex].filename;
-
-        //picture
-        const picture = mm.selectCover(metadata.common.picture)
-        if (typeof (picture) != 'undefined' && picture != null) {
-            console.log('Cover art info: ', picture)
-            document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-            backgroundmaskimg.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-            backgroundmaskimg.style.display = "block";
-        } else {
-            //use placeholder image
-            document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
-            document.getElementById('coverartsmall').name = "vibecat"
-            backgroundmaskimg.src = "";
-            backgroundmaskimg.style.display = "none";
-            UI.get_desktop_wallpaper().then((wallpaperpath) => { mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')` })
-        }
-
-        // artblob = new Blob([picture.data], { type: picture.format })
-        //let artblob = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-
-        navigator.mediaSession.metadata = new MediaMetadata({
-            title: metadata.common.title ? metadata.common.title : player.files[fileindex].filename,
-            artist: metadata.common.artist ? metadata.common.artist : "unknown",
-            album: metadata.common.album ? metadata.common.album : "unknown",
-            //artwork: picture ? [{ src: new Blob([picture.data], { type: picture.format }) }] : null,
-        });
-    },
     play: async function (fileindex, load) {
         /* If something is playing resumes playback,
         if nothing is playing plays from the player.files[fileindex],
         if no fileindex assumes playback of the last song, if no last song, unloads playr
         */
         console.log('Attempt to play: ', fileindex);
-        switch (player.playstate) {
-            case "audio":
-
-                break;
-            case "video":
-
-                break;
-            case false:
-
-                break;
-            default:
-        }
+        
 
         if (player.playstate != false) {//if is playing something
             if (fileindex == undefined) {//pause playback
@@ -531,18 +476,22 @@ let player = {//Playback control
             }
         } else {//playing something
             if (fileindex == player.now_playing) {
-                player.stream1.play()
-                backgroundvideo.play();
-                backgroundvideo.currentTime = player.stream1.seek()
+                player.stream1.play();
+                if(backgroundvideo.src!=""){
+                    backgroundvideo.play();
+                    backgroundvideo.currentTime = player.stream1.seek()
+                }
                 console.log('resume : ', player.files[player.now_playing].path);
                 return 0;
             }
         }
 
         if (fileindex == undefined && player.now_playing != null) {//resume playback
-            player.stream1.play()
-            backgroundvideo.play();
-            backgroundvideo.currentTime = player.stream1.seek()
+            player.stream1.play();
+            if(backgroundvideo.src!=""){
+                backgroundvideo.play();
+                backgroundvideo.currentTime = player.stream1.seek()
+            }
             console.log('resume : ', player.files[player.now_playing].path);
             return 0;
         }
@@ -702,6 +651,58 @@ let player = {//Playback control
         var seeked = player.stream1.seek() - 5
         player.stream1.seek(seeked)
         backgroundvideo.currentTime = seeked
+    },
+    updatemetadata: async function (fileindex) {
+
+        navigator.mediaSession.playbackState = "playing";
+        navigator.mediaSession.metadata = new MediaMetadata({ title: player.files[fileindex].filename });
+        navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
+        navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
+        //navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
+        //navigator.mediaSession.setActionHandler('seekbackward', function () { });
+        //navigator.mediaSession.setActionHandler('seekforward', function () { });
+        navigator.mediaSession.setActionHandler('seekto', function () { });
+        navigator.mediaSession.setActionHandler('previoustrack', function () { console.log('External previous command'); player.previous() });
+        navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
+
+        /* pull file data */
+        const metadata = await mm.parseFile(player.files[fileindex].path);
+        console.log(metadata)
+        document.getElementById('songTitle').innerText = metadata.common.title ? metadata.common.title : player.files[fileindex].filename;
+
+        //picture
+        const picture = mm.selectCover(metadata.common.picture)
+        if (typeof (picture) != 'undefined' && picture != null) {
+            console.log('Cover art info: ', picture)
+            document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+            backgroundmaskimg.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+            backgroundmaskimg.style.display = "block";
+
+            //let imgscr = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+            //let imgscr = new Blob([picture.data], { type: picture.format });
+            let imgscr = URL.createObjectURL(new Blob([picture.data], { type: picture.format }))
+            console.log(imgscr)
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: metadata.common.title ? metadata.common.title : player.files[fileindex].filename,
+                artist: metadata.common.artist ? metadata.common.artist : "unknown",
+                album: metadata.common.album ? metadata.common.album : "unknown",
+                artwork: picture ? [{ src: imgscr }] : null,
+            });
+        } else {
+            //use placeholder image
+            document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
+            document.getElementById('coverartsmall').name = "vibecat"
+            backgroundmaskimg.src = "";
+            backgroundmaskimg.style.display = "none";
+            UI.get_desktop_wallpaper().then((wallpaperpath) => {
+                mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')`
+            });
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: metadata.common.title ? metadata.common.title : player.files[fileindex].filename,
+                artist: metadata.common.artist ? metadata.common.artist : "unknown",
+                album: metadata.common.album ? metadata.common.album : "unknown",
+            });
+        }
     },
 }
 

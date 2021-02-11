@@ -6,7 +6,7 @@
 //dependancys, dont add howler
 const { ipcRenderer, remote, clipboard } = require('electron');
 const main = remote.require('./main');//access export functions in main
-const { dialog, Menu, MenuItem, nativeTheme, shell } = remote;
+const { dialog, Menu, MenuItem, nativeTheme, systemPreferences, shell } = remote;
 const fs = require('fs');
 const path = require('path');
 const wallpaper = require('wallpaper');
@@ -16,11 +16,13 @@ const mm = require('music-metadata');
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
 const playbtn = document.getElementById('playbtn');
 const nextbtn = document.getElementById('nextbtn');
+const previousbtn = document.getElementById('previousbtn');
 const main_library_view = document.getElementById('main_library_view');
 const song_progress_bar = document.getElementById('song_progress_bar');
 const backgroundmaskimg = document.getElementById('backgroundmaskimg');
 const backgroundvideo = document.getElementById('backgroundvideo');
 const mainmaskcontainer = document.getElementById('mainmaskcontainer');
+const Menupannel_main = document.getElementById('Menupannel_main');
 
 //  Taskbar buttons for frameless window
 document.getElementById('x-button').addEventListener('click', function () {
@@ -39,14 +41,6 @@ window.addEventListener('load', async function () {
     UI.initalize()
     player.initalize()
     maininitalizer()
-    UI.get_desktop_wallpaper().then((wallpaperpath) => { mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')` })
-    setTimeout(async () => {
-
-        //last palyed song
-        window.location.href = `#${config.last_played - 2}`;
-        player.play(config.last_played, false);
-        player.pause();
-    }, 500);
 })
 
 window.addEventListener('keydown', function (e) {//keyboard actions
@@ -115,6 +109,9 @@ let config = {
     key: "Anthonymcfg",
     background_blur: 4,//pixels
     last_played: 0,
+    animations: true,
+    shuffle: true,
+    repeat: 0,//0 no repeat, 1 repeat all, 2 replay current song
     favourites: ["I can be the one"]
 }
 
@@ -261,8 +258,79 @@ let player = {//Playback control
     playstate: false,//is (should be) playing music or video
     now_playing: null,//Song thats currently playing
     initalize: async function () {
-        //set configurations
-        backgroundmaskimg.style.filter = config.background_blur ? `blur(${config.background_blur}px)` : `blur(0px)`
+
+        setTimeout(async () => {
+            //last palyed song
+            window.location.href = `#${config.last_played - 2}`;
+            player.play(config.last_played, false);
+            player.pause();
+        }, 500);
+
+        //shuffle button
+        switch (config.shuffle) {
+            case false://no shuffle
+                document.getElementById('shufflebtn').className = "shufflebtn"
+                break;
+            case true:// shuffle
+                document.getElementById('shufflebtn').className = "shufflebtn_activated"
+                break;
+            default: config.shuffle = false; config_manage.save();
+
+        }
+        document.getElementById('shufflebtn').addEventListener('click', function () {
+            switch (config.shuffle) {
+                case false://no shuffle
+                    document.getElementById('shufflebtn').className = "shufflebtn_activated"
+                    config.shuffle = true; config_manage.save();
+                    break;
+                case true:// shuffle
+                    document.getElementById('shufflebtn').className = "shufflebtn"
+                    config.shuffle = false; config_manage.save();
+                    break;
+                default: config.shuffle = false; config_manage.save();
+            }
+        })
+
+        //repeat button
+        switch (config.repeat) {
+            case 0://no repeat
+                document.getElementById('repeatbtn').className = "shufflebtn"
+                break;
+            case 1:// repeat all
+                document.getElementById('repeatbtn').className = "shufflebtn_activated"
+                document.getElementById('repeatbtn').innerText = "All"
+                break;
+            case 2://replay current song
+                document.getElementById('repeatbtn').className = "shufflebtn_activated"
+                break;
+            default: config.repeat = 0; config_manage.save();
+
+        }
+
+        document.getElementById('repeatbtn').addEventListener('click', function () {
+            switch (config.repeat) {
+                case 0://no repeat
+                    document.getElementById('repeatbtn').className = "shufflebtn_activated"
+                    document.getElementById('repeatbtn').innerText = "All"
+                    config.repeat = 1;
+                    config_manage.save();
+                    break;
+                case 1:// repeat all
+                    document.getElementById('repeatbtn').className = "shufflebtn_activated"
+                    document.getElementById('repeatbtn').innerText = "1"
+                    config.repeat = 2;
+                    config_manage.save();
+                    break;
+                case 2://replay current song
+                    document.getElementById('repeatbtn').className = "shufflebtn"
+                    document.getElementById('repeatbtn').innerText = ""
+                    config.repeat = 0;
+                    config_manage.save();
+                    break;
+                default: config.repeat = 0; config_manage.save();
+
+            }
+        })
 
         //  Play\pause button
         playbtn.addEventListener('click', function () { player.play() })
@@ -273,7 +341,7 @@ let player = {//Playback control
         ipcRenderer.on('tray_next', () => { player.next() })//listening on channel 'tray_next'
 
         //  Previous button
-        document.getElementById('previousbtn').addEventListener('click', function () { player.previous() })
+        previousbtn.addEventListener('click', function () { player.previous() })
         ipcRenderer.on('tray_previous', () => { player.previous() })//listening on channel 'tray_previous'
 
         //seek controls
@@ -299,18 +367,18 @@ let player = {//Playback control
         } else {
             await getfiles(main.get.musicfolders())//wait for recursive file checks
             setTimeout(() => { build_library() }, 0)//imediatly after file checks
-            /*var hold = setInterval(() => {
+            var hold = setInterval(() => {
                 if (main_library_view.childElementCount < player.files.length) {
                     build_library()
                     console.warn('recheck library');
-                    notify.new(
+                    UI.notify.new(
                         'Slow disk',
                         'Your songs are stored on a slow storage media, you may have a bad expeience using this application'
                     );
                 } else {
                     clearInterval(hold)
                 }
-            }, 1000);//retry over and over, again and again-gen*/
+            }, 1000);//retry over and over, again and again-gen
         }
 
         async function getfiles(muzicpaths) {//gets files form array of music folder paths
@@ -349,30 +417,24 @@ let player = {//Playback control
                 })
             })
         }
-        
+
         async function build_library() {
             main_library_view.innerHTML = "";
 
-            for (let fileindex in player.files) { buildsong(fileindex); }
-
+            for (let fileindex in player.files) { buildsong(fileindex) }
+            songTitle.innerText = "Ready to Vibe";
             function buildsong(fileindex) {
-                var song_bar = document.createElement('div')
-                song_bar.classList = "song_bar"
-                song_bar.id = fileindex
+                var song_bar = document.createElement('div');
+                song_bar.classList = "song_bar";
+                song_bar.id = fileindex;
                 var song_title = document.createElement('div')
-                song_title.className = "song_title"
+                song_title.className = "song_title";
                 song_title.innerHTML = player.files[fileindex].filename;
-                song_bar.title = `Play ${player.files[fileindex].filename}`
-                song_bar.appendChild(song_title)
-                main_library_view.appendChild(song_bar)
+                song_bar.title = `Play ${player.files[fileindex].filename}`;
+                song_bar.appendChild(song_title);
+                main_library_view.appendChild(song_bar);
                 functionality(song_bar, fileindex);
-
-                /*if(process.platform == 'linux'){
-     
-                }*/
-                setTimeout(() => {//artificial delay to prevent all files from being accessed within 20ms of each other, will slow down webview when drawing images from metadata
-                    fillmetadata(song_bar, fileindex, song_title);
-                }, fileindex * 5);
+                setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 5);
 
             }
 
@@ -380,7 +442,7 @@ let player = {//Playback control
                 try {
                     var song_duration = document.createElement('div')
                     song_duration.className = "song_duration"
-                    mm.parseFile(player.files[fileindex].path, { duration: true }).then(async (metadata) => {
+                    mm.parseFile(player.files[fileindex].path, { duration: false }).then(async (metadata) => {
 
                         //metadata song title
                         if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
@@ -589,8 +651,26 @@ let player = {//Playback control
     },
     next: async function () {//Play next song in que if any
         console.log('Play Next');
-        //check shuffle and skip
-        const nextsong = player.files[player.now_playing + 1] ? Number(player.now_playing + 1) : 0;
+
+        switch (config.repeat) {
+            case 0://no repeat
+                break;
+            case 1:// repeat all
+                break;
+            case 2://replay current song
+                break;
+            default:
+        }
+
+        //prototype shuffle
+        let nextsong;
+        if (config.shuffle == true) {
+            nextsong = rand_number(player.files.length, 0, player.now_playing);
+        } else {
+            nextsong = player.files[player.now_playing + 1] ? Number(player.now_playing + 1) : 0;
+        }
+
+
         player.play(nextsong)
         document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
         document.getElementById(`${nextsong}`).className = "song_bar_active"
@@ -699,9 +779,11 @@ let player = {//Playback control
                 mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')`
             });
             navigator.mediaSession.metadata = new MediaMetadata({
-                title: metadata.common.title ? metadata.common.title : player.files[fileindex].filename,
-                artist: metadata.common.artist ? metadata.common.artist : "unknown",
-                album: metadata.common.album ? metadata.common.album : "unknown",
+                title: metadata.common.title || player.files[fileindex].filename,
+                artist: metadata.common.artist || "unknown",
+                //artist: metadata.common.artist ? metadata.common.artist : "unknown",
+                album: metadata.common.album || "unknown",
+                //album: metadata.common.album ? metadata.common.album : "unknown",
             });
         }
     },
@@ -709,10 +791,94 @@ let player = {//Playback control
 
 let UI = {
     initalize: function () {
+        UI.get_desktop_wallpaper().then((wallpaperpath) => { mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')` })
 
+        //animations
+        document.getElementById('Animations_btn').addEventListener('click', function () { UI.settings.animation.flip() })
+        UI.settings.animation.setpostition()
+
+        document.getElementById('setting_btn').addEventListener('click', function () { UI.navigate.setting_view() })
+        document.getElementById('search_btn').addEventListener('click', function () {
+            //search function is gonna be a head banger
+        })
+
+        //background blur
+        backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
+        document.getElementById('repeatbtn').style.filter = `blur(${config.background_blur}px)`;
+        playbtn.style.filter = `blur(${config.background_blur}px)`;
+        nextbtn.style.filter = `blur(${config.background_blur}px)`;
+        previousbtn.style.filter = `blur(${config.background_blur}px)`;
+        document.getElementById('shufflebtn').style.filter = `blur(${config.background_blur}px)`;
+        document.getElementById('background_blur_put').value = config.background_blur;
+        document.getElementById('background_blur_put').addEventListener('change', function () {
+            let puts = this.value;
+            backgroundmaskimg.style.filter = `blur(${puts}px)`;
+            document.getElementById('repeatbtn').style.filter = `blur(${puts}px)`;
+            playbtn.style.filter = `blur(${puts}px)`;
+            nextbtn.style.filter = `blur(${puts}px)`;
+            previousbtn.style.filter = `blur(${puts}px)`;
+            document.getElementById('shufflebtn').style.filter = `blur(${puts}px)`;
+            config.background_blur = puts;
+            config_manage.save()
+        })
+    },
+    navigate: {
+        main_library_view: function () {
+            console.log('Navigate main library')
+            document.getElementById('setting_view').style.display = "none";
+            main_library_view.style.display = "block";
+            Menupannel_main.style.display = "block";
+        },
+        setting_view: function () {
+            console.log('Navigate settings')
+            if (main_library_view.style.display == "none") { this.main_library_view(); return 0; }
+            document.getElementById('setting_view').style.display = "block";
+            main_library_view.style.display = "none";
+            Menupannel_main.style.display = "none";
+        }
     },
     settings: {
+        animation: {
+            flip: function () {
+                console.log('animation switch triggered');
+                if (process.platform != "linux" && systemPreferences.getAnimationSettings().shouldRenderRichAnimation == false) {//animations preffered OFF by system
+                    notify.new('System over-rule', 'Animations dissabled by Your Systems devices preferences');
+                } else {
+                    if (config.animations == true) {
+                        //turn off the switch
+                        config.animations = false
+                        console.warn('animations dissabled');
+                    } else {
+                        //turn on the witch
+                        config.animations = true
+                        console.warn('animations enabled');
+                    }
+                }
 
+                config_manage.save();
+                this.setpostition();
+            },
+            setpostition: function () {
+                switch (process.platform) {
+                    case "linux"://Linux && free BSD
+                        if (config.animations == true) { mation() }
+                        else { nomation() }
+                        break;
+                    default://Mac OS && windows
+                        if (systemPreferences.getAnimationSettings().shouldRenderRichAnimation == true) {//animations preffered by system only works on windows and wackOS
+                            if (config.animations == true) { mation() } else { nomation() }
+                        } else { nomation() }//system preffers no animations
+                }
+                function mation() {
+                    document.getElementById('Animations_switch_container').className = 'switch_container_active';
+                    document.getElementById('nomation_box').innerText = ""
+                }
+                function nomation() {
+                    document.getElementById('Animations_switch_container').className = 'switch_container_dissabled';
+                    document.getElementById('nomation_box').innerText = "*{transition: none !important;animation: none !important;}"
+                }
+            },
+        },
     },
     notify: {//notification function house
         clap: window.addEventListener('resize', async () => { UI.notify.clearall() }),
@@ -797,4 +963,13 @@ let UI = {
         return returned;
     },
 
+}
+
+function rand_number(max, min, cant_be) {
+    let randowm = Math.floor(Math.random() * (max - min + 1)) + min;
+    if (randowm == cant_be) {
+        return rand_number(max, min, cant_be);
+    } else {
+        return randowm;
+    }
 }

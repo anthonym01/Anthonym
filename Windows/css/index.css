@@ -112,8 +112,18 @@ body {
     top: 0;
     left: 0;
     height: 30px;
-    width: calc(100% - 215px);
+    width: 100%;
     background: var(--Playbar_gradereverse);
+    -webkit-app-region: drag;
+}
+
+.titlcon {
+    height: 30px;
+    width: 30px;
+    background-size: 85%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: url('../img/icon.png');
     -webkit-app-region: drag;
 }
 
@@ -122,24 +132,52 @@ body {
     position: fixed;
     top: 0;
     right: 0;
-    width: 135px;
+    width: 215px;
     height: 30px;
     -webkit-app-region: no-drag;
-    background: var(--Playbar_gradereverse);
     z-index: 500;
+    background-color: var(--background-color);
+    opacity: 0;
+    transition: opacity 300ms;
 }
 
-.tbutton {
+.tbuttonholder:hover {
+    transition: opacity 0ms;
+    opacity: 1;
+}
+
+.tbutton,
+.tbutton_half {
     /* Task buttons */
     background-color: transparent;
     position: absolute;
     top: 0;
     right: 0;
     width: 45px;
-    height: 100%;
+    height: 30px;
 }
 
 .tbutton:hover {
+    background-color: var(--accent_color);
+}
+
+.tbutton_half {
+    height: 30px;
+    width: 40px;
+    right: 0;
+    background-color: transparent;
+    cursor: pointer;
+    transition: background-color 300ms;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.tbutton_half:hover {
+    background-color: var(--off_grey);
+}
+
+.tbutton_half:active {
     background-color: var(--accent_color);
 }
 
@@ -159,79 +197,15 @@ body {
     right: 90px;
 }
 
-/* Title bar menu */
-.titlemenu {
-    position: fixed;
-    top: 0;
-    right: 135px;
-    width: 80px;
-    height: 30px;
-    -webkit-app-region: no-drag;
-    background: var(--Playbar_gradereverse);
-    z-index: 500;
-}
-
-.titlemenu_btn {
-    /* Buttons for titlemenu */
-    position: absolute;
-    height: 30px;
-    width: 40px;
-    right: 0;
-    background-color: transparent;
-    cursor: pointer;
-    transition: background-color 300ms;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-.titlemenu_btn:hover {
-    background-color: var(--half_grey);
-}
-
-.titlemenu_btn:active {
-    background-color: var(--accent_color);
-    transition: background-color 0ms;
-}
-
 #setting_btn {
-    right: 0;
+    right: 135px;
     background-image: var(--setting_icon);
 }
 
 #search_btn {
-    right: 40px;
+    right: 175px;
     background-size: 55%;
     background-image: var(--search_icon);
-}
-
-.titlcon,
-.titlcon_active {
-    height: 30px;
-    width: 30px;
-    background-size: 85%;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-image: url('../img/icon.png');
-    -webkit-app-region: drag;
-}
-
-.titlcon_active {
-    animation: spinnn 3s linear infinite;
-}
-
-@keyframes spinnn {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    50% {
-        transform: rotate(180deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
 }
 
 /*Scrollbar*/
@@ -267,6 +241,14 @@ body {
     background: var(--Playbar_grade_a);
 }
 
+.Playbar:hover .shufflebtn,
+.Playbar:hover .shufflebtn_activated,
+.Playbar:hover .playbtn,
+.Playbar:hover .pausebtn {
+    filter: blur(0px) !important;
+    transition: background-color 300ms, background-image 300ms, background-size 300ms, background-position 300ms, filter 0ms;
+}
+
 #coverartsmall {
     position: absolute;
     bottom: 0rem;
@@ -285,13 +267,13 @@ body {
     background-color: transparent;
     border-radius: 50%;
     cursor: pointer;
-    transition: background-color 300ms, background-image 300ms, background-size 300ms, background-position 300ms;
+    transition: background-color 300ms, background-image 300ms, background-size 300ms, background-position 300ms, filter 300ms;
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;
     right: calc(50vw - 2.25rem);
     background-image: var(--play_icon);
-    /*filter: blur(1px);*/
+    filter: blur(6px);
     background-size: 80%;
     background-position: 90% 50%;
 }
@@ -299,11 +281,6 @@ body {
 .pausebtn {
     background-image: var(--pause_icon);
     background-position: center;
-}
-
-.playbtn:hover,
-.pausebtn:hover {
-    filter: blur(0px);
 }
 
 .playbtn:active,
@@ -329,7 +306,8 @@ body {
     background-position: 20% 50%;
 }
 
-.shufflebtn {
+.shufflebtn,
+.shufflebtn_activated {
     /* Shuffle and Repeat button */
     position: absolute;
     bottom: 1.25rem;
@@ -338,21 +316,22 @@ body {
     background-color: transparent;
     border-radius: 50%;
     cursor: pointer;
-    transition: background-color 300ms;
+    transition: background-color 300ms, filter 300ms;
     user-select: none;
     white-space: wrap;
     text-align: center;
     background-position: center;
     background-repeat: no-repeat;
     background-size: 90%;
-    /*filter: blur(0px);*/
+    filter: blur(5px);
 }
 
-.shufflebtn:hover {
-    filter: blur(0px);
+.shufflebtn_activated {
+    background-color: var(--accent_color_t);
 }
 
-.shufflebtn:active {
+.shufflebtn:active,
+.shufflebtn_activated:hover {
     background-color: var(--accent_color);
     transition: background-color 0ms;
 }
@@ -660,10 +639,137 @@ body {
 }
 
 
+/*      settings        */
+.setting_view {
+    position: fixed;
+    top: 0px;
+    padding-top: 30px;
+    right: 0;
+    height: calc(100% - 30px - 7rem);
+    /*top and bottom*/
+    width: 100%;
+    display: none;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    background-origin: content-box;
+    z-index: 2;
+}
+
+.setting_bar {
+    position: relative;
+    height: 6vh;
+    width: 100%;
+    text-align: center;
+    margin-top: 2vh;
+}
+
+.Bar_title {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: calc(100% - 14vh);
+    /*height: 6vh;*/
+    font-size: 4vh;
+    text-align: center;
+    cursor: pointer;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* Switches */
+.switch_container_active {
+    position: absolute;
+    /*transform: translate(12vh, 0);*/
+    top: 0vh;
+    right: 1vh;
+    width: 12vh;
+    height: 5vh;
+    border: 0.5vh solid;
+    border-radius: 5vh;
+    cursor: pointer;
+    background-color: var(--background-color);
+}
+
+.switch_container_active .switchbdy {
+    position: absolute;
+    width: 12vh;
+    height: 5vh;
+    border-radius: 5vh;
+    cursor: pointer;
+    transition: transform, background-color;
+    transition-duration: 300ms;
+    background-color: var(--background-color);
+}
+
+.switch_container_active .switch {
+    top: 0.2vh;
+    right: 0.2vh;
+    position: absolute;
+    height: 4.6vh;
+    width: 4.6vh;
+    border-radius: 50%;
+    z-index: 1;
+    transform: translate(0px, 0);
+    transition: transform, background-color;
+    transition-duration: 300ms;
+    background-color: var(--accent_color);
+}
+
+.switch_container_dissabled {
+    position: absolute;
+    /*transform: translate(12vh, 0);*/
+    top: 0vh;
+    right: 1vh;
+    width: 12vh;
+    height: 5vh;
+    border: 0.5vh solid;
+    border-radius: 5vh;
+    cursor: pointer;
+    transition: transform, background-color;
+    transition-duration: 300ms;
+    background-color: var(--background-color);
+    border: 0.5vh solid var(--grey);
+}
+
+.switch_container_dissabled .switchbdy {
+    position: absolute;
+    width: 12vh;
+    height: 5vh;
+    border-radius: 5vh;
+    cursor: pointer;
+    transition: background-color;
+    transition-duration: 300ms;
+    background-color: var(--background-color)
+}
+
+.switch_container_dissabled .switch {
+    top: 0.2vh;
+    right: 0.2vh;
+    position: absolute;
+    height: 4.6vh;
+    width: 4.6vh;
+    border-radius: 50%;
+    z-index: 1;
+    transform: translate(-7vh, 0);
+    transition: transform, background-color;
+    transition-duration: 300ms;
+    background-color: var(--accent_color);
+}
+
+
 
 /*  In page notification  */
 
-@keyframes stretch {from {width: 0%;} to { width: 100%; } }
+@keyframes stretch {
+    from {
+        width: 0%;
+    }
+
+    to {
+        width: 100%;
+    }
+}
 
 .notification {
     position: fixed;

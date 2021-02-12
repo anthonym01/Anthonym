@@ -270,9 +270,11 @@ let player = {//Playback control
         switch (config.shuffle) {
             case false://no shuffle
                 document.getElementById('shufflebtn').className = "shufflebtn"
+                document.getElementById('shufflebtn').title = "no shuffle"
                 break;
             case true:// shuffle
-                document.getElementById('shufflebtn').className = "shufflebtn_activated"
+                document.getElementById('shufflebtn').className = "shufflebtn_on"
+                document.getElementById('shufflebtn').title = "shuffle"
                 break;
             default: config.shuffle = false; config_manage.save();
 
@@ -280,12 +282,16 @@ let player = {//Playback control
         document.getElementById('shufflebtn').addEventListener('click', function () {
             switch (config.shuffle) {
                 case false://no shuffle
-                    document.getElementById('shufflebtn').className = "shufflebtn_activated"
-                    config.shuffle = true; config_manage.save();
+                    document.getElementById('shufflebtn').className = "shufflebtn_on"
+                    document.getElementById('shufflebtn').title = "shuffle"
+                    config.shuffle = true;
+                    config_manage.save();
                     break;
                 case true:// shuffle
-                    document.getElementById('shufflebtn').className = "shufflebtn"
-                    config.shuffle = false; config_manage.save();
+                    document.getElementById('shufflebtn').className = "shufflebtn";
+                    document.getElementById('shufflebtn').title = "no shuffle"
+                    config.shuffle = false;
+                    config_manage.save();
                     break;
                 default: config.shuffle = false; config_manage.save();
             }
@@ -294,14 +300,16 @@ let player = {//Playback control
         //repeat button
         switch (config.repeat) {
             case 0://no repeat
-                document.getElementById('repeatbtn').className = "shufflebtn"
+                document.getElementById('repeatbtn').className = "repeatbtn_no"
+                document.getElementById('repeatbtn').title = "no repeat"
                 break;
             case 1:// repeat all
-                document.getElementById('repeatbtn').className = "shufflebtn_activated"
-                document.getElementById('repeatbtn').innerText = "All"
+                document.getElementById('repeatbtn').className = "repeatbtn_all"
+                document.getElementById('repeatbtn').title = "repeat all"
                 break;
             case 2://replay current song
-                document.getElementById('repeatbtn').className = "shufflebtn_activated"
+                document.getElementById('repeatbtn').className = "repeatbtn_lock"
+                document.getElementById('repeatbtn').title = "repeat current song"
                 break;
             default: config.repeat = 0; config_manage.save();
 
@@ -310,20 +318,20 @@ let player = {//Playback control
         document.getElementById('repeatbtn').addEventListener('click', function () {
             switch (config.repeat) {
                 case 0://no repeat
-                    document.getElementById('repeatbtn').className = "shufflebtn_activated"
-                    document.getElementById('repeatbtn').innerText = "All"
+                    document.getElementById('repeatbtn').className = "repeatbtn_all"
+                    document.getElementById('repeatbtn').title = "repeat all"
                     config.repeat = 1;
                     config_manage.save();
                     break;
                 case 1:// repeat all
-                    document.getElementById('repeatbtn').className = "shufflebtn_activated"
-                    document.getElementById('repeatbtn').innerText = "1"
+                    document.getElementById('repeatbtn').className = "repeatbtn_lock";
+                    document.getElementById('repeatbtn').title = "repeat current song"
                     config.repeat = 2;
                     config_manage.save();
                     break;
                 case 2://replay current song
-                    document.getElementById('repeatbtn').className = "shufflebtn"
-                    document.getElementById('repeatbtn').innerText = ""
+                    document.getElementById('repeatbtn').className = "repeatbtn_no"
+                    document.getElementById('repeatbtn').title = "no repeat"
                     config.repeat = 0;
                     config_manage.save();
                     break;
@@ -362,7 +370,7 @@ let player = {//Playback control
     fetch_library: async function () {
         //build library inteligentlly
         player.files = [];
-        if (main.get.musicfolders() == []) {
+        if (main.get.musicfolders() == [] || main.get.musicfolders() == undefined || main.get.musicfolders() < 1) {
             first_settup()//run first settup
         } else {
             await getfiles(main.get.musicfolders())//wait for recursive file checks

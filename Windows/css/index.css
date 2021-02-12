@@ -22,7 +22,9 @@
     --pause_icon: url('../img/play-bck-controls/pause-svgrepo-com-dark.webp');
     --previous_icon: url('../img/play-bck-controls/backward-svgrepo-com-dark.webp');
     --shuffle_icon: url('../img/play-bck-controls/shuffle-pngrepo-com-dark.webp');
+    --shuffle_no_icon: url('../img/play-bck-controls/shuffle-pngrepo-com-dark-non.webp');
     --repeat_icon: url('../img/play-bck-controls/repeat-dark.webp');
+    --repeat_lock_icon: url('../img/play-bck-controls/repeat-lock-dark.webp');
     --vynal_icon: url('../img/vinyl-record-pngrepo-com.png');
 }
 
@@ -47,7 +49,9 @@
         --pause_icon: url('../img/play-bck-controls/pause-svgrepo-com-light.webp');
         --previous_icon: url('../img/play-bck-controls/backward-svgrepo-com-light.webp');
         --shuffle_icon: url('../img/play-bck-controls/shuffle-pngrepo-com-light.webp');
+        --shuffle_no_icon: url('../img/play-bck-controls/shuffle-pngrepo-com-light-non.webp');
         --repeat_icon: url('../img/play-bck-controls/repeat-light.webp');
+        --repeat_lock_icon: url('../img/play-bck-controls/repeat-lock-light.webp');
         --vynal_icon: url('../img/vinyl-record-pngrepo-com-white.png');
     }
 }
@@ -242,7 +246,10 @@ body {
 }
 
 .Playbar:hover .shufflebtn,
-.Playbar:hover .shufflebtn_activated,
+.Playbar:hover .shufflebtn_on,
+.Playbar:hover .repeatbtn_no,
+.Playbar:hover .repeatbtn_lock,
+.Playbar:hover .repeatbtn_all,
 .Playbar:hover .playbtn,
 .Playbar:hover .pausebtn {
     filter: blur(0px) !important;
@@ -307,7 +314,10 @@ body {
 }
 
 .shufflebtn,
-.shufflebtn_activated {
+.shufflebtn_on,
+.repeatbtn_all,
+.repeatbtn_lock,
+.repeatbtn_no {
     /* Shuffle and Repeat button */
     position: absolute;
     bottom: 1.25rem;
@@ -324,29 +334,43 @@ body {
     background-repeat: no-repeat;
     background-size: 90%;
     filter: blur(5px);
+    /* Shuffle button */
+    left: calc(50vw - 12rem);
+    background-image: var(--shuffle_no_icon);
 }
 
-.shufflebtn_activated {
-    background-color: var(--accent_color_t);
+.shufflebtn_on {
+    background-image: var(--shuffle_icon);
+}
+
+.repeatbtn_no,
+.repeatbtn_lock,
+.repeatbtn_all {
+    /* repeat button */
+    left: unset;
+    right: calc(50vw - 12rem);
+    background-image: var(--repeat_icon);
+}
+
+.repeatbtn_lock {
+    background-image: var(--repeat_lock_icon);
+}
+
+.repeatbtn_no::after {
+    content: "";
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+    height: 10%;
+    background-color: var(--accent_color);
 }
 
 .shufflebtn:active,
-.shufflebtn_activated:hover {
+.repeatbtn:active {
     background-color: var(--accent_color);
     transition: background-color 0ms;
 }
 
-#shufflebtn {
-    /* Shuffle button */
-    left: calc(50vw - 12rem);
-    background-image: var(--shuffle_icon);
-}
-
-#repeatbtn {
-    /* repeat button */
-    right: calc(50vw - 12rem);
-    background-image: var(--repeat_icon);
-}
 
 #songTitle {
     /* Song title in playbar */

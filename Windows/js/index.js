@@ -107,11 +107,11 @@ async function maininitalizer() {//Used to start re-startable app functions
 
 let config = {
     key: "Anthonymcfg",
-    background_blur: 4,//pixels
+    background_blur: 2,//pixels
     last_played: 0,
     animations: true,
-    shuffle: true,
-    repeat: 0,//0 no repeat, 1 repeat all, 2 replay current song
+    shuffle: false,
+    repeat: 1,//0 no repeat, 1 repeat all, 2 replay current song
     favourites: ["I can be the one"]
 }
 
@@ -758,6 +758,7 @@ let player = {//Playback control
         const metadata = await mm.parseFile(player.files[fileindex].path);
         console.log(metadata)
         document.getElementById('songTitle').innerText = metadata.common.title ? metadata.common.title : player.files[fileindex].filename;
+        document.getElementById('songArtist').innerText = metadata.common.artist ? `by ${metadata.common.artist}` : "unknown";
 
         //picture
         const picture = mm.selectCover(metadata.common.picture)

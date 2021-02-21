@@ -10,6 +10,10 @@ const { dialog, Menu, MenuItem, nativeTheme, systemPreferences, shell } = remote
 const fs = require('fs');
 const path = require('path');
 const wallpaper = require('wallpaper');
+/*System wallpaper loactions
+/home/samuel/.local/share/wallpapers
+
+*/
 const mm = require('music-metadata');
 //const {Howl, Howler} = require('howler');
 
@@ -23,6 +27,8 @@ const backgroundmaskimg = document.getElementById('backgroundmaskimg');
 const backgroundvideo = document.getElementById('backgroundvideo');
 const mainmaskcontainer = document.getElementById('mainmaskcontainer');
 const Menupannel_main = document.getElementById('Menupannel_main');
+const repeatbtn = document.getElementById('repeatbtn');
+const shufflebtn = document.getElementById('shufflebtn');
 
 //  Taskbar buttons for frameless window
 document.getElementById('x-button').addEventListener('click', function () {
@@ -261,35 +267,44 @@ let player = {//Playback control
 
         setTimeout(async () => {
             //last palyed song
-            window.location.href = `#${config.last_played - 2}`;
             player.play(config.last_played, false);
             player.pause();
+            window.location.href = `#${config.last_played - 2}`;
         }, 500);
 
+        //searchput
+        document.getElementById('searchput').addEventListener('keydown', function (e) {//keyboard actions
+            e.stopImmediatePropagation();
+            setTimeout(() => {
+
+                //console.log(this.value)
+                player.lookup(this.value)
+            }, 100);
+        })
         //shuffle button
         switch (config.shuffle) {
             case false://no shuffle
-                document.getElementById('shufflebtn').className = "shufflebtn"
-                document.getElementById('shufflebtn').title = "no shuffle"
+                shufflebtn.className = "shufflebtn"
+                shufflebtn.title = "no shuffle"
                 break;
             case true:// shuffle
-                document.getElementById('shufflebtn').className = "shufflebtn_on"
-                document.getElementById('shufflebtn').title = "shuffle"
+                shufflebtn.className = "shufflebtn_on"
+                shufflebtn.title = "shuffle"
                 break;
             default: config.shuffle = false; config_manage.save();
 
         }
-        document.getElementById('shufflebtn').addEventListener('click', function () {
+        shufflebtn.addEventListener('click', function () {
             switch (config.shuffle) {
                 case false://no shuffle
-                    document.getElementById('shufflebtn').className = "shufflebtn_on"
-                    document.getElementById('shufflebtn').title = "shuffle"
+                    shufflebtn.className = "shufflebtn_on"
+                    shufflebtn.title = "shuffle"
                     config.shuffle = true;
                     config_manage.save();
                     break;
                 case true:// shuffle
-                    document.getElementById('shufflebtn').className = "shufflebtn";
-                    document.getElementById('shufflebtn').title = "no shuffle"
+                    shufflebtn.className = "shufflebtn";
+                    shufflebtn.title = "no shuffle"
                     config.shuffle = false;
                     config_manage.save();
                     break;
@@ -300,38 +315,38 @@ let player = {//Playback control
         //repeat button
         switch (config.repeat) {
             case 0://no repeat
-                document.getElementById('repeatbtn').className = "repeatbtn_no"
-                document.getElementById('repeatbtn').title = "no repeat"
+                repeatbtn.className = "repeatbtn_no"
+                repeatbtn.title = "no repeat"
                 break;
             case 1:// repeat all
-                document.getElementById('repeatbtn').className = "repeatbtn_all"
-                document.getElementById('repeatbtn').title = "repeat all"
+                repeatbtn.className = "repeatbtn_all"
+                repeatbtn.title = "repeat all"
                 break;
             case 2://replay current song
-                document.getElementById('repeatbtn').className = "repeatbtn_lock"
-                document.getElementById('repeatbtn').title = "repeat current song"
+                repeatbtn.className = "repeatbtn_lock"
+                repeatbtn.title = "repeat current song"
                 break;
             default: config.repeat = 0; config_manage.save();
 
         }
 
-        document.getElementById('repeatbtn').addEventListener('click', function () {
+        repeatbtn.addEventListener('click', function () {
             switch (config.repeat) {
                 case 0://no repeat
-                    document.getElementById('repeatbtn').className = "repeatbtn_all"
-                    document.getElementById('repeatbtn').title = "repeat all"
+                    repeatbtn.className = "repeatbtn_all"
+                    repeatbtn.title = "repeat all"
                     config.repeat = 1;
                     config_manage.save();
                     break;
                 case 1:// repeat all
-                    document.getElementById('repeatbtn').className = "repeatbtn_lock";
-                    document.getElementById('repeatbtn').title = "repeat current song"
+                    repeatbtn.className = "repeatbtn_lock";
+                    repeatbtn.title = "repeat current song"
                     config.repeat = 2;
                     config_manage.save();
                     break;
                 case 2://replay current song
-                    document.getElementById('repeatbtn').className = "repeatbtn_no"
-                    document.getElementById('repeatbtn').title = "no repeat"
+                    repeatbtn.className = "repeatbtn_no"
+                    repeatbtn.title = "no repeat"
                     config.repeat = 0;
                     config_manage.save();
                     break;
@@ -453,7 +468,10 @@ let player = {//Playback control
                     mm.parseFile(player.files[fileindex].path, { duration: false }).then(async (metadata) => {
 
                         //metadata song title
-                        if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
+                        if (metadata.common.title != undefined) {
+                            song_title.innerHTML = metadata.common.title;
+
+                        }
 
                         //file duration
                         player.files[fileindex].duration = metadata.format.duration;//raw duration
@@ -548,7 +566,7 @@ let player = {//Playback control
         } else {//playing something
             if (fileindex == player.now_playing) {
                 player.stream1.play();
-                if (backgroundvideo.src != "") {
+                if (backgroundvideo.style.display != "none") {
                     backgroundvideo.play();
                     backgroundvideo.currentTime = player.stream1.seek()
                 }
@@ -559,7 +577,8 @@ let player = {//Playback control
 
         if (fileindex == undefined && player.now_playing != null) {//resume playback
             player.stream1.play();
-            if (backgroundvideo.src != "") {
+            if (backgroundvideo.style.display != "none") {
+
                 backgroundvideo.play();
                 backgroundvideo.currentTime = player.stream1.seek()
             }
@@ -579,6 +598,7 @@ let player = {//Playback control
         if (fileindex != player.now_playing && player.playstate != false) {
             await player.stream1.unload();//unlock the stream thats gonna be used
             backgroundvideo.src = "";
+            backgroundvideo.style.display = "none"
         }
 
         try {
@@ -613,9 +633,13 @@ let player = {//Playback control
 
                         case ".mp4": case ".m4v": case ".webm": case ".mov"://playable as music files
                             backgroundvideo.src = player.files[fileindex].path;
+                            backgroundvideo.style.display = "block"
                             backgroundvideo.play();
+                            document.getElementById('tbuttonholder').className = "tbuttonholder"//allow to be hidden
                             break;
-                        default: backgroundvideo.src = "";
+                        default:
+                            backgroundvideo.src = "";
+                            backgroundvideo.style.display = "none"
 
                     }
                     backgroundvideo.currentTime = 0;
@@ -768,6 +792,25 @@ let player = {//Playback control
             backgroundmaskimg.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
             backgroundmaskimg.style.display = "block";
 
+            //backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
+            repeatbtn.style.filter = `blur(${config.background_blur}px)`;
+            playbtn.style.filter = `blur(${config.background_blur}px)`;
+            nextbtn.style.filter = `blur(${config.background_blur}px)`;
+            previousbtn.style.filter = `blur(${config.background_blur}px)`;
+            shufflebtn.style.filter = `blur(${config.background_blur}px)`;
+
+            if (document.getElementById('searchbox').style.display != "block") {//hide it if its not in use
+                document.getElementById('tbuttonholder').className = "tbuttonholder"
+            }
+
+            if (config.background_blur == 0) {
+                document.getElementById('songdetailcontainer').classList = "songdetailcontainer_alt";
+            } else {
+                document.getElementById('songdetailcontainer').classList = "songdetailcontainer";
+
+            }
+
+
             //let imgscr = `data:${picture.format};base64,${picture.data.toString('base64')}`;
             //let imgscr = new Blob([picture.data], { type: picture.format });
             let imgscr = URL.createObjectURL(new Blob([picture.data], { type: picture.format }))
@@ -784,6 +827,15 @@ let player = {//Playback control
             document.getElementById('coverartsmall').name = "vibecat"
             backgroundmaskimg.src = "";
             backgroundmaskimg.style.display = "none";
+
+            repeatbtn.style.filter = `blur(0)`;
+            playbtn.style.filter = `blur(0)`;
+            nextbtn.style.filter = `blur(0)`;
+            previousbtn.style.filter = `blur(0)`;
+            shufflebtn.style.filter = `blur(0)`;
+
+            document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
+            document.getElementById('songdetailcontainer').classList = "songdetailcontainer_alt";
             UI.get_desktop_wallpaper().then((wallpaperpath) => {
                 mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')`
             });
@@ -795,38 +847,156 @@ let player = {//Playback control
                 //album: metadata.common.album ? metadata.common.album : "unknown",
             });
         }
+        if (backgroundvideo.style.display == "block") { document.getElementById('tbuttonholder').className = "tbuttonholder" }
     },
+    lookup: async function (pattern) {//match any pattern to local file name
+        console.log('Look for ', pattern)
+        document.getElementById('searchbox').innerHTML = ""
+
+        if (pattern == "") { return "empty" }
+
+        for (let fileindex in player.files) {
+            if (player.files[fileindex].filename.toLowerCase().search(pattern.toLowerCase()) != -1) { buildsong(fileindex) }
+        }
+
+        function buildsong(fileindex) {
+            var song_bar = document.createElement('div');
+            song_bar.classList = "song_bar";
+            song_bar.id = fileindex;
+            var song_title = document.createElement('div')
+            song_title.className = "song_title";
+            song_title.innerHTML = player.files[fileindex].filename;
+            song_bar.title = `Play ${player.files[fileindex].filename}`;
+            song_bar.appendChild(song_title);
+            document.getElementById('searchbox').appendChild(song_bar);
+            functionality(song_bar, fileindex);
+            setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 2);
+
+        }
+
+        async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
+            try {
+                var song_duration = document.createElement('div')
+                song_duration.className = "song_duration"
+                mm.parseFile(player.files[fileindex].path, { duration: false }).then(async (metadata) => {
+
+                    //metadata song title
+                    if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
+
+                    //file duration
+                    song_duration.title = `${metadata.format.duration} seconds`;
+                    if (Number(metadata.format.duration % 60) >= 10) {
+                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
+                    } else {
+                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
+                    }
+                    eliment.appendChild(song_duration)
+
+                    //cover art
+                    const picture = mm.selectCover(metadata.common.picture)
+                    if (typeof (picture) != 'undefined' && picture != null) {
+                        var songicon = document.createElement("img")
+                        songicon.className = "songicon"
+                        songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                        eliment.appendChild(songicon)
+                    }
+                    else {
+                        //use placeholder image
+                        var songicon = document.createElement("div")
+                        songicon.className = "songicon_dfault"
+                        eliment.appendChild(songicon)
+                    }
+                });
+            } catch (err) {
+                console.warn("Metadata error : ", err)
+            }
+        }
+
+        async function functionality(eliment, fileindex) {//context menu and playback on click
+
+            let contextMenu = new Menu.buildFromTemplate([
+                {//play button
+                    label: "Play",
+                    type: "normal",
+                    click() { player.play(fileindex) }
+                },
+                {
+                    label: "add to favourites",
+                    type: "normal",
+                    click() { }
+                },
+                {
+                    label: "add to playlist",
+                    type: "normal",
+                    click() { }
+                },
+                { type: "separator" },
+                {
+                    label: "copy file name",
+                    click() { clipboard.writeText(player.files[fileindex].filename) }
+                },
+                {//open song file in default external application
+                    label: "show in folder",
+                    click() { shell.showItemInFolder(player.files[fileindex].path) }
+                },
+                {//copy file path
+                    label: "copy file location",
+                    toolTip: `${player.files[fileindex].path}`,
+                    click() { clipboard.write(player.files[fileindex].path); }
+                }
+            ])
+
+            eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
+                e.preventDefault();
+                e.stopPropagation();//important
+                contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
+            }, false);
+
+            eliment.addEventListener('click', function () { player.play(fileindex) })//click to play
+        }
+    }
 }
 
 let UI = {
     initalize: function () {
         UI.get_desktop_wallpaper().then((wallpaperpath) => { mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')` })
 
+        //titlebar
+
+
         //animations
         document.getElementById('Animations_btn').addEventListener('click', function () { UI.settings.animation.flip() })
+        document.getElementById('tray_btn').addEventListener('click', function () { UI.settings.use_tray.flip() })
+        document.getElementById('minimize_to_tray_btn').addEventListener('click', function () { UI.settings.minimize_to_tray.flip() })
+        document.getElementById('close_to_tray_btn').addEventListener('click', function () { UI.settings.quiton_X.flip() })
         UI.settings.animation.setpostition()
 
         document.getElementById('setting_btn').addEventListener('click', function () { UI.navigate.setting_view() })
+
+        //search
         document.getElementById('search_btn').addEventListener('click', function () {
-            //search function is gonna be a head banger
+            if (document.getElementById('searchbox').style.display == "block") {//hide it
+                UI.hide_search()
+            } else {//show it
+                UI.show_search()
+            }
         })
+        document.getElementById('Menupannel_main').addEventListener('mouseenter', function () { UI.hide_search() })
+        document.getElementById('main_library_view').addEventListener('mouseenter', function () { UI.hide_search() })
+        document.getElementById('Playbar').addEventListener('mouseenter', function () { UI.hide_search() })
+        document.getElementById('setting_view').addEventListener('mouseenter', function () { UI.hide_search() })
 
         //background blur
         backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
-        document.getElementById('repeatbtn').style.filter = `blur(${config.background_blur}px)`;
-        playbtn.style.filter = `blur(${config.background_blur}px)`;
-        nextbtn.style.filter = `blur(${config.background_blur}px)`;
-        previousbtn.style.filter = `blur(${config.background_blur}px)`;
-        document.getElementById('shufflebtn').style.filter = `blur(${config.background_blur}px)`;
         document.getElementById('background_blur_put').value = config.background_blur;
         document.getElementById('background_blur_put').addEventListener('change', function () {
             let puts = this.value;
             backgroundmaskimg.style.filter = `blur(${puts}px)`;
-            document.getElementById('repeatbtn').style.filter = `blur(${puts}px)`;
+            repeatbtn.style.filter = `blur(${puts}px)`;
             playbtn.style.filter = `blur(${puts}px)`;
             nextbtn.style.filter = `blur(${puts}px)`;
             previousbtn.style.filter = `blur(${puts}px)`;
-            document.getElementById('shufflebtn').style.filter = `blur(${puts}px)`;
+            shufflebtn.style.filter = `blur(${puts}px)`;
             config.background_blur = puts;
             config_manage.save()
         })
@@ -845,6 +1015,29 @@ let UI = {
             main_library_view.style.display = "none";
             Menupannel_main.style.display = "none";
         }
+    },
+    hide_search: async function () {
+        //if (document.getElementById('searchput').value != "" || document.getElementById('searchbox').style.display == "block") {
+        if (backgroundmaskimg.style.display == "none" && backgroundvideo.style.display == "none") {
+            document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
+        } else {
+            document.getElementById('tbuttonholder').className = "tbuttonholder"
+        }
+        document.getElementById('searchput').style.display = ""
+        document.getElementById('searchbox').style.display = ""
+        /*} else {
+
+            document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
+
+
+            document.getElementById('searchbox').style.display = ""
+        }*/
+    },
+    show_search: async function () {
+        document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
+        document.getElementById('searchbox').style.display = "block"
+        setTimeout(() => { document.getElementById('searchput').focus() }, 100);
+        document.getElementById('searchput').style.display = "block"
     },
     settings: {
         animation: {
@@ -879,15 +1072,82 @@ let UI = {
                         } else { nomation() }//system preffers no animations
                 }
                 function mation() {
-                    document.getElementById('Animations_switch_container').className = 'switch_container_active';
-                    document.getElementById('nomation_box').innerText = ""
+                    document.getElementById('anime_put').checked = true;
+                    document.getElementById('nomation_box').innerText = "";
                 }
                 function nomation() {
-                    document.getElementById('Animations_switch_container').className = 'switch_container_dissabled';
-                    document.getElementById('nomation_box').innerText = "*{transition: none !important;animation: none !important;}"
+                    document.getElementById('anime_put').checked = false;
+                    document.getElementById('nomation_box').innerText = "*{transition: none !important;animation: none !important;}";
                 }
             },
         },
+        use_tray: {
+            flip: function () {
+                console.log('use tray switch triggered');
+
+                if (main.get.use_tray() == true) {//turn off the switch
+                    main.set.use_tray(false)
+                    main.remove_tray()
+                    console.warn('use tray  dissabled');
+                } else {//turn on the witch
+                    main.set.use_tray(true)
+                    main.reamake_tray()
+                    console.warn('use tray enabled');
+                }
+                this.setpostition();
+            },
+            setpostition: function () {
+                if (main.get.use_tray() == true) {
+                    document.getElementById('tray_put').checked = true;
+                } else {
+                    document.getElementById('tray_put').checked = false;
+                }
+            },
+        },
+        minimize_to_tray: {
+            flip: function () {
+                console.log('use tray switch triggered');
+                if (main.get.minimize_to_tray() == true) {//turn off the switch
+                    main.set.minimize_to_tray(false)
+                    //main.remove_tray()
+                    console.warn('use minimize_to_tray dissabled');
+                } else {//turn on the witch
+                    main.set.minimize_to_tray(true)
+                    //main.reamake_tray()
+                    console.warn('use minimize_to_tray enabled');
+                }
+                this.setpostition();
+            },
+            setpostition: function () {
+                if (main.get.minimize_to_tray() == true) {
+                    document.getElementById('minimize_to_tray_put').checked = true;
+                } else {
+                    document.getElementById('minimize_to_tray_put').checked = false;
+                }
+            },
+        },
+        quiton_X: {
+            flip: function () {
+                console.log('use tray switch triggered');
+                if (main.get.quiton_X() == true) {//turn off the switch
+                    main.set.quiton_X(false)
+                    //main.remove_tray()
+                    console.warn('use minimize_to_tray dissabled');
+                } else {//turn on the witch
+                    main.set.quiton_X(true)
+                    //main.reamake_tray()
+                    console.warn('use minimize_to_tray enabled');
+                }
+                this.setpostition();
+            },
+            setpostition: function () {
+                if (main.get.quiton_X() == true) {
+                    document.getElementById('close_to_tray_put').checked = true;
+                } else {
+                    document.getElementById('close_to_tray_put').checked = false;
+                }
+            },
+        }
     },
     notify: {//notification function house
         clap: window.addEventListener('resize', async () => { UI.notify.clearall() }),

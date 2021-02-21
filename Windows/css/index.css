@@ -121,7 +121,10 @@ body {
     -webkit-app-region: drag;
 }
 
+
 .titlcon {
+    top: 0;
+    left: 0;
     height: 30px;
     width: 30px;
     background-size: 85%;
@@ -131,7 +134,8 @@ body {
     -webkit-app-region: drag;
 }
 
-.tbuttonholder {
+.tbuttonholder,
+.tbuttonholder_locked {
     /* Task buttons container*/
     position: fixed;
     top: 0;
@@ -145,7 +149,8 @@ body {
     transition: opacity 300ms;
 }
 
-.tbuttonholder:hover {
+.tbuttonholder:hover,
+.tbuttonholder_locked {
     transition: opacity 0ms;
     opacity: 1;
 }
@@ -281,7 +286,7 @@ body {
     background-size: contain;
     right: calc(50vw - 2.25rem);
     background-image: var(--play_icon);
-    filter: blur(6px);
+    filter: blur(0px);
     background-size: 80%;
     background-position: 90% 50%;
 }
@@ -327,14 +332,14 @@ body {
     background-color: transparent;
     border-radius: 50%;
     cursor: pointer;
-    transition: background-color 300ms, filter 300ms;
+    transition: background-color 300ms, background-image 300ms, filter 300ms;
     user-select: none;
     white-space: wrap;
     text-align: center;
     background-position: center;
     background-repeat: no-repeat;
     background-size: 90%;
-    filter: blur(5px);
+    filter: blur(0px);
     /* Shuffle button */
     left: calc(50vw - 12rem);
     background-image: var(--shuffle_no_icon);
@@ -381,13 +386,19 @@ body {
     transition: background-color 0ms;
 }
 
-.songdetailcontainer{
+.songdetailcontainer,
+.songdetailcontainer_alt {
     /* Song title in playbar */
     position: absolute;
-    height: 3.75rem;   
+    height: 3.75rem;
     width: calc(100% - 1vw - 7rem);
     left: calc(1vw + 7rem);
     bottom: 0rem;
+}
+
+.songdetailcontainer_alt {
+    white-space: wrap;
+    max-width: calc(100% - 51vw - 17.5rem);
 }
 
 #songTitle {
@@ -447,7 +458,7 @@ body {
     height: calc(100% - 30px - 7rem);
     /*top and bottom*/
     width: 15rem;
-    z-index: 5;
+    z-index: 3;
 }
 
 
@@ -545,7 +556,7 @@ body {
     display: none;
     overflow-x: hidden;
     overflow-y: scroll;
-    z-index: 500;
+    z-index: 50;
 }
 
 #first_instruct {
@@ -680,6 +691,56 @@ body {
     transition: transform 0ms, background-color 300ms;
 }
 
+/*      Search thingies */
+#searchbox {
+    position: fixed;
+    right: 0;
+    width: calc(100% - 15rem);
+    top: 30px;
+    /*
+    left: 175px;
+    width: calc(100% - 350px);*/
+    height: fit-content;
+    min-height: 0;
+    max-height: calc(100% - 30px - 7rem);
+    background-color: var(--background-color);
+    z-index: 4;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: none;
+    filter: blur(1px);
+}
+
+#titlebarfillout {
+    /*   cosmetic    */
+    position: fixed;
+    top: 0px;
+    left: 0;
+    width: 100%;
+    height: 0px;
+    background-color: var(--background-color);
+    display: none;
+}
+
+#searchput {
+    position: fixed;
+    top: 0;
+    left: 0;
+    /*width: calc(100% - 350px);*/
+    width: 100%;
+    height: 30px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    -webkit-app-region: no-drag;
+    border: none;
+    outline: none;
+    z-index: 4;
+    text-align: center;
+    display: none;
+    font-size: 1.2rem;
+    box-sizing: border-box;
+
+}
 
 /*      settings        */
 .setting_view {
@@ -694,112 +755,12 @@ body {
     overflow-x: hidden;
     overflow-y: scroll;
     background-origin: content-box;
-    z-index: 2;
+    z-index: 5;
 }
 
-.setting_bar {
-    position: relative;
-    height: 6vh;
-    width: 100%;
-    text-align: center;
-    margin-top: 2vh;
-}
+.setting_bar {}
 
-.Bar_title {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: calc(100% - 14vh);
-    /*height: 6vh;*/
-    font-size: 4vh;
-    text-align: center;
-    cursor: pointer;
-    overflow: hidden;
-    box-sizing: border-box;
-}
-
-/* Switches */
-.switch_container_active {
-    position: absolute;
-    /*transform: translate(12vh, 0);*/
-    top: 0vh;
-    right: 1vh;
-    width: 12vh;
-    height: 5vh;
-    border: 0.5vh solid;
-    border-radius: 5vh;
-    cursor: pointer;
-    background-color: var(--background-color);
-}
-
-.switch_container_active .switchbdy {
-    position: absolute;
-    width: 12vh;
-    height: 5vh;
-    border-radius: 5vh;
-    cursor: pointer;
-    transition: transform, background-color;
-    transition-duration: 300ms;
-    background-color: var(--background-color);
-}
-
-.switch_container_active .switch {
-    top: 0.2vh;
-    right: 0.2vh;
-    position: absolute;
-    height: 4.6vh;
-    width: 4.6vh;
-    border-radius: 50%;
-    z-index: 1;
-    transform: translate(0px, 0);
-    transition: transform, background-color;
-    transition-duration: 300ms;
-    background-color: var(--accent_color);
-}
-
-.switch_container_dissabled {
-    position: absolute;
-    /*transform: translate(12vh, 0);*/
-    top: 0vh;
-    right: 1vh;
-    width: 12vh;
-    height: 5vh;
-    border: 0.5vh solid;
-    border-radius: 5vh;
-    cursor: pointer;
-    transition: transform, background-color;
-    transition-duration: 300ms;
-    background-color: var(--background-color);
-    border: 0.5vh solid var(--grey);
-}
-
-.switch_container_dissabled .switchbdy {
-    position: absolute;
-    width: 12vh;
-    height: 5vh;
-    border-radius: 5vh;
-    cursor: pointer;
-    transition: background-color;
-    transition-duration: 300ms;
-    background-color: var(--background-color)
-}
-
-.switch_container_dissabled .switch {
-    top: 0.2vh;
-    right: 0.2vh;
-    position: absolute;
-    height: 4.6vh;
-    width: 4.6vh;
-    border-radius: 50%;
-    z-index: 1;
-    transform: translate(-7vh, 0);
-    transition: transform, background-color;
-    transition-duration: 300ms;
-    background-color: var(--accent_color);
-}
-
-
+.Bar_title {}
 
 /*  In page notification  */
 

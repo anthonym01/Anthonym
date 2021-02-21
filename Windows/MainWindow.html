@@ -22,6 +22,7 @@
 
 <body>
 
+
     <div class="background_mask" id="mainmaskcontainer">
         <img id="backgroundmaskimg" src="" style="display: none;">
         <video id="backgroundvideo" src="" autoplay muted preload="metadata"></video>
@@ -34,13 +35,19 @@
             <div>background blur</div><input id="background_blur_put" type="number" min="0" max="100"
                 placeholder="1-100">
         </div>
-        <div class="setting_bar" id="Animations_btn" title="toggle Animations">
-            <div class="Bar_title">Animations</div>
-            <div class="switch_container_active" id="Animations_switch_container">
-                <div class="switchbdy" id="Animations_switchbdy">
-                    <div class="switch"></div>
-                </div>
-            </div>
+        <div title="toggle Animations" id="Animations_btn" class="setting_bar">
+            <div class="bar_title">Animations</div><input class="bar_box" id="anime_put" type="checkbox" checked>
+        </div>
+        <div title="" id="tray_btn" class="setting_bar">
+            <div class="bar_title">use tray icon</div><input class="bar_box" id="tray_put" type="checkbox" checked>
+        </div>
+        <div title="" id="minimize_to_tray_btn" class="setting_bar">
+            <div class="bar_title">minimize to tray</div><input class="bar_box" id="minimize_to_tray_put"
+                type="checkbox" checked>
+        </div>
+        <div title="" id="close_to_tray_btn" class="setting_bar">
+            <div class="bar_title">close to tray</div><input class="bar_box" id="close_to_tray_put" type="checkbox"
+                checked>
         </div>
     </div>
 
@@ -54,9 +61,9 @@
     </div>
 
     <!-- Play back controls -->
-    <div class="Playbar">
+    <div class="Playbar" id="Playbar">
         <img id="coverartsmall" height="auto" src="img/memes/Cats/comfuz.jpg" alt="cover">
-        <div class="songdetailcontainer">
+        <div class="songdetailcontainer" id="songdetailcontainer">
             <div id="songTitle">Not ready to Vibe</div>
             <div id="songArtist">anthonym</div>
         </div>
@@ -78,12 +85,10 @@
         <button id="first_finish_btn">Finish</button>
     </div>
 
-    <!-- Titlebar for frameless window draging -->
-    <div id="Title_bar">
-        <!--<div class="titlcon" id="titlcon"></div>-->
-    </div>
+    <!-- Titlebar stuff -->
+    <div id="Title_bar"></div>
     <!--<div class="title_menu_background"></div>-->
-    <div class="tbuttonholder">
+    <div class="tbuttonholder_locked" id="tbuttonholder">
 
         <div class="tbutton_half" id="setting_btn" title="settings"></div>
         <div class="tbutton_half" id="search_btn" title="Search"></div>
@@ -92,7 +97,12 @@
         <div class="tbutton" id="minimize-button" title="Minimize">-</div>
     </div>
 
+    <!--    Search functionality    -->
+    <div id="searchbox"></div>
+    <input type="text" id="searchput">
 
+    <div class="titlcon" id="titlcon"></div>
+    
     <script src="js/howler 2.2.1/howler.js"></script>
     <script type="text/javascript" src="js/index.js"></script>
     <script type="text/javascript" src="js/first_settup.js"></script>

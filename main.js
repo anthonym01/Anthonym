@@ -12,6 +12,7 @@ let config = {
 		alt_location: false,
 		minimize_to_tray: true,
 		quiton_X: true,
+		use_tray: true,
 		music_folders: [],
 	},
 	save: async function () { storeinator.set('default', JSON.stringify(config.data)) },
@@ -22,11 +23,16 @@ if (storeinator.get('default')) { config.load() }//load config
 
 app.on('ready', function () {//App ready to roll
 	app.allowRendererProcessReuse = true;//Allow render processes to be reused
+	app.requestSingleInstanceLock();//req lock
 	mainWindow.create();
-	if (config.data.minimize_to_tray == true) { tray.create() }
+	if (config.data.use_tray == true) { tray.create() }
 })
 
 app.on('window-all-closed', () => { if (tray.body == null) { app.quit() } })
+
+app.on('second-instance', (event) => {
+	mainWindow.show();
+});
 
 let mainWindow = {
 	body: null,//defines the window as an abject
@@ -95,13 +101,14 @@ let tray = {
 	body: null,//tray value
 	Play_msg: ipcMain.on('Play_msg', (event, now_playing, state) => {//Receive Song data from mainwindow and apply to tray
 		console.log('now playing: ', now_playing, state, /*event*/);
-		tray.update(now_playing, state)
+		if (tray.body != null) { tray.update(now_playing, state) }
 	}),
 	create: async function () {
 		console.log('Create tray')
 		tray.body = new Tray(path.join(__dirname, '/build/icons/256x256.png'))
 		tray.body.on('click', function () { console.log('tray clicked'); mainWindow.show() })//Single click
-		tray.update('Click to open','Play')//First menu
+		tray.update('Click to open', 'Play')//First menu
+
 	},
 	update: async function (now_playing, state) {
 		let contextMenu = new Menu()//menu
@@ -120,7 +127,11 @@ let tray = {
 	},
 	playpause: async function () { mainWindow.body.webContents.send('tray_play_pause') },
 	next: async function () { mainWindow.body.webContents.send('tray_next') },
-	previous: async function () { mainWindow.body.webContents.send('tray_previous') }
+	previous: async function () { mainWindow.body.webContents.send('tray_previous') },
+	destroy: async function () {
+		tray.body.destroy()
+		tray.body == null;
+	}
 }
 
 //Schortcut to write changes to files because i keep forgetting the fs writefile
@@ -143,9 +154,10 @@ module.exports = {//exported modules
 	setontop: async function () { mainWindow.body.setAlwaysOnTop(true) },//always on top the window
 	setnotontop: async function () { mainWindow.body.setAlwaysOnTop(false) },//always on top'nt the window
 	Stash_window: async function () { mainWindow.hide() },
-
+	reamake_tray: function () { tray.create() },
+	remove_tray: function () { tray.destroy() },
 	minimize_btn: async function () {
-		if (config.data.minimize_to_tray == true) {
+		if (config.data.minimize_to_tray == true && tray.body != null) {
 			mainWindow.hide()
 		} else {
 			mainWindow.body.minimize();
@@ -161,16 +173,18 @@ module.exports = {//exported modules
 		}
 	},
 	x_button: async function () {
-		if (config.data.minimize_to_tray == true && config.data.quiton_X == true) {
+		if (config.data.quiton_X != true) {
 			app.quit()
 		} else {
-			mainWindow.hide()
+			if (tray.body != null) { mainWindow.hide() } else { app.quit() }
 		}
 	},
 	get: {
 		musicfolders: function () { return config.data.music_folders },
 		alt_location: function () { return config.data.alt_location },
 		minimize_to_tray: function () { return config.data.minimize_to_tray },
+		quiton_X: function () { return config.data.quiton_X },
+		use_tray: function () { return config.data.use_tray }
 	},
 	set: {
 		musicfolders: async function (music_folders) {
@@ -183,6 +197,14 @@ module.exports = {//exported modules
 		},
 		minimize_to_tray: async function (minimize_to_tray) {
 			config.data.minimize_to_tray = minimize_to_tray;
+			config.save();
+		},
+		quiton_X: async function (quiton_X) {
+			config.data.quiton_X = quiton_X;
+			config.save();
+		},
+		use_tray: async function (use_tray) {
+			config.data.use_tray = use_tray;
 			config.save();
 		},
 	}

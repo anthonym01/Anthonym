@@ -523,6 +523,11 @@ let player = {//Playback control
                         type: "normal",
                         click() { }
                     },
+                    {
+                        label: "edit tags",
+                        type: "normal",
+                        click() { }
+                    },
                     { type: "separator" },
                     {
                         label: "copy file name",

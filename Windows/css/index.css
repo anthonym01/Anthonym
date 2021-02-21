@@ -696,7 +696,7 @@ body {
     position: fixed;
     right: 0;
     width: calc(100% - 15rem);
-    top: 30px;
+    top: 28px;
     /*
     left: 175px;
     width: calc(100% - 350px);*/
@@ -708,7 +708,6 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     display: none;
-    filter: blur(1px);
 }
 
 #titlebarfillout {

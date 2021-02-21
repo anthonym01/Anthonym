@@ -19,20 +19,25 @@ let config = {
 	load: function () { config.data = JSON.parse(storeinator.get('default')) }
 }
 
-if (storeinator.get('default')) { config.load() }//load config
+const gotTheLock = app.requestSingleInstanceLock();
 
-app.on('ready', function () {//App ready to roll
-	app.allowRendererProcessReuse = true;//Allow render processes to be reused
-	app.requestSingleInstanceLock();//req lock
-	mainWindow.create();
-	if (config.data.use_tray == true) { tray.create() }
-})
+if (gotTheLock == false) { app.quit(); } else {
 
-app.on('window-all-closed', () => { if (tray.body == null) { app.quit() } })
+	if (storeinator.get('default')) { config.load() }//load config
 
-app.on('second-instance', (event) => {
-	mainWindow.show();
-});
+	app.on('ready', function () {//App ready to roll
+		app.allowRendererProcessReuse = true;//Allow render processes to be reused
+		mainWindow.create();
+		if (config.data.use_tray == true) { tray.create() }
+	})
+
+	app.on('window-all-closed', () => { if (tray.body == null) { app.quit() } })
+
+	app.on('second-instance', (event) => {
+		mainWindow.show();
+	});
+
+}
 
 let mainWindow = {
 	body: null,//defines the window as an abject

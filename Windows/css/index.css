@@ -398,7 +398,7 @@ body {
 
 .songdetailcontainer_alt {
     white-space: wrap;
-    max-width: calc(100% - 51vw - 17.5rem);
+    max-width: calc(100% - 55vw - 16rem);
 }
 
 #songTitle {
@@ -477,6 +477,8 @@ body {
     overflow-y: scroll;
     background-origin: content-box;
     z-index: 2;
+    transition: filter 300ms;
+    filter:blur(0px);
 }
 
 .song_bar,

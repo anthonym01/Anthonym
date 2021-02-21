@@ -52,6 +52,7 @@ window.addEventListener('load', async function () {
 window.addEventListener('keydown', function (e) {//keyboard actions
     switch (e.key) {
         case " ": case "p": case "enter": e.preventDefault(); player.play(); break;
+        case "f": e.preventDefault(); UI.show_search(); break;
         case "n": e.preventDefault(); player.next(); break;
         case "b": e.preventDefault(); player.previous(); break;
         case "m": e.preventDefault(); player.mute(); break;
@@ -511,7 +512,7 @@ let player = {//Playback control
                     {//play button
                         label: "Play",
                         type: "normal",
-                        click() { player.play(fileindex) }
+                        click() { player.play(fileindex); }
                     },
                     {
                         label: "add to favourites",
@@ -562,6 +563,7 @@ let player = {//Playback control
         */
         console.log('Attempt to play: ', fileindex);
 
+        UI.hide_search();
 
         if (player.playstate != false) {//if is playing something
             if (fileindex == undefined) {//pause playback
@@ -987,7 +989,7 @@ let UI = {
             }
         })
         document.getElementById('Menupannel_main').addEventListener('mouseenter', function () { UI.hide_search() })
-        document.getElementById('main_library_view').addEventListener('mouseenter', function () { UI.hide_search() })
+        //document.getElementById('main_library_view').addEventListener('mouseenter', function () { UI.hide_search() })
         document.getElementById('Playbar').addEventListener('mouseenter', function () { UI.hide_search() })
         document.getElementById('setting_view').addEventListener('mouseenter', function () { UI.hide_search() })
 
@@ -1030,6 +1032,9 @@ let UI = {
         }
         document.getElementById('searchput').style.display = ""
         document.getElementById('searchbox').style.display = ""
+
+        document.getElementById('main_library_view').style.filter = ""
+        document.getElementById('searchbox').style.width = ""
         /*} else {
 
             document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
@@ -1042,7 +1047,9 @@ let UI = {
         document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
         document.getElementById('searchbox').style.display = "block"
         setTimeout(() => { document.getElementById('searchput').focus() }, 100);
-        document.getElementById('searchput').style.display = "block"
+        document.getElementById('searchput').style.display = "block";
+        document.getElementById('main_library_view').style.filter = `blur(${config.background_blur}px)`;
+        document.getElementById('searchbox').style.width = `calc(100% - 15rem + ${config.background_blur})`;
     },
     settings: {
         animation: {

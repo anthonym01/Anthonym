@@ -15,6 +15,7 @@ const wallpaper = require('wallpaper');
 
 */
 const mm = require('music-metadata');
+const { Howler } = require('howler');
 //const {Howl, Howler} = require('howler');
 
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
@@ -272,6 +273,8 @@ let player = {//Playback control
             player.pause();
             window.location.href = `#${config.last_played - 2}`;
         }, 500);
+
+        document.getElementById('coverartsmall').addEventListener('click', function () { player.scroll_to_current() })
 
         //searchput
         document.getElementById('searchput').addEventListener('keydown', function (e) {//keyboard actions
@@ -563,7 +566,7 @@ let player = {//Playback control
         */
         console.log('Attempt to play: ', fileindex);
 
-        UI.hide_search();
+        //UI.hide_search();
 
         if (player.playstate != false) {//if is playing something
             if (fileindex == undefined) {//pause playback
@@ -604,6 +607,7 @@ let player = {//Playback control
 
         if (fileindex != player.now_playing && player.playstate != false) {
             await player.stream1.unload();//unlock the stream thats gonna be used
+            Howler.unload()
             backgroundvideo.src = "";
             backgroundvideo.style.display = "none"
         }
@@ -708,14 +712,11 @@ let player = {//Playback control
         } else {
             nextsong = player.files[player.now_playing + 1] ? Number(player.now_playing + 1) : 0;
         }
-
-
         player.play(nextsong)
-        document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
-        document.getElementById(`${nextsong}`).className = "song_bar_active"
-        song_progress_bar.value = 0;//reset seek value
         player.now_playing = nextsong;
-        window.location.href = `#${nextsong - 2}`;
+        song_progress_bar.value = 0;//reset seek value
+        player.scroll_to_current()
+
     },
     previous: async function () {
         console.log('Play Previous');
@@ -728,11 +729,10 @@ let player = {//Playback control
         }
 
         player.play(player.now_playing - 1)
-        document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
-        document.getElementById(`${player.now_playing - 1}`).className = "song_bar_active"
-        window.location.href = `#${player.now_playing - 2}`
         song_progress_bar.value = 0;//reset seek value
         player.now_playing = player.now_playing - 1;
+
+        player.scroll_to_current()
     },
     mute: async function () {
         if (player.stream1.mute == true) {
@@ -821,6 +821,7 @@ let player = {//Playback control
             //let imgscr = `data:${picture.format};base64,${picture.data.toString('base64')}`;
             //let imgscr = new Blob([picture.data], { type: picture.format });
             let imgscr = URL.createObjectURL(new Blob([picture.data], { type: picture.format }))
+            ipcRenderer.send('new_icon', imgscr)
             console.log(imgscr)
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: metadata.common.title ? metadata.common.title : player.files[fileindex].filename,
@@ -869,7 +870,6 @@ let player = {//Playback control
         function buildsong(fileindex) {
             var song_bar = document.createElement('div');
             song_bar.classList = "song_bar";
-            song_bar.id = fileindex;
             var song_title = document.createElement('div')
             song_title.className = "song_title";
             song_title.innerHTML = player.files[fileindex].filename;
@@ -925,7 +925,10 @@ let player = {//Playback control
                 {//play button
                     label: "Play",
                     type: "normal",
-                    click() { player.play(fileindex) }
+                    click() {
+                        player.play(fileindex);
+                        setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
+                    }
                 },
                 {
                     label: "add to favourites",
@@ -959,8 +962,22 @@ let player = {//Playback control
                 contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
             }, false);
 
-            eliment.addEventListener('click', function () { player.play(fileindex) })//click to play
+            eliment.addEventListener('click', function () {
+                player.play(fileindex);
+                setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
+
+            })//click to play
         }
+    },
+    scroll_to_current: async function () {
+        document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
+        document.getElementById(`${player.now_playing - 1}`).className = "song_bar_active"
+        if (document.getElementById(`#${player.now_playing - 2}`)) {
+            window.location.href = `#${player.now_playing - 2}`
+        } else {
+            window.location.href = `#${player.now_playing - 1}`
+        }
+
     }
 }
 
@@ -989,7 +1006,7 @@ let UI = {
             }
         })
         document.getElementById('Menupannel_main').addEventListener('mouseenter', function () { UI.hide_search() })
-        //document.getElementById('main_library_view').addEventListener('mouseenter', function () { UI.hide_search() })
+        document.getElementById('main_library_view').addEventListener('mouseenter', function () { UI.hide_search() })
         document.getElementById('Playbar').addEventListener('mouseenter', function () { UI.hide_search() })
         document.getElementById('setting_view').addEventListener('mouseenter', function () { UI.hide_search() })
 

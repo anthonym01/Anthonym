@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain, nativeImage } = require('electron');
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
@@ -81,12 +81,21 @@ let mainWindow = {
 		}))
 
 		mainWindowState.manage(mainWindow.body);//give window to window manager plugin
+
+		mainWindow.body.on('minimize', function () { mainWindow.minimize() })
 	},
 	hide: async function () {
 		console.log('hide main window')
 		//if (process.platform == 'linux') { create_tray(); }
 		mainWindow.body.hide();
 		mainWindow.body.setSkipTaskbar(true);
+	},
+	minimize: async function () {
+		if (config.data.minimize_to_tray == true && tray.body != null) {
+			mainWindow.hide()
+		} else {
+			mainWindow.body.minimize();
+		}
 	},
 	show: async function () {
 		console.log('Show main window')
@@ -108,6 +117,10 @@ let tray = {
 		console.log('now playing: ', now_playing, state, /*event*/);
 		if (tray.body != null) { tray.update(now_playing, state) }
 	}),
+	new_icon: ipcMain.on('new_icon', (event, image) => {//Receive Song data from mainwindow and apply to tray
+		console.log('new tray icon: ', image, /*event*/);
+		if (tray.body != null) { tray.seticon(image) }
+	}),
 	create: async function () {
 		console.log('Create tray')
 		tray.body = new Tray(path.join(__dirname, '/build/icons/256x256.png'))
@@ -128,7 +141,10 @@ let tray = {
 		contextMenu.append(new MenuItem({ role: 'quit' }))
 
 		tray.body.setContextMenu(contextMenu)//Set tray menu
-		tray.body.setToolTip(now_playing)//Set tray tooltip
+		tray.body.setToolTip(`Playing: ${now_playing}`)//Set tray tooltip
+	},
+	seticon: async function (image) {
+		//tray.body.setImage(nativeImage.createFromPath(image)) 
 	},
 	playpause: async function () { mainWindow.body.webContents.send('tray_play_pause') },
 	next: async function () { mainWindow.body.webContents.send('tray_next') },
@@ -162,11 +178,7 @@ module.exports = {//exported modules
 	reamake_tray: function () { tray.create() },
 	remove_tray: function () { tray.destroy() },
 	minimize_btn: async function () {
-		if (config.data.minimize_to_tray == true && tray.body != null) {
-			mainWindow.hide()
-		} else {
-			mainWindow.body.minimize();
-		}
+		mainWindow.minimize()
 	},
 	maximize_btn: async function () {
 		if (config.data.minimize_to_tray == true) { mainWindow.show() }

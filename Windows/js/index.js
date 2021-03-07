@@ -16,6 +16,7 @@ const wallpaper = require('wallpaper');
 */
 const mm = require('music-metadata');
 const { Howler } = require('howler');
+const thumbnailjs = require('thumbnail-js')
 //const {Howl, Howler} = require('howler');
 
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
@@ -501,20 +502,33 @@ let player = {//Playback control
                         eliment.appendChild(song_duration)
 
                         //cover art
-                        const picture = mm.selectCover(metadata.common.picture)
-                        if (typeof (picture) != 'undefined' && picture != null) {
-                            var songicon = document.createElement("img")
-                            songicon.className = "songicon"
-                            songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                            eliment.appendChild(songicon)
-                        }
-                        else {
-                            //use placeholder image
-                            var songicon = document.createElement("div")
-                            songicon.className = "songicon_dfault"
-                            eliment.appendChild(songicon)
-                        }
+                        if (path.extname(player.files[fileindex].path) == ".mp4") {
+                            console.warn('mp4 file detected')
 
+                            thumbnailjs.getVideoThumbnail(player.files[fileindex].path, 1, 3, "image/jpg").then((thumnaildata) => {
+                                //console.log(thumnaildata)
+                                var songicon = document.createElement("img")
+                                songicon.className = "songicon"
+                                songicon.src = thumnaildata;
+                                eliment.appendChild(songicon)
+                            })
+
+                        } else {
+
+                            const picture = mm.selectCover(metadata.common.picture)
+                            if (typeof (picture) != 'undefined' && picture != null) {
+                                var songicon = document.createElement("img")
+                                songicon.className = "songicon"
+                                songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                                eliment.appendChild(songicon)
+                            }
+                            else {
+                                //use placeholder image
+                                var songicon = document.createElement("div")
+                                songicon.className = "songicon_dfault"
+                                eliment.appendChild(songicon)
+                            }
+                        }
 
                     });
                 } catch (err) {
@@ -999,6 +1013,43 @@ let player = {//Playback control
 
             })//click to play
         }
+    },
+    lift_coverart: async function (fileindex) {
+        try {
+
+            if (path.extname(player.files[fileindex].path) == ".mp4") {
+                console.warn('mp4 file detected')
+
+                thumbnailjs.getVideoThumbnail(player.files[fileindex].path, 1, 3, "image/jpg").then((thumnaildata) => {
+                    //console.log(thumnaildata)
+                    var songicon = document.createElement("img")
+                    songicon.className = "songicon"
+                    songicon.src = thumnaildata;
+                    eliment.appendChild(songicon)
+                })
+
+            } else {
+
+                const picture = mm.selectCover(metadata.common.picture)
+                if (typeof (picture) != 'undefined' && picture != null) {
+                    var songicon = document.createElement("img")
+                    songicon.className = "songicon"
+                    songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                    eliment.appendChild(songicon)
+                }
+                else {
+                    //use placeholder image
+                    var songicon = document.createElement("div")
+                    songicon.className = "songicon_dfault"
+                    eliment.appendChild(songicon)
+                }
+            }
+        } catch (err) {
+
+        } finally {
+
+        }
+
     },
     scroll_to_current: async function () {
         document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })

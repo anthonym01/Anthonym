@@ -398,10 +398,23 @@ let player = {//Playback control
                 if (main_library_view.childElementCount < player.files.length) {
                     build_library()
                     console.warn('recheck library');
-                    UI.notify.new(
-                        'Slow disk',
-                        'Your songs are stored on a slow storage media, you may have a bad expeience using this application'
-                    );
+
+                    //warn the bokens
+                    if (process.platform == 'win32') {
+
+                        UI.notify.new(
+                            'Slow file access',
+                            'took more than 10ms to gain acces to files, this could be due to another application such as a antivirus or a cloud storage providor using those files'
+                        );
+
+                    } else {
+
+                        UI.notify.new(
+                            'Slow file access',
+                            'took more than 10ms to gain acces to files, this could be due to the way your OS handles files on that drive, the drive may be slow, your cpu curve could be set to conserve power, or another application could be using that disk heavily'
+                        );
+
+                    }
                 } else {
                     clearInterval(hold)
                 }
@@ -461,7 +474,7 @@ let player = {//Playback control
                 song_bar.appendChild(song_title);
                 main_library_view.appendChild(song_bar);
                 functionality(song_bar, fileindex);
-                setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 5);
+                setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 20);
 
             }
 
@@ -579,6 +592,9 @@ let player = {//Playback control
                 if (backgroundvideo.style.display != "none") {
                     backgroundvideo.play();
                     backgroundvideo.currentTime = player.stream1.seek()
+                } else {
+                    backgroundvideo.muted = true;
+                    backgroundvideo.pause()
                 }
                 console.log('resume : ', player.files[player.now_playing].path);
                 return 0;
@@ -591,6 +607,9 @@ let player = {//Playback control
 
                 backgroundvideo.play();
                 backgroundvideo.currentTime = player.stream1.seek()
+            } else {
+                backgroundvideo.muted = true;
+                backgroundvideo.pause()
             }
             console.log('resume : ', player.files[player.now_playing].path);
             return 0;
@@ -606,13 +625,16 @@ let player = {//Playback control
         }
 
         if (fileindex != player.now_playing && player.playstate != false) {
-            await player.stream1.unload();//unlock the stream thats gonna be used
-            Howler.unload()
-            backgroundvideo.src = "";
-            backgroundvideo.style.display = "none"
+            //await player.stream1.unload();//unlock the stream thats gonna be used
+            //Howler.unload()
+            /*backgroundvideo.src = "";
+            backgroundvideo.style.display = "none"*/
         }
 
         try {
+            //await player.stream1.unload();//unlock the stream thats gonna be used
+            Howler.unload()//unload playing track if any
+
             player.stream1 = new Howl({
                 src: player.files[fileindex].path,//takes an array, or single path
                 autoplay: true,
@@ -651,6 +673,9 @@ let player = {//Playback control
                         default:
                             backgroundvideo.src = "";
                             backgroundvideo.style.display = "none"
+                            backgroundvideo.muted = true;
+                            backgroundvideo.pause()
+
 
                     }
                     backgroundvideo.currentTime = 0;
@@ -669,7 +694,9 @@ let player = {//Playback control
                     console.log('Playing: ', player.files[fileindex]);
                 }
             });
+
             if (load != false) { player.stream1.load() }
+
         } catch (err) {
             console.warn('howl error ', err)
         } finally {
@@ -682,11 +709,11 @@ let player = {//Playback control
         if (player.playstate != false) {
             player.stream1.pause();
             backgroundvideo.pause();
-            player.stop_seeking()
+            player.stop_seeking();
             player.playstate = false;//stop playstate 
             navigator.mediaSession.playbackState = "paused";
-            playbtn.classList = "playbtn"
-            playbtn.title = "play"
+            playbtn.classList = "playbtn";
+            playbtn.title = "play";
             ipcRenderer.send('Play_msg', player.files[player.now_playing].filename, 'Play');
         } else {//assume error
             console.warn('Tried pause functionality with no playback');
@@ -735,10 +762,10 @@ let player = {//Playback control
         player.scroll_to_current()
     },
     mute: async function () {
-        if (player.stream1.mute == true) {
-            player.stream1.mute(false)
+        if (Howler._muted == true) {
+            Howler.mute(false)
         } else {
-            player.stream1.mute(true)
+            Howler.mute(true)
         }
     },
     start_seeking: async function () {
@@ -746,6 +773,7 @@ let player = {//Playback control
         player.stop_seeking();
         player.seekterval = setInterval(() => {
             let seeked = player.stream1.seek()
+            song_progress_bar.max = player.files[player.now_playing].duration;
             song_progress_bar.value = seeked;
             navigator.mediaSession.setPositionState({
                 duration: player.files[player.now_playing].duration,//player.files[player.now_playing].duration,
@@ -778,9 +806,10 @@ let player = {//Playback control
         navigator.mediaSession.metadata = new MediaMetadata({ title: player.files[fileindex].filename });
         navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
         navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
-        //navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
-        //navigator.mediaSession.setActionHandler('seekbackward', function () { });
-        //navigator.mediaSession.setActionHandler('seekforward', function () { });
+        navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
+        navigator.mediaSession.setActionHandler('seekbackward', function () { });
+        navigator.mediaSession.setActionHandler('seekforward', function () { });
+        //navigator.mediaSession.setActionHandler('shuffle', function () { });
         navigator.mediaSession.setActionHandler('seekto', function () { });
         navigator.mediaSession.setActionHandler('previoustrack', function () { console.log('External previous command'); player.previous() });
         navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
@@ -821,6 +850,7 @@ let player = {//Playback control
             //let imgscr = `data:${picture.format};base64,${picture.data.toString('base64')}`;
             //let imgscr = new Blob([picture.data], { type: picture.format });
             let imgscr = URL.createObjectURL(new Blob([picture.data], { type: picture.format }))
+
             ipcRenderer.send('new_icon', imgscr)
             console.log(imgscr)
             navigator.mediaSession.metadata = new MediaMetadata({
@@ -829,6 +859,7 @@ let player = {//Playback control
                 album: metadata.common.album ? metadata.common.album : "unknown",
                 artwork: picture ? [{ src: imgscr }] : null,
             });
+
         } else {
             //use placeholder image
             document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
@@ -971,7 +1002,7 @@ let player = {//Playback control
     },
     scroll_to_current: async function () {
         document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
-        document.getElementById(`${player.now_playing - 1}`).className = "song_bar_active"
+        document.getElementById(`${player.now_playing}`).className = "song_bar_active"
         if (document.getElementById(`#${player.now_playing - 2}`)) {
             window.location.href = `#${player.now_playing - 2}`
         } else {
@@ -983,21 +1014,26 @@ let player = {//Playback control
 
 let UI = {
     initalize: function () {
+
+        //grab desktop wallpaper
         UI.get_desktop_wallpaper().then((wallpaperpath) => { mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')` })
 
-        //titlebar
-
-
-        //animations
+        //animations switch trigger
         document.getElementById('Animations_btn').addEventListener('click', function () { UI.settings.animation.flip() })
-        document.getElementById('tray_btn').addEventListener('click', function () { UI.settings.use_tray.flip() })
-        document.getElementById('minimize_to_tray_btn').addEventListener('click', function () { UI.settings.minimize_to_tray.flip() })
-        document.getElementById('close_to_tray_btn').addEventListener('click', function () { UI.settings.quiton_X.flip() })
-        UI.settings.animation.setpostition()
 
+        //tray switch trigger
+        document.getElementById('tray_btn').addEventListener('click', function () { UI.settings.use_tray.flip() })
+
+        //minimize to tray switch trigger
+        document.getElementById('minimize_to_tray_btn').addEventListener('click', function () { UI.settings.minimize_to_tray.flip() })
+
+        //close to tray switch trigger
+        document.getElementById('close_to_tray_btn').addEventListener('click', function () { UI.settings.quiton_X.flip() })
+
+        //setting navitation trigger
         document.getElementById('setting_btn').addEventListener('click', function () { UI.navigate.setting_view() })
 
-        //search
+        //search trigger
         document.getElementById('search_btn').addEventListener('click', function () {
             if (document.getElementById('searchbox').style.display == "block") {//hide it
                 UI.hide_search()
@@ -1005,6 +1041,7 @@ let UI = {
                 UI.show_search()
             }
         })
+
         document.getElementById('Menupannel_main').addEventListener('mouseenter', function () { UI.hide_search() })
         document.getElementById('main_library_view').addEventListener('mouseenter', function () { UI.hide_search() })
         document.getElementById('Playbar').addEventListener('mouseenter', function () { UI.hide_search() })

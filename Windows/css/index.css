@@ -6,9 +6,9 @@
 :root {
     --text-color: rgb(0, 0, 0);
     --background-color: rgb(255, 255, 255);
-    --half_background-color: rgba(255, 255, 255, .5);
+    --half_background-color: rgba(255, 255, 255, 0.2);
     --accent_color: rgb(0, 153, 255);
-    --accent_color_t: rgba(0, 153, 255, 0.5);
+    /*--accent_color_t: rgba(0, 153, 255, 0.5);*/
     --grey: rgb(122, 122, 122);
     --off_grey: rgb(205, 205, 205);
     --half_grey: rgb(165, 165, 165);
@@ -32,15 +32,15 @@
     :root {
         --text-color: rgb(255, 255, 255);
         --background-color: rgb(0, 0, 0);
-        --half_background-color: rgba(0, 0, 0, 0.4);
+        --half_background-color: rgba(0, 0, 0, 0.2);
         --accent_color: rgb(0, 153, 255);
-        --accent_color_t: rgba(0, 153, 255, 0.5);
+        /*--accent_color_t: rgba(0, 153, 255, 0.5);*/
         --grey: rgb(122, 122, 122);
         --off_grey: rgb(50, 50, 50);
         --half_grey: rgb(90, 90, 90);
         --Playbar_grade: linear-gradient(0deg, rgba(0, 0, 0, .8), rgba(0, 0, 0, .3));
         --Playbar_grade_a: linear-gradient(0deg, rgba(0, 0, 0, .9), rgba(0, 0, 0, .6));
-        --Playbar_gradereverse: linear-gradient(180deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
+        --Playbar_gradereverse: linear-gradient(180deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
         --file_icon: url('../img/filecons/folder_white.webp');
         --add_icon: url('../img/plus-light.webp');
         --setting_icon: url('../img/setting-light.webp');
@@ -196,6 +196,15 @@ body {
 
 #x-button:hover {
     background-color: red;
+}
+
+#x-button::before{
+    position: absolute;
+    top:0;
+    left: 0;
+    width: 3px;
+    height: 30px;
+    content: "";
 }
 
 #maximize-button {

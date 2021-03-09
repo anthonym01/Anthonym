@@ -198,21 +198,103 @@ body {
     background-color: red;
 }
 
-#x-button::before{
+#x-button::before {
     position: absolute;
-    top:0;
-    left: 0;
-    width: 3px;
-    height: 30px;
+    top: 5px;
+    left: 21.75px;
+    width: 1.5px;
+    height: 20px;
     content: "";
+    background-color: var(--text-color);
+    transition: transform 300ms;
+    transform: rotate(45deg);
+}
+
+#x-button::after {
+    position: absolute;
+    top: 5px;
+    right: 21.75px;
+    width: 1.5px;
+    height: 20px;
+    content: "";
+    background-color: var(--text-color);
+    transition: transform 300ms;
+    transform: rotate(-45deg);
+}
+
+#x-button:hover::before {
+    transform: rotate(-45deg);
+}
+
+#x-button:hover::after {
+    transform: rotate(45deg);
 }
 
 #maximize-button {
     right: 45px;
 }
 
+#maximize-button::after {
+    position: absolute;
+    top: 6px;
+    right: 11px;
+    height: 15px;
+    width: 15px;
+    border: 1.5px solid var(--text-color);
+    content: "";
+    background-color: var(--background-color);
+    box-sizing: border-box;
+    transition: top 300ms, left 300ms;
+}
+
+#maximize-button::before {
+    position: absolute;
+    top: 9px;
+    left: 15px;
+    height: 15px;
+    width: 15px;
+    background-color: var(--background-color);
+    border: 1.5px solid var(--text-color);
+    content: "";
+    box-sizing: border-box;
+    transition: top 300ms, left 300ms;
+}
+
+#maximize-button:hover::before,
+#maximize-button:hover::after {
+    background-color: var(--accent_color);
+}
+
+#maximize-button:hover::before {
+    top: 6px;
+    right: 11px;
+    left: unset;
+}
+
+#maximize-button:hover::after {
+    top: 9px;
+    left: 15px;
+    right: unset;
+}
+
 #minimize-button {
     right: 90px;
+}
+
+#minimize-button::after {
+    position: absolute;
+    top: 13.75px;
+    height: 1.5px;
+    width: 20px;
+    left: 12.5px;
+    background-color: var(--text-color);
+    content: "";
+    transition: transform 300ms;
+    transform: rotate(0);
+}
+
+#minimize-button:hover:after {
+    transform: rotate(180deg);
 }
 
 #setting_btn {
@@ -489,7 +571,7 @@ body {
     background-origin: content-box;
     z-index: 2;
     transition: filter 300ms;
-    filter:blur(0px);
+    filter: blur(0px);
 }
 
 .song_bar,

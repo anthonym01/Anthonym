@@ -26,7 +26,9 @@
     "postinstall": "electron-builder install-app-deps",
     "builder-default": "electron-builder",
     "builder-linux": "electron-builder --linux deb appimage tar.xz snap pacman",
-    "builder-win": "electron-builder --win --x64 --ia32"
+    "builder-win": "electron-builder --win --x64 --ia32",
+    "builder-pacman": "electron-builder --linux pacman",
+    "builder-win64": "electron-builder --win --x64"
   },
   "build": {
     "appId": "com.anthonym.music",

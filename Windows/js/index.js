@@ -428,33 +428,38 @@ let player = {//Playback control
             muzicpaths.forEach(folder => {//for each folder in the array
 
                 fs.readdir(folder, function (err, files) {//read the files within the directory
+                    try {
+                        if (err) { throw err }
+                        files.forEach(file => {//for each file in the folder
 
-                    if (err) { console.warn('File error', err) }//error accessing directory due to it not existing or locked permissions
+                            var fullfilepath = path.join(folder, file);
+                            if (fs.statSync(fullfilepath).isDirectory()) {//sud-directory to search
+                                getfiles([fullfilepath]);
+                                return 0;
+                            } else {//file to handle
 
-                    files.forEach(file => {//for each file in the folder
+                                switch (path.parse(fullfilepath).ext) {//check file types
 
-                        var fullfilepath = path.join(folder, file);
-                        if (fs.statSync(fullfilepath).isDirectory()) {//sud-directory to search
-                            getfiles([fullfilepath]);
-                            return 0;
-                        } else {//file to handle
+                                    case ".mp3": case ".m4a": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
+                                    case ".aac": case ".caf": case ".m4b": case ".mp4": case ".m4v": case ".weba":
+                                    case ".webm": case ".dolby": case ".flac": //playable as music files
+                                        player.files.push({ filename: path.parse(fullfilepath).name, path: fullfilepath });
+                                        break;
 
-                            switch (path.parse(fullfilepath).ext) {//check file types
+                                    case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
+                                        player.playlists.push({ path: fullfilepath });
+                                        break;
 
-                                case ".mp3": case ".m4a": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
-                                case ".aac": case ".caf": case ".m4b": case ".mp4": case ".m4v": case ".weba":
-                                case ".webm": case ".dolby": case ".flac": //playable as music files
-                                    player.files.push({ filename: path.parse(fullfilepath).name, path: fullfilepath });
-                                    break;
-
-                                case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
-                                    player.playlists.push({ path: fullfilepath });
-                                    break;
-
-                                default: console.warn('Cannot handle (not supported): ', fullfilepath);//not supported music file
+                                    default: console.warn('Cannot handle (not supported): ', fullfilepath);//not supported music file
+                                }
                             }
-                        }
-                    })
+                        })
+
+                    }//error accessing directory due to it not existing or locked permissions
+                    catch (err) {
+                        console.warn('File error', err)
+                        UI.notify.new('Error', `Could not access ${folder}`)
+                    }
                 })
             })
         }
@@ -505,7 +510,7 @@ let player = {//Playback control
                         if (path.extname(player.files[fileindex].path) == ".mp4") {
                             console.warn('mp4 file detected')
 
-                            thumbnailjs.getVideoThumbnail(player.files[fileindex].path, 1, 3, "image/jpg").then((thumnaildata) => {
+                            thumbnailjs.getVideoThumbnail(player.files[fileindex].path, 1, 6, "image/jpg").then((thumnaildata) => {
                                 //console.log(thumnaildata)
                                 var songicon = document.createElement("img")
                                 songicon.className = "songicon"

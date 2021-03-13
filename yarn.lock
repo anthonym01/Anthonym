@@ -900,7 +900,7 @@ http-cache-semantics@^4.0.0:
   resolved "https://registry.yarnpkg.com/http-cache-semantics/-/http-cache-semantics-4.1.0.tgz#49e91c5cbf36c9b94bcfcd71c23d5249ec74e390"
   integrity sha512-carPklcUh7ROWRK7Cv27RPtdhYhUsela/ue5/jKzjegVvXDqM2ILE9Q2BGn9JZJh1g87cp56su/FgQSzcWS8cQ==
 
-iconv-lite@^0.6.2:
+iconv-lite@0.6.2, iconv-lite@^0.6.2:
   version "0.6.2"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.6.2.tgz#ce13d1875b0c3a674bd6a04b7f76b01b1b6ded01"
   integrity sha512-2y91h5OpQlolefMPmUlivelittSWy0rP+oYVpn6A7GwVHNE8AWzoYOBNmlwks3LobaJxgHCYZAnyNo2GgpNRNQ==
@@ -1196,6 +1196,13 @@ music-metadata@^7.6.2:
     media-typer "^1.1.0"
     strtok3 "^6.0.6"
     token-types "^2.0.0"
+
+node-id3@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/node-id3/-/node-id3-0.2.2.tgz#4267d35cc994140d457d79ce7949308f57414e8f"
+  integrity sha512-DIk1gL6iWupo4odBqFc9d5C4h081M3Bb8ASJ8YlVF+6jpLH4FWukrNXI0PxLUDxFIuiQr4dQ0GzBVsrmMnRLJg==
+  dependencies:
+    iconv-lite "0.6.2"
 
 normalize-package-data@^2.5.0:
   version "2.5.0"

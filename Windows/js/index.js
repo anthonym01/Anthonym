@@ -16,7 +16,9 @@ const wallpaper = require('wallpaper');
 */
 const mm = require('music-metadata');
 const { Howler } = require('howler');
-const thumbnailjs = require('thumbnail-js')
+const thumbnailjs = require('thumbnail-js');
+const NodeID3 = require('node-id3');
+
 //const {Howl, Howler} = require('howler');
 
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
@@ -31,6 +33,7 @@ const mainmaskcontainer = document.getElementById('mainmaskcontainer');
 const Menupannel_main = document.getElementById('Menupannel_main');
 const repeatbtn = document.getElementById('repeatbtn');
 const shufflebtn = document.getElementById('shufflebtn');
+const searchput = document.getElementById('searchput');
 
 //  Taskbar buttons for frameless window
 document.getElementById('x-button').addEventListener('click', function () {
@@ -278,7 +281,7 @@ let player = {//Playback control
         document.getElementById('coverartsmall').addEventListener('click', function () { player.scroll_to_current() })
 
         //searchput
-        document.getElementById('searchput').addEventListener('keydown', function (e) {//keyboard actions
+        searchput.addEventListener('keydown', function (e) {//keyboard actions
             e.stopImmediatePropagation();
             setTimeout(() => {
 
@@ -906,6 +909,16 @@ let player = {//Playback control
             });
         }
         if (backgroundvideo.style.display == "block") { document.getElementById('tbuttonholder').className = "tbuttonholder" }
+
+        //notification if hidden
+        const myNotification = new Notification('Anthonym', {
+            body: `Playing ${metadata.common.title || player.files[fileindex].filename} by ${metadata.common.artist || "unknown"}`,
+            image:`data:${picture.format};base64,${picture.data.toString('base64')}`,
+        })
+        myNotification.onclick = () => {
+            console.log('Notification clicked')
+        }
+
     },
     lookup: async function (pattern) {//match any pattern to local file name
         console.log('Look for ', pattern)
@@ -1070,7 +1083,10 @@ let player = {//Playback control
 
 let UI = {
     initalize: function () {
-
+        UI.settings.animation.setpostition()
+        UI.settings.minimize_to_tray.setpostition()
+        UI.settings.quiton_X.setpostition()
+        UI.settings.use_tray.setpostition()
         //grab desktop wallpaper
         UI.get_desktop_wallpaper().then((wallpaperpath) => { mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')` })
 
@@ -1134,13 +1150,13 @@ let UI = {
         }
     },
     hide_search: async function () {
-        //if (document.getElementById('searchput').value != "" || document.getElementById('searchbox').style.display == "block") {
+        //if (searchput.value != "" || document.getElementById('searchbox').style.display == "block") {
         if (backgroundmaskimg.style.display == "none" && backgroundvideo.style.display == "none") {
             document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
         } else {
             document.getElementById('tbuttonholder').className = "tbuttonholder"
         }
-        document.getElementById('searchput').style.display = ""
+        searchput.style.display = ""
         document.getElementById('searchbox').style.display = ""
 
         document.getElementById('main_library_view').style.filter = ""
@@ -1156,8 +1172,8 @@ let UI = {
     show_search: async function () {
         document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
         document.getElementById('searchbox').style.display = "block"
-        setTimeout(() => { document.getElementById('searchput').focus() }, 100);
-        document.getElementById('searchput').style.display = "block";
+        setTimeout(() => { searchput.focus(); searchput.select() }, 100);
+        searchput.style.display = "block";
         document.getElementById('main_library_view').style.filter = `blur(${config.background_blur}px)`;
         document.getElementById('searchbox').style.width = `calc(100% - 15rem + ${config.background_blur})`;
     },

@@ -82,7 +82,11 @@ let mainWindow = {
 
 		mainWindowState.manage(mainWindow.body);//give window to window manager plugin
 
-		mainWindow.body.on('minimize', function () { mainWindow.minimize() })
+		mainWindow.body.on('minimize', function () {
+			if (config.data.minimize_to_tray == true && tray.body != null) {
+				mainWindow.hide()
+			}
+		})
 	},
 	hide: async function () {
 		console.log('hide main window')
@@ -91,10 +95,9 @@ let mainWindow = {
 		mainWindow.body.setSkipTaskbar(true);
 	},
 	minimize: async function () {
+		mainWindow.body.minimize();
 		if (config.data.minimize_to_tray == true && tray.body != null) {
 			mainWindow.hide()
-		} else {
-			mainWindow.body.minimize();
 		}
 	},
 	show: async function () {

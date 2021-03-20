@@ -22,7 +22,8 @@ let config = {
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (gotTheLock == false) { app.quit(); } else {
-
+	app.setAppUserModelId("Anthonym");
+	app.name = "Anthonym";
 	if (storeinator.get('default')) { config.load() }//load config
 
 	app.on('ready', function () {//App ready to roll
@@ -178,6 +179,7 @@ module.exports = {//exported modules
 	setontop: async function () { mainWindow.body.setAlwaysOnTop(true) },//always on top the window
 	setnotontop: async function () { mainWindow.body.setAlwaysOnTop(false) },//always on top'nt the window
 	Stash_window: async function () { mainWindow.hide() },
+	Show_window: async function () { mainWindow.show() },
 	reamake_tray: function () { tray.create() },
 	remove_tray: function () { tray.destroy() },
 	minimize_btn: async function () {

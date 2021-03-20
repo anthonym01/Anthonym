@@ -6,6 +6,7 @@
   "category": "Multimedia",
   "homepage": "https://github.com/anthonym01/Anthonym",
   "license": "ISC",
+
   "bin": "AA01",
   "icon": "build/icons/1024x1024.png",
   "author": {

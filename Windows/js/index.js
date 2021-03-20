@@ -35,6 +35,9 @@ const repeatbtn = document.getElementById('repeatbtn');
 const shufflebtn = document.getElementById('shufflebtn');
 const searchput = document.getElementById('searchput');
 
+
+let looking = [];//looking timers, only search after stopped typing
+
 //  Taskbar buttons for frameless window
 document.getElementById('x-button').addEventListener('click', function () {
     navigator.mediaSession.playbackState = "paused";
@@ -283,11 +286,10 @@ let player = {//Playback control
         //searchput
         searchput.addEventListener('keydown', function (e) {//keyboard actions
             e.stopImmediatePropagation();
-            setTimeout(() => {
-
-                //console.log(this.value)
-                player.lookup(this.value)
-            }, 100);
+            //setTimeout(() => {
+            //console.log(this.value)
+            player.lookup(this.value);
+            //}, 0);
         })
         //shuffle button
         switch (config.shuffle) {
@@ -483,7 +485,7 @@ let player = {//Playback control
                 song_bar.appendChild(song_title);
                 main_library_view.appendChild(song_bar);
                 functionality(song_bar, fileindex);
-                setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 20);
+                setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 5);
 
             }
 
@@ -511,16 +513,14 @@ let player = {//Playback control
 
                         //cover art
                         if (path.extname(player.files[fileindex].path) == ".mp4") {
-                            console.warn('mp4 file detected')
-
-                            thumbnailjs.getVideoThumbnail(player.files[fileindex].path, 1, 6, "image/jpg").then((thumnaildata) => {
-                                //console.log(thumnaildata)
-                                var songicon = document.createElement("img")
-                                songicon.className = "songicon"
-                                songicon.src = thumnaildata;
-                                eliment.appendChild(songicon)
-                            })
-
+                            setTimeout(() => {
+                                thumbnailjs.getVideoThumbnail(player.files[fileindex].path, 1, 0.1, "image/jpg").then((thumnaildata) => {
+                                    var songicon = document.createElement("img")
+                                    songicon.className = "songicon"
+                                    songicon.src = thumnaildata;
+                                    eliment.appendChild(songicon)
+                                });
+                            }, fileindex * 500);
                         } else {
 
                             const picture = mm.selectCover(metadata.common.picture)
@@ -701,6 +701,7 @@ let player = {//Playback control
 
                     }
                     backgroundvideo.currentTime = 0;
+                    config_manage.save();
                 },
                 onplay: async function () {
                     //playback of loaded song file sucessfull
@@ -757,7 +758,7 @@ let player = {//Playback control
         //prototype shuffle
         let nextsong;
         if (config.shuffle == true) {
-            nextsong = rand_number(player.files.length, 0, player.now_playing);
+            nextsong = rand_number(player.files.length - 1, 0, player.now_playing);
         } else {
             nextsong = player.files[player.now_playing + 1] ? Number(player.now_playing + 1) : 0;
         }
@@ -843,11 +844,12 @@ let player = {//Playback control
         document.getElementById('songArtist').innerText = metadata.common.artist ? `by ${metadata.common.artist}` : "unknown";
 
         //picture
-        const picture = mm.selectCover(metadata.common.picture)
-        if (typeof (picture) != 'undefined' && picture != null) {
+        const picture = mm.selectCover(metadata.common.picture) || undefined;
+        const processed_picture = picture ? `data:${picture.format};base64,${picture.data.toString('base64')}` : './img/icon.png';
+        if (typeof (picture) != 'undefined' && picture != undefined) {
             console.log('Cover art info: ', picture)
-            document.getElementById('coverartsmall').src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-            backgroundmaskimg.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+            document.getElementById('coverartsmall').src = processed_picture;
+            backgroundmaskimg.src = processed_picture;
             backgroundmaskimg.style.display = "block";
 
             //backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
@@ -911,38 +913,61 @@ let player = {//Playback control
         if (backgroundvideo.style.display == "block") { document.getElementById('tbuttonholder').className = "tbuttonholder" }
 
         //notification if hidden
-        const myNotification = new Notification('Anthonym', {
-            body: `Playing ${metadata.common.title || player.files[fileindex].filename} by ${metadata.common.artist || "unknown"}`,
-            image:`data:${picture.format};base64,${picture.data.toString('base64')}`,
-        })
-        myNotification.onclick = () => {
-            console.log('Notification clicked')
+        if (remote.getCurrentWindow().isFocused() == false || remote.getCurrentWindow().isVisible() != true) {
+            const playnotification = new Notification(
+                `${metadata.common.title || player.files[fileindex].filename}`,
+                {
+                    body: `Playing ${metadata.common.title || player.files[fileindex].filename} by ${metadata.common.artist || "unknown"}`,
+                    icon: processed_picture,
+                    image: './img/icon.png',
+                    silent: true,
+                }
+            );
+            playnotification.onclick = () => {
+                console.log('Notification clicked')
+                main.Show_window()
+            }
         }
 
     },
     lookup: async function (pattern) {//match any pattern to local file name
         console.log('Look for ', pattern)
-        document.getElementById('searchbox').innerHTML = ""
 
-        if (pattern == "") { return "empty" }
 
-        for (let fileindex in player.files) {
-            if (player.files[fileindex].filename.toLowerCase().search(pattern.toLowerCase()) != -1) { buildsong(fileindex) }
-        }
+        for (let i in looking) { clearInterval(looking.pop()) }//prevent rappid researching
 
-        function buildsong(fileindex) {
-            var song_bar = document.createElement('div');
-            song_bar.classList = "song_bar";
-            var song_title = document.createElement('div')
-            song_title.className = "song_title";
-            song_title.innerHTML = player.files[fileindex].filename;
-            song_bar.title = `Play ${player.files[fileindex].filename}`;
-            song_bar.appendChild(song_title);
-            document.getElementById('searchbox').appendChild(song_bar);
-            functionality(song_bar, fileindex);
-            setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 2);
+        let lookafor = setTimeout(() => {
 
-        }
+            if (pattern == "") {
+                return "empty"
+            } else {
+                document.getElementById('searchbox').innerHTML = ""
+            }
+
+            for (let fileindex in player.files) {
+                if (player.files[fileindex].filename.toLowerCase().search(pattern.toLowerCase()) != -1) { buildsong(fileindex) }
+            }
+
+            function buildsong(fileindex) {
+                var song_bar = document.createElement('div');
+                song_bar.classList = "song_bar";
+                var song_title = document.createElement('div')
+                song_title.className = "song_title";
+                song_title.innerHTML = player.files[fileindex].filename;
+                song_bar.title = `Play ${player.files[fileindex].filename}`;
+                song_bar.appendChild(song_title);
+                document.getElementById('searchbox').appendChild(song_bar);
+                functionality(song_bar, fileindex);
+                setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 2);
+
+            }
+        }, 500);
+        looking.push(lookafor)
+
+        /*if (looking != true) {//prevent rapid researching
+            looking = true
+        }*/
+
 
         async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
             try {

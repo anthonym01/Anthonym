@@ -126,6 +126,8 @@ let config = {
     last_played: 0,
     animations: true,
     shuffle: false,
+    playbar_icons: true,
+    video_icons: true,
     repeat: 1,//0 no repeat, 1 repeat all, 2 replay current song
     favourites: ["I can be the one"]
 }
@@ -394,6 +396,7 @@ let player = {//Playback control
     },
     fetch_library: async function () {
         //build library inteligentlly
+        let mp4count = 0;
         player.files = [];
         if (main.get.musicfolders() == [] || main.get.musicfolders() == undefined || main.get.musicfolders() < 1) {
             first_settup()//run first settup
@@ -444,9 +447,9 @@ let player = {//Playback control
                             } else {//file to handle
 
                                 switch (path.parse(fullfilepath).ext) {//check file types
-
-                                    case ".mp3": case ".m4a": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
-                                    case ".aac": case ".caf": case ".m4b": case ".mp4": case ".m4v": case ".weba":
+                                    case ".mp4": mp4count++;
+                                    case ".mp3": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
+                                    case ".aac": case ".caf": case ".m4b": case ".m4v": case ".weba":
                                     case ".webm": case ".dolby": case ".flac": //playable as music files
                                         player.files.push({ filename: path.parse(fullfilepath).name, path: fullfilepath });
                                         break;
@@ -455,7 +458,7 @@ let player = {//Playback control
                                         player.playlists.push({ path: fullfilepath });
                                         break;
 
-                                    default: console.warn('Cannot handle (not supported): ', fullfilepath);//not supported music file
+                                    default: console.warn('not supported: ', fullfilepath);//not supported music file
                                 }
                             }
                         })
@@ -496,10 +499,7 @@ let player = {//Playback control
                     mm.parseFile(player.files[fileindex].path, { duration: false }).then(async (metadata) => {
 
                         //metadata song title
-                        if (metadata.common.title != undefined) {
-                            song_title.innerHTML = metadata.common.title;
-
-                        }
+                        if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title }
 
                         //file duration
                         player.files[fileindex].duration = metadata.format.duration;//raw duration
@@ -512,7 +512,7 @@ let player = {//Playback control
                         eliment.appendChild(song_duration)
 
                         //cover art
-                        if (path.extname(player.files[fileindex].path) == ".mp4") {
+                        if (path.extname(player.files[fileindex].path) == ".mp4" && mp4count > 200) {
                             setTimeout(() => {
                                 thumbnailjs.getVideoThumbnail(player.files[fileindex].path, 1, 0.1, "image/jpg").then((thumnaildata) => {
                                     var songicon = document.createElement("img")

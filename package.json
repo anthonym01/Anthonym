@@ -6,7 +6,6 @@
   "category": "Multimedia",
   "homepage": "https://github.com/anthonym01/Anthonym",
   "license": "ISC",
-
   "bin": "AA01",
   "icon": "build/icons/1024x1024.png",
   "author": {
@@ -28,6 +27,7 @@
     "builder-default": "electron-builder",
     "builder-linux": "electron-builder --linux deb appimage tar.xz snap pacman",
     "builder-win": "electron-builder --win --x64 --ia32",
+    "builder-wack": "electron-builder --macos",
     "builder-pacman": "electron-builder --linux pacman",
     "builder-win64": "electron-builder --win --x64"
   },
@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "asar": "^1.0.0",
-    "electron": "^11.2.3",
+    "electron": "^12.0.2",
     "electron-builder": "^22.9.1"
   },
   "dependencies": {

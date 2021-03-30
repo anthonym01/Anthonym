@@ -150,7 +150,8 @@ body {
     background-color: var(--background-color);
     opacity: 0;
     transition: opacity 300ms;
-    border-radius: 0px 0px 30px 0px;
+    border-radius: 0px 0px 0px 10px;
+    /*overflow: hidden;*/
 }
 
 .tbuttonholder:hover,

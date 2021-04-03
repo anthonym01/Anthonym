@@ -512,7 +512,7 @@ let player = {//Playback control
                         eliment.appendChild(song_duration)
 
                         //cover art
-                        if (path.extname(player.files[fileindex].path) == ".mp4" && mp4count > 200) {
+                        if (path.extname(player.files[fileindex].path) == ".mp4" && mp4count < 200) {
                             setTimeout(() => {
                                 thumbnailjs.getVideoThumbnail(player.files[fileindex].path, 1, 0.1, "image/jpg").then((thumnaildata) => {
                                     var songicon = document.createElement("img")

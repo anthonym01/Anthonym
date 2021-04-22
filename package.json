@@ -1,6 +1,6 @@
 {
   "name": "anthonym",
-  "version": "1.0.0",
+  "version": "0.0.23",
   "description": "An electron based Music player",
   "main": "main.js",
   "category": "Multimedia",
@@ -24,12 +24,10 @@
   "scripts": {
     "start": "electron main.js",
     "postinstall": "electron-builder install-app-deps",
-    "builder-default": "electron-builder",
-    "builder-linux": "electron-builder --linux deb appimage tar.xz snap pacman",
+    "build": "electron-builder",
+    "builder-linux": "electron-builder --linux deb appimage tar.xz tar.gz snap pacman",
     "builder-win": "electron-builder --win --x64 --ia32",
-    "builder-wack": "electron-builder --macos",
-    "builder-pacman": "electron-builder --linux pacman",
-    "builder-win64": "electron-builder --win --x64"
+    "builder-wack": "electron-builder --macos"
   },
   "build": {
     "appId": "com.anthonym.music",

@@ -11,15 +11,13 @@ const fs = require('fs');
 const path = require('path');
 const wallpaper = require('wallpaper');
 /*System wallpaper loactions
-/home/samuel/.local/share/wallpapers
+    - /home/samuel/.local/share/wallpapers
 
 */
 const mm = require('music-metadata');
 const { Howler } = require('howler');
 const thumbnailjs = require('thumbnail-js');
 const NodeID3 = require('node-id3');
-
-//const {Howl, Howler} = require('howler');
 
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
 const playbtn = document.getElementById('playbtn');
@@ -40,11 +38,20 @@ let looking = [];//looking timers, only search after stopped typing
 
 //  Taskbar buttons for frameless window
 document.getElementById('x-button').addEventListener('click', function () {
+    console.log('Quit button')
     navigator.mediaSession.playbackState = "paused";
     main.x_button();
 })
-document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
-document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })
+
+document.getElementById('maximize-button').addEventListener('click', function () {
+    console.log('maximize button');
+    main.maximize_btn();
+})
+
+document.getElementById('minimize-button').addEventListener('click', function () {
+    console.log('minimize button');
+    main.minimize_btn();
+})
 
 window.addEventListener('load', async function () {
     main_menus();
@@ -58,15 +65,34 @@ window.addEventListener('load', async function () {
 })
 
 window.addEventListener('keydown', function (e) {//keyboard actions
+    console.log('Keypress: ', e.key)
     switch (e.key) {
         case " ": case "p": case "enter": e.preventDefault(); player.play(); break;
         case "f": e.preventDefault(); UI.show_search(); break;
-        case "n": e.preventDefault(); player.next(); break;
-        case "b": e.preventDefault(); player.previous(); break;
-        case "m": e.preventDefault(); player.mute(); break;
-        case "ArrowRight": e.preventDefault(); player.seekforward(); break;
-        case "ArrowLeft": e.preventDefault(); player.seekbackward(); break;
-        default: console.log(e.key)
+        case "n": 
+        e.preventDefault();
+        console.log('Seekforward on keypress');
+        player.next(); break;
+        case "b": 
+        e.preventDefault();
+        console.log('previous on keypress');
+         player.previous(); break;
+        case "m":
+             e.preventDefault();
+             console.log('mute on keypress');
+              player.mute();
+               break;
+        case "ArrowRight":
+            e.preventDefault();
+            console.log('Seek forward on keypress');
+            player.seekforward();
+            break;
+        case "ArrowLeft":
+             e.preventDefault();
+             console.log('Seek backward on keypress');
+             player.seekbackward();
+              break;
+        default: console.log('No action')
     }
 })
 
@@ -96,11 +122,13 @@ async function main_menus() {
         { role: 'copy' },
         { role: 'paste' },
         { role: 'selectAll' },
-        { role: 'seperator' },
+        //{ role: 'seperator' },
         { role: 'undo' },
         { role: 'redo' },
     ]);
-    //textbox.addEventListener('contextmenu', (event) => popupmenu, false)
+    document.getElementById('background_blur_put').addEventListener('contextmenu', (event) => { popupmenu(event) }, false)
+    searchput.addEventListener('contextmenu', (event) => { popupmenu(event) }, false)
+
     function popupmenu(event) {//Popup the menu in this window
         event.preventDefault()
         event.stopPropagation()
@@ -449,7 +477,7 @@ let player = {//Playback control
                                 switch (path.parse(fullfilepath).ext) {//check file types
                                     case ".mp4": mp4count++;
                                     case ".mp3": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
-                                    case ".aac": case ".caf": case ".m4b": case ".m4v": case ".weba":
+                                    case ".aac": case ".caf": case ".m4b": case ".m4v": case ".m4a": case ".weba":
                                     case ".webm": case ".dolby": case ".flac": //playable as music files
                                         player.files.push({ filename: path.parse(fullfilepath).name, path: fullfilepath });
                                         break;
@@ -1108,6 +1136,7 @@ let player = {//Playback control
 
 let UI = {
     initalize: function () {
+
         UI.settings.animation.setpostition()
         UI.settings.minimize_to_tray.setpostition()
         UI.settings.quiton_X.setpostition()

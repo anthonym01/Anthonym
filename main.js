@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain,/* nativeImage*/ } = require('electron');
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
@@ -7,6 +7,9 @@ const windowStateKeeper = require('electron-window-state');
 const Store = require('electron-store'); const storeinator = new Store;
 //const tray = require('./tray.js');
 
+
+
+/* Configuration, application properties or persistent user settings */
 let config = {
 	data: {
 		alt_location: false,
@@ -21,7 +24,9 @@ let config = {
 
 const gotTheLock = app.requestSingleInstanceLock();
 
-if (gotTheLock == false) { app.quit(); } else {
+if (gotTheLock == false) {//stop app if other instence is running
+	 app.quit();
+ } else {
 	app.setAppUserModelId("Anthonym");
 	app.name = "Anthonym";
 	if (storeinator.get('default')) { config.load() }//load config
@@ -52,11 +57,11 @@ let mainWindow = {
 
 		mainWindow.body = new BrowserWindow({//make main window
 			x: mainWindowState.x,//x position
-			y: mainWindowState.y,//y position
+			y: mainWindowState.y,//y position 
 			width: mainWindowState.width,
 			height: mainWindowState.height,
 			backgroundColor: '#000000',
-			frame: false,
+			frame: true,
 			center: true,//center the window
 			alwaysOnTop: false,
 			icon: path.join(__dirname, '/build/icons/256x256.png'),//some linux window managers cant process due to bug
@@ -82,6 +87,73 @@ let mainWindow = {
 		}))
 
 		mainWindowState.manage(mainWindow.body);//give window to window manager plugin
+
+		mainWindow.body.on('minimize', function () {
+			if (config.data.minimize_to_tray == true && tray.body != null) {
+				mainWindow.hide()
+			}
+		})
+	},
+	hide: async function () {
+		console.log('hide main window')
+		//if (process.platform == 'linux') { create_tray(); }
+		mainWindow.body.hide();
+		mainWindow.body.setSkipTaskbar(true);
+	},
+	minimize: async function () {
+		mainWindow.body.minimize();
+		if (config.data.minimize_to_tray == true && tray.body != null) {
+			mainWindow.hide()
+		}
+	},
+	show: async function () {
+		console.log('Show main window')
+		if (mainWindow.body != undefined) {
+			mainWindow.body.show();
+			mainWindow.body.focusOnWebView()
+			mainWindow.body.setSkipTaskbar(false);
+		} else {
+			mainWindow.create()
+		}
+
+		//if (process.platform == 'linux') { tray.destroy(); }
+	}
+};
+
+let Editor_window = {
+	body: null,//defines the Editor window
+	create: function (path) {
+		console.log(`crate editor window with intent to edit ${path}`)
+		const { screenwidth, screenheight } = screen.getPrimaryDisplay().workAreaSize //gets screen size
+
+		Editor_window.body = new BrowserWindow({//make main window
+			width:	screenwidth/4,
+			height: screenheight/4,
+			minWidth: 400,
+			minHeight: 300,
+			backgroundColor: '#000000',
+			frame: true,
+			center: true,
+			alwaysOnTop: false,
+			icon: path.join(__dirname, '/build/icons/256x256.png'),//some linux window managers cant process due to bug
+			title: 'Anthonym',
+			show: true,
+			skipTaskbar: false,
+			//titleBarStyle: 'hiddenInset',
+			webPreferences: {
+				nodeIntegration: true,
+				enableRemoteModule: true,
+				nodeIntegrationInWorker: true,
+				worldSafeExecuteJavaScript: true,
+				contextIsolation: false
+			},
+		})
+
+		mainWindow.body.loadURL(url.format({
+			pathname: path.join(__dirname, '/Windows/editor.html'),
+			protocol: 'file:',
+			slashes: true
+		}))
 
 		mainWindow.body.on('minimize', function () {
 			if (config.data.minimize_to_tray == true && tray.body != null) {

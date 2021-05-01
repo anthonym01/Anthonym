@@ -110,7 +110,7 @@ async function main_menus() {
         { label: 'Contact developer', click() { shell.openExternal(my_website) } },
         { role: 'toggledevtools' },
     ]);
-    Menu.setApplicationMenu(menu_body);
+    //Menu.setApplicationMenu(menu_body);
     window.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         menu_body.popup({ window: remote.getCurrentWindow() })

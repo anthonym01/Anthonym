@@ -1,13 +1,4 @@
-const {
-	app,
-	BrowserWindow,
-	Menu,
-	screen,
-	MenuItem,
-	Tray,
-	ipcMain,
-	/* nativeImage*/
-} = require('electron');
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain,	/* nativeImage*/ } = require('electron');
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
@@ -16,7 +7,6 @@ const windowStateKeeper = require('electron-window-state');
 const Store = require('electron-store');
 const storeinator = new Store;
 //const tray = require('./tray.js');
-
 
 
 /* Configuration, application properties or persistent user settings */
@@ -218,13 +208,13 @@ let Editor_window = {
 let tray = {
 	body: null, //tray value
 	Play_msg: ipcMain.on('Play_msg', (event, now_playing, state) => { //Receive Song data from mainwindow and apply to tray
-		console.log('now playing: ', now_playing, state, /*event*/ );
+		console.log('now playing: ', now_playing, state, /*event*/);
 		if (tray.body != null) {
 			tray.update(now_playing, state)
 		}
 	}),
 	new_icon: ipcMain.on('new_icon', (event, image) => { //Receive Song data from mainwindow and apply to tray
-		console.log('new tray icon: ', image, /*event*/ );
+		console.log('new tray icon: ', image, /*event*/);
 		if (tray.body != null) {
 			tray.seticon(image)
 		}

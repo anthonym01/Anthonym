@@ -1,7 +1,7 @@
 # Anthonym  
 
-An Electron based media player with working media controls
-![screenshots/Screenshot_20210510_213510.png](:screenshots/Screenshot_20210510_213510.png)
+An Electron based media player with working media controls  
+![Latest screenshot](:https://raw.githubusercontent.com/anthonym01/Anthonym/main/screenshots/Screenshot_20210510_213510.png)
 ## Features  
 
 (* work in progress)

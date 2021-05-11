@@ -30,14 +30,17 @@ An Electron based media player with working media controls
   - xml
   - json
 - Smart playlists
-  - No reliance of file paths*
+  - No reliance on file paths*
   - Never played songs*  
   - Most played songs*
   - "Overplayed" songs*
   - Recommended random songs from libraries based on your interests*
-  - Favorites
+  - Favorites*
 - media session support
+  - Toggleable Enable/disable media reporting  
 - Toggle-able (Actual) random shuffle
 - Discord rich presence
 - Enable/disable media reporting  
 - Virtualizer  
+- Equilizer  
+  - Individual Equalizer profiles per song

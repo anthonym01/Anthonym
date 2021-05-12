@@ -1,4 +1,4 @@
-# Anthonym  
+# [Anthonym](https://anthonym01.github.io/Anthonym/)
 
 An Electron based media player with working media controls  
 

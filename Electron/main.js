@@ -224,7 +224,12 @@ let tray = {
 		tray.body = new Tray(path.join(__dirname, '/build/icons/256x256.png'))
 		tray.body.on('click', function () {
 			console.log('tray clicked');
-			mainWindow.show()
+			console.log("Focused: ",mainWindow.body.isFocused()," Visible: ",mainWindow.body.isVisible())
+			if (mainWindow.body.isVisible() == true) {
+				mainWindow.hide()
+			} else {
+				mainWindow.show()
+			}
 		}) //Single click
 		tray.update('Click to open', 'Play') //First menu
 

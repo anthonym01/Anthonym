@@ -5,11 +5,14 @@
 
 //dependancys, dont add howler
 const { ipcRenderer, remote, clipboard } = require('electron');
+//import { ipcRenderer, remote, clipboard } from 'electron';
 const main = remote.require('./main');//access export functions in main
 const { dialog, Menu, MenuItem, nativeTheme, systemPreferences, shell } = remote;
 const fs = require('fs');
 const path = require('path');
 const wallpaper = require('wallpaper');
+
+import {rand_number} from './utils.mjs'
 /*System wallpaper loactions
     - /home/samuel/.local/share/wallpapers
 
@@ -69,29 +72,29 @@ window.addEventListener('keydown', function (e) {//keyboard actions
     switch (e.key) {
         case " ": case "p": case "enter": e.preventDefault(); player.play(); break;
         case "f": e.preventDefault(); UI.show_search(); break;
-        case "n": 
-        e.preventDefault();
-        console.log('Seekforward on keypress');
-        player.next(); break;
-        case "b": 
-        e.preventDefault();
-        console.log('previous on keypress');
-         player.previous(); break;
+        case "n":
+            e.preventDefault();
+            console.log('Seekforward on keypress');
+            player.next(); break;
+        case "b":
+            e.preventDefault();
+            console.log('previous on keypress');
+            player.previous(); break;
         case "m":
-             e.preventDefault();
-             console.log('mute on keypress');
-              player.mute();
-               break;
+            e.preventDefault();
+            console.log('mute on keypress');
+            player.mute();
+            break;
         case "ArrowRight":
             e.preventDefault();
             console.log('Seek forward on keypress');
             player.seekforward();
             break;
         case "ArrowLeft":
-             e.preventDefault();
-             console.log('Seek backward on keypress');
-             player.seekbackward();
-              break;
+            e.preventDefault();
+            console.log('Seek backward on keypress');
+            player.seekbackward();
+            break;
         default: console.log('No action')
     }
 })
@@ -160,6 +163,7 @@ let config = {
     favourites: ["I can be the one"]
 }
 
+/* rework to be module */
 let config_manage = {
     save: async function () {//Save the config file
         console.table('Configuration is being saved', config);
@@ -941,7 +945,7 @@ let player = {//Playback control
         if (backgroundvideo.style.display == "block") { document.getElementById('tbuttonholder').className = "tbuttonholder" }
 
         //notification if hidden
-        if (remote.getCurrentWindow().isFocused() == false || remote.getCurrentWindow().isVisible() != true) {
+        if (remote.getCurrentWindow().isVisible() == false) {
             const playnotification = new Notification(
                 `${metadata.common.title || player.files[fileindex].filename}`,
                 {
@@ -1426,11 +1430,85 @@ let UI = {
 
 }
 
-function rand_number(max, min, cant_be) {
-    let randowm = Math.floor(Math.random() * (max - min + 1)) + min;
-    if (randowm == cant_be) {
-        return rand_number(max, min, cant_be);
-    } else {
-        return randowm;
+
+/* Rework to be a module */
+
+let folders = [];
+
+async function first_settup() {
+    document.getElementById('first_setup_screen').style.display = "block";//hide first settup screen
+    document.getElementById('first_finish_btn').addEventListener('click', function () {//finish button in first settup screen
+        main.set.musicfolders(folders);//save selected music folders
+        document.getElementById('first_setup_screen').style.display = "none";//hide first settup screen
+        maininitalizer();
+    })
+    buildfirst_folders()
+
+    function buildfirst_folders() {//rempresent selected folders
+        document.getElementById('first_setup_folders').innerHTML = ""
+
+        for (let i=0;i<folders.length;i++) {
+            individual_folder(i);
+        }
+        //folders.forEach(folder => { individual_folder(folder) })
+
+        function individual_folder(index) {
+            let parsed_folder = path.parse(folders[index])
+
+            let folder_first = document.createElement('div')
+            folder_first.classList = "folder_first"
+            folder_first.title = folders[index];
+            let first_icon = document.createElement('div')
+            first_icon.classList = "first_icon"
+            let first_title = document.createElement('div')
+            first_title.classList = "first_title"
+
+            if (parsed_folder.name == "") {//root drive on windows
+                first_title.innerText = folders[index];
+                first_title.style.color = 'rgb(255,0,0)';
+                folder_first.title = 'Scanning whole drives not recommended';
+            } else {
+                first_title.innerText = parsed_folder.name;
+            }
+
+            let first_select_cancel_btn = document.createElement('div')
+            first_select_cancel_btn.classList = "first_select_cancel_btn"
+            first_select_cancel_btn.title = "Remove"
+
+            first_select_cancel_btn.addEventListener('click', function () {
+                console.log(folders)
+                console.log('Removing first folder: ', index)
+                folders.splice(index, 1);//yeets the index i and closes the hole left behind
+                buildfirst_folders()
+            })
+
+            folder_first.appendChild(first_select_cancel_btn)
+            folder_first.appendChild(first_title)
+            folder_first.appendChild(first_icon)
+            document.getElementById('first_setup_folders').appendChild(folder_first)
+        }
+
+        //build add new folder functionality
+        var addnew_first = document.createElement('div')
+        addnew_first.classList = "folder_first"
+        addnew_first.title = " click to add new folders, you can select more than one";
+        var first_icon = document.createElement('div')
+        first_icon.classList = "folder_add_new"
+        var first_title = document.createElement('div')
+        first_title.classList = "first_title"
+        first_title.innerHTML = "Add folders"
+
+        addnew_first.appendChild(first_title)
+        addnew_first.appendChild(first_icon)
+        document.getElementById('first_setup_folders').appendChild(addnew_first)
+        addnew_first.addEventListener('click', function () {//click add new button
+            dialog.showOpenDialog({//dialog in directory selection mode
+                buttonLabel: 'Select music folder',
+                properties: ['openDirectory', 'multiSelections'],
+            }).then((filepath) => {//get filepaths
+                console.log(filepath.filePaths)
+                filepath.filePaths.forEach(mpath => { folders.push(mpath) })//push them into temporary local folder variable
+            }).finally(() => { buildfirst_folders() })//rebuild folders with new data
+        })
     }
 }

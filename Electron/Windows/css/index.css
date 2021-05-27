@@ -595,6 +595,10 @@ body {
     cursor: pointer;
 }
 
+/*.song_bar {
+    text-shadow: 0em 0em 0.1em rgb(0, 0, 0), 0em 0em 0.3em rgb(0, 0, 0);
+}*/
+
 .song_bar_active {
     background-color: var(--accent_color);
     color: var(--background-color);

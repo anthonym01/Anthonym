@@ -3,21 +3,20 @@
     samuelmatheson20@gmail.com
 */
 
-//dependancys, dont add howler
 const { ipcRenderer, remote, clipboard } = require('electron');
-//import { ipcRenderer, remote, clipboard } from 'electron';
-const main = remote.require('./main');//access export functions in main
 const { dialog, Menu, MenuItem, nativeTheme, systemPreferences, shell } = remote;
+const main = remote.require('./main');
 const fs = require('fs');
 const path = require('path');
 const wallpaper = require('wallpaper');
 
-import {rand_number} from './utils.mjs'
+import { rand_number } from './utils.mjs';
 /*System wallpaper loactions
     - /home/samuel/.local/share/wallpapers
 
 */
 const mm = require('music-metadata');
+//import { Howler, Howl } from 'howler';
 const { Howler } = require('howler');
 const thumbnailjs = require('thumbnail-js');
 const NodeID3 = require('node-id3');
@@ -1447,7 +1446,7 @@ async function first_settup() {
     function buildfirst_folders() {//rempresent selected folders
         document.getElementById('first_setup_folders').innerHTML = ""
 
-        for (let i=0;i<folders.length;i++) {
+        for (let i = 0; i < folders.length; i++) {
             individual_folder(i);
         }
         //folders.forEach(folder => { individual_folder(folder) })

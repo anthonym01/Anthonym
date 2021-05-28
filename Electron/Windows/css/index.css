@@ -57,8 +57,6 @@
         --vynal_icon: url('../img/vinyl-record-pngrepo-com-white.png');
     }
 }
-
-
 body {
     color: var(--text-color);
     background-color: var(--background-color);

@@ -72,6 +72,7 @@
     "image-size": "^0.9.3",
     "music-metadata": "^7.6.2",
     "node-id3": "^0.2.2",
+    "sharp": "^0.28.3",
     "thumbnail-js": "^0.1.5",
     "wallpaper": "^4.4.1"
   }

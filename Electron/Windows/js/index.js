@@ -38,6 +38,10 @@ const searchput = document.getElementById('searchput');
 
 let looking = [];//looking timers, only search after stopped typing
 
+let now_playing_content = {
+    duration:999,
+}
+
 //  Taskbar buttons for frameless window
 document.getElementById('x-button').addEventListener('click', function () {
     console.log('Quit button')
@@ -143,8 +147,8 @@ async function maininitalizer() {//Used to start re-startable app functions
     //reset players state to default
     player.pause();
     player.stop_seeking();
-    player.files = [];//path and other details of song files
-    player.playlists = [];//playlist files and details
+    files = [];//path and other details of song files
+    playlists = [];//playlist files and details
     player.queue = [];//Play queue randomized from playlist/library
     player.playstate = false;//is (should be) playing music
     player.fetch_library();
@@ -288,18 +292,16 @@ let config_manage = {
     },
 }
 
+let files = [];
+
+let playlists = [//playlists
+    /*{
+        path: "path  to playlist file, if any",
+        files: [0, 5, 23, 6, 7]//file indexes
+    }*/
+];
+
 let player = {//Playback control
-    files: [//path and other details of song files
-        { filename: "basename", path: "path in file system", duration: "song duration in seconds" }
-    ],
-    playlists: [//playlist files and details
-        {
-            path: "path  to playlist file, if any",
-            files: [
-                { name: "Name of file saved from last run", index: "index of file in current player.files array" },
-            ]
-        }
-    ],
     queue: [],//Play queue randomized from playlist/library
     stream1: null,//stream for howler
     seekterval: null,//looping seek time update
@@ -307,8 +309,7 @@ let player = {//Playback control
     now_playing: null,//Song thats currently playing
     initalize: async function () {
 
-        setTimeout(async () => {
-            //last palyed song
+        setTimeout(async () => {//set last palyed song
             player.play(config.last_played, false);
             player.pause();
             window.location.href = `#${config.last_played - 2}`;
@@ -428,33 +429,18 @@ let player = {//Playback control
     fetch_library: async function () {
         //build library inteligentlly
         let mp4count = 0;
-        player.files = [];
+        files = [];
         if (main.get.musicfolders() == [] || main.get.musicfolders() == undefined || main.get.musicfolders() < 1) {
             first_settup()//run first settup
         } else {
             await getfiles(main.get.musicfolders())//wait for recursive file checks
             setTimeout(() => { build_library() }, 0)//imediatly after file checks
-            var hold = setInterval(() => {
-                if (main_library_view.childElementCount < player.files.length) {
+            let hold = setInterval(() => {
+                if (main_library_view.childElementCount < files) {
                     build_library()
                     console.warn('recheck library');
-
                     //warn the bokens
-                    if (process.platform == 'win32') {
-
-                        UI.notify.new(
-                            'Slow file access',
-                            'took more than 10ms to gain acces to files, this could be due to another application such as a antivirus or a cloud storage providor using those files'
-                        );
-
-                    } else {
-
-                        UI.notify.new(
-                            'Slow file access',
-                            'took more than 10ms to gain acces to files, this could be due to the way your OS handles files on that drive, the drive may be slow, your cpu curve could be set to conserve power, or another application could be using that disk heavily'
-                        );
-
-                    }
+                    UI.notify.new('Slow file access', 'took more than 10ms to gain acces to files');
                 } else {
                     clearInterval(hold)
                 }
@@ -466,10 +452,11 @@ let player = {//Playback control
 
             muzicpaths.forEach(folder => {//for each folder in the array
 
-                fs.readdir(folder, function (err, files) {//read the files within the directory
+                fs.readdir(folder, function (err, dfiles) {//files from the directory
                     try {
-                        if (err) { throw err }
-                        files.forEach(file => {//for each file in the folder
+                        if (err) { throw err }//yeet
+
+                        dfiles.forEach(file => {//for each file in the folder
 
                             var fullfilepath = path.join(folder, file);
                             if (fs.statSync(fullfilepath).isDirectory()) {//sud-directory to search
@@ -482,11 +469,11 @@ let player = {//Playback control
                                     case ".mp3": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
                                     case ".aac": case ".caf": case ".m4b": case ".m4v": case ".m4a": case ".weba":
                                     case ".webm": case ".dolby": case ".flac": //playable as music files
-                                        player.files.push({ filename: path.parse(fullfilepath).name, path: fullfilepath });
+                                        files.push(fullfilepath);
                                         break;
 
                                     case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
-                                        player.playlists.push({ path: fullfilepath });
+                                        player.playlists.push(fullfilepath);
                                         break;
 
                                     default: console.warn('not supported: ', fullfilepath);//not supported music file
@@ -506,7 +493,7 @@ let player = {//Playback control
         async function build_library() {
             main_library_view.innerHTML = "";
 
-            for (let fileindex in player.files) { buildsong(fileindex) }
+            for (let fileindex in files) { buildsong(fileindex) }
             songTitle.innerText = "Ready to Vibe";
             function buildsong(fileindex) {
                 var song_bar = document.createElement('div');
@@ -514,26 +501,27 @@ let player = {//Playback control
                 song_bar.id = fileindex;
                 var song_title = document.createElement('div')
                 song_title.className = "song_title";
-                song_title.innerHTML = player.files[fileindex].filename;
-                song_bar.title = `Play ${player.files[fileindex].filename}`;
+                song_title.innerHTML = path.parse(files[fileindex]).name;
+                song_bar.title = 'click to play';
                 song_bar.appendChild(song_title);
                 main_library_view.appendChild(song_bar);
-                functionality(song_bar, fileindex);
-                setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 5);
+
+                functionality(song_bar, fileindex);//make bar functional
+                setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 5);//handle metadata
 
             }
 
             async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
                 try {
-                    var song_duration = document.createElement('div')
+                    var song_duration = document.createElement('div');
                     song_duration.className = "song_duration"
-                    mm.parseFile(player.files[fileindex].path, { duration: false }).then(async (metadata) => {
+                    mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
 
                         //metadata song title
                         if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title }
 
                         //file duration
-                        player.files[fileindex].duration = metadata.format.duration;//raw duration
+                        //player.files[fileindex].duration = metadata.format.duration;//raw duration
                         song_duration.title = `${metadata.format.duration.toPrecision(2)} seconds`;
                         if (Number(metadata.format.duration % 60) >= 10) {
                             song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
@@ -542,10 +530,11 @@ let player = {//Playback control
                         }
                         eliment.appendChild(song_duration)
 
-                        //cover art
-                        if (path.extname(player.files[fileindex].path) == ".mp4" && mp4count < 200) {
+                        //cover art thumbnail
+
+                        if (path.extname(files[fileindex]) == ".mp4" && mp4count < 200) {
                             setTimeout(() => {
-                                thumbnailjs.getVideoThumbnail(player.files[fileindex].path, 1, 3, "image/jpg").then((thumnaildata) => {
+                                thumbnailjs.getVideoThumbnail(files[fileindex], 1, 3, "image/jpg").then((thumnaildata) => {
                                     var songicon = document.createElement("img")
                                     songicon.className = "songicon"
                                     songicon.src = thumnaildata;
@@ -577,6 +566,7 @@ let player = {//Playback control
 
             async function functionality(eliment, fileindex) {//context menu and playback on click
 
+                /* Bar context menu and actions */
                 let contextMenu = new Menu.buildFromTemplate([
                     {//play button
                         label: "Play",
@@ -601,16 +591,16 @@ let player = {//Playback control
                     { type: "separator" },
                     {
                         label: "copy file name",
-                        click() { clipboard.writeText(player.files[fileindex].filename) }
+                        click() { clipboard.writeText(path.basename(files[fileindex])) }
                     },
                     {//open song file in default external application
                         label: "show in folder",
-                        click() { shell.showItemInFolder(player.files[fileindex].path) }
+                        click() { shell.showItemInFolder(files[fileindex]) }
                     },
                     {//copy file path
                         label: "copy file location",
-                        toolTip: `${player.files[fileindex].path}`,
-                        click() { clipboard.write(player.files[fileindex].path); }
+                        toolTip: `${files[fileindex]}`,
+                        click() { clipboard.write(files[fileindex]); }
                     }
                 ])
 
@@ -627,7 +617,7 @@ let player = {//Playback control
     },
     play: async function (fileindex, load) {
         /* If something is playing resumes playback,
-        if nothing is playing plays from the player.files[fileindex],
+        if nothing is playing plays from the files[fileindex],
         if no fileindex assumes playback of the last song, if no last song, unloads playr
         */
         console.log('Attempt to play: ', fileindex);
@@ -649,7 +639,7 @@ let player = {//Playback control
                     backgroundvideo.muted = true;
                     backgroundvideo.pause()
                 }
-                console.log('resume : ', player.files[player.now_playing].path);
+                console.log('resume : ', files[player.now_playing]);
                 return 0;
             }
         }
@@ -664,7 +654,7 @@ let player = {//Playback control
                 backgroundvideo.muted = true;
                 backgroundvideo.pause()
             }
-            console.log('resume : ', player.files[player.now_playing].path);
+            console.log('resume : ', files[player.now_playing]);
             return 0;
         }
 
@@ -689,36 +679,36 @@ let player = {//Playback control
             Howler.unload()//unload playing track if any
 
             player.stream1 = new Howl({
-                src: player.files[fileindex].path,//takes an array, or single path
+                src: files[fileindex],//takes an array, or single path
                 autoplay: true,
                 loop: false,
                 volume: 1,
                 preload: false,
                 html5: true,
                 onend: function () {//Playback ends
-                    console.log('Finished playing', player.files[fileindex].path);
+                    console.log('Finished playing', files[fileindex]);
                     player.playstate = false;
                     //place repeat chck here
                     player.next()
                 },
                 onplayerror: function () {//Playback fails
-                    console.warn('fail to play ', player.files[fileindex])
+                    console.warn('fail to play ', files[fileindex])
                     stream1.once('unlock', function () {//wait for unlock
                         player.play(fileindex);// try to play again
-                        notify.new('Error', `Could not access file: ${player.files[fileindex]}`, 'a file access error occured for some reason, could be anything from a bad disk to improper file permissions')
+                        notify.new('Error', `Could not access file: ${files[fileindex]}`, 'a file access error occured for some reason, could be anything from a bad disk to improper file permissions')
                     });
                 },
                 onload: function () {
-                    console.log('loaded: ', player.files[fileindex].path)
-                    document.getElementById('songTitle').innerText = player.files[fileindex].filename;
+                    console.log('loaded: ', files[fileindex])
+                    document.getElementById('songTitle').innerText = path.basename(files[fileindex]);
                     //player.stream1.play()//play the sound that was just loaded
                     //Handle background video (if any)
                     song_progress_bar.value = 0;
-                    song_progress_bar.max = player.files[fileindex].duration;
-                    switch (path.parse(player.files[fileindex].path).ext) {//check file types
+                    //song_progress_bar.max = files[fileindex].duration;
+                    switch (path.extname(files[fileindex])) {//check file types
 
                         case ".mp4": case ".m4v": case ".webm": case ".mov"://playable as music files
-                            backgroundvideo.src = player.files[fileindex].path;
+                            backgroundvideo.src = files[fileindex];
                             backgroundvideo.style.display = "block"
                             backgroundvideo.play();
                             document.getElementById('tbuttonholder').className = "tbuttonholder"//allow to be hidden
@@ -741,11 +731,11 @@ let player = {//Playback control
                     config.last_played = Number(fileindex);
                     config_manage.save();
                     player.updatemetadata(fileindex);
-                    ipcRenderer.send('Play_msg', player.files[fileindex].filename, 'pause')//Send playing song to main
+                    ipcRenderer.send('Play_msg', path.basename(files[fileindex]), 'pause')//Send playing song to main
                     playbtn.classList = "pausebtn"
                     playbtn.title = "pause"
                     player.start_seeking()
-                    console.log('Playing: ', player.files[fileindex]);
+                    console.log('Playing: ', files[fileindex]);
                 }
             });
 
@@ -768,7 +758,7 @@ let player = {//Playback control
             navigator.mediaSession.playbackState = "paused";
             playbtn.classList = "playbtn";
             playbtn.title = "play";
-            ipcRenderer.send('Play_msg', player.files[player.now_playing].filename, 'Play');
+            ipcRenderer.send('Play_msg', path.basename(files[player.now_playing]), 'Play');
         } else {//assume error
             console.warn('Tried pause functionality with no playback');
         }
@@ -789,9 +779,9 @@ let player = {//Playback control
         //prototype shuffle
         let nextsong;
         if (config.shuffle == true) {
-            nextsong = rand_number(player.files.length - 1, 0, player.now_playing);
+            nextsong = rand_number(files.length - 1, 0, player.now_playing);
         } else {
-            nextsong = player.files[player.now_playing + 1] ? Number(player.now_playing + 1) : 0;
+            nextsong = files[player.now_playing + 1] ? Number(player.now_playing + 1) : 0;
         }
         player.play(nextsong)
         player.now_playing = nextsong;
@@ -827,13 +817,12 @@ let player = {//Playback control
         player.stop_seeking();
         player.seekterval = setInterval(() => {
             let seeked = player.stream1.seek()
-            song_progress_bar.max = player.files[player.now_playing].duration;
             song_progress_bar.value = seeked;
-            navigator.mediaSession.setPositionState({
-                duration: player.files[player.now_playing].duration,//player.files[player.now_playing].duration,
+            /*navigator.mediaSession.setPositionState({
+                duration: now_playing_content.duration,
                 playbackRate: 1,
                 position: seeked,
-            });
+            });*/
         }, 1000)
     },
     stop_seeking: function () {
@@ -854,10 +843,10 @@ let player = {//Playback control
         player.stream1.seek(seeked)
         backgroundvideo.currentTime = seeked
     },
-    updatemetadata: async function (fileindex) {
+    updatemetadata: async function (fileindex) {//Bste the UI with metadata about the song that is currently playing
 
         navigator.mediaSession.playbackState = "playing";
-        navigator.mediaSession.metadata = new MediaMetadata({ title: player.files[fileindex].filename });
+        navigator.mediaSession.metadata = new MediaMetadata({ title: path.basename(files[fileindex]) });
         navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
         navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
         navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
@@ -869,11 +858,13 @@ let player = {//Playback control
         navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
 
         /* pull file data */
-        const metadata = await mm.parseFile(player.files[fileindex].path);
-        console.log(metadata)
-        document.getElementById('songTitle').innerText = metadata.common.title ? metadata.common.title : player.files[fileindex].filename;
-        document.getElementById('songArtist').innerText = metadata.common.artist ? `by ${metadata.common.artist}` : "unknown";
+        const metadata = await mm.parseFile(files[fileindex]);
 
+        console.log(metadata)
+        document.getElementById('songTitle').innerText = metadata.common.title ? metadata.common.title : path.basename(files[fileindex]);
+        document.getElementById('songArtist').innerText = metadata.common.artist ? `by ${metadata.common.artist}` : "unknown";
+        now_playing_content.duration = metadata.format.duration;
+        song_progress_bar.max = metadata.format.duration;
         //picture
         const picture = mm.selectCover(metadata.common.picture) || undefined;
         const processed_picture = picture ? `data:${picture.format};base64,${picture.data.toString('base64')}` : './img/icon.png';
@@ -909,7 +900,7 @@ let player = {//Playback control
             ipcRenderer.send('new_icon', imgscr)
             console.log(imgscr)
             navigator.mediaSession.metadata = new MediaMetadata({
-                title: metadata.common.title ? metadata.common.title : player.files[fileindex].filename,
+                title: metadata.common.title ? metadata.common.title : path.basename(files[fileindex]),
                 artist: metadata.common.artist ? metadata.common.artist : "unknown",
                 album: metadata.common.album ? metadata.common.album : "unknown",
                 artwork: picture ? [{ src: imgscr }] : null,
@@ -934,8 +925,8 @@ let player = {//Playback control
                 mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')`
             });
             navigator.mediaSession.metadata = new MediaMetadata({
-                title: metadata.common.title || player.files[fileindex].filename,
-                artist: metadata.common.artist || "unknown",
+                title: metadata.common.title || path.basename(files[fileindex]),
+                artist: metadata.common.artist || "unknown artist",
                 //artist: metadata.common.artist ? metadata.common.artist : "unknown",
                 album: metadata.common.album || "unknown",
                 //album: metadata.common.album ? metadata.common.album : "unknown",
@@ -946,9 +937,9 @@ let player = {//Playback control
         //notification if hidden
         if (remote.getCurrentWindow().isVisible() == false) {
             const playnotification = new Notification(
-                `${metadata.common.title || player.files[fileindex].filename}`,
+                `${metadata.common.title || path.basename(files[fileindex])}`,
                 {
-                    body: `Playing ${metadata.common.title || player.files[fileindex].filename} by ${metadata.common.artist || "unknown"}`,
+                    body: `Playing ${metadata.common.title || path.basename(files[fileindex])} by ${metadata.common.artist || "unknown"}`,
                     icon: processed_picture,
                     image: './img/icon.png',
                     silent: true,
@@ -975,8 +966,8 @@ let player = {//Playback control
                 document.getElementById('searchbox').innerHTML = ""
             }
 
-            for (let fileindex in player.files) {
-                if (player.files[fileindex].filename.toLowerCase().search(pattern.toLowerCase()) != -1) { buildsong(fileindex) }
+            for (let fileindex in files) {
+                if (files[fileindex].filename.toLowerCase().search(pattern.toLowerCase()) != -1) { buildsong(fileindex) }
             }
 
             function buildsong(fileindex) {
@@ -984,8 +975,8 @@ let player = {//Playback control
                 song_bar.classList = "song_bar";
                 var song_title = document.createElement('div')
                 song_title.className = "song_title";
-                song_title.innerHTML = player.files[fileindex].filename;
-                song_bar.title = `Play ${player.files[fileindex].filename}`;
+                song_title.innerHTML = path.basename(files[fileindex]);
+                song_bar.title = `Play ${path.basename(files[fileindex])}`;
                 song_bar.appendChild(song_title);
                 document.getElementById('searchbox').appendChild(song_bar);
                 functionality(song_bar, fileindex);
@@ -1004,7 +995,7 @@ let player = {//Playback control
             try {
                 var song_duration = document.createElement('div')
                 song_duration.className = "song_duration"
-                mm.parseFile(player.files[fileindex].path, { duration: false }).then(async (metadata) => {
+                mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
 
                     //metadata song title
                     if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
@@ -1062,16 +1053,16 @@ let player = {//Playback control
                 { type: "separator" },
                 {
                     label: "copy file name",
-                    click() { clipboard.writeText(player.files[fileindex].filename) }
+                    click() { clipboard.writeText(path.basename(files[fileindex])) }
                 },
                 {//open song file in default external application
                     label: "show in folder",
-                    click() { shell.showItemInFolder(player.files[fileindex].path) }
+                    click() { shell.showItemInFolder(files[fileindex]) }
                 },
                 {//copy file path
                     label: "copy file location",
-                    toolTip: `${player.files[fileindex].path}`,
-                    click() { clipboard.write(player.files[fileindex].path); }
+                    //toolTip: `${player.files[fileindex].path}`,
+                    click() { clipboard.write(files[fileindex]); }
                 }
             ])
 
@@ -1091,10 +1082,10 @@ let player = {//Playback control
     lift_coverart: async function (fileindex) {
         try {
 
-            if (path.extname(player.files[fileindex].path) == ".mp4") {
+            if (path.extname(files[fileindex]) == ".mp4") {
                 console.warn('mp4 file detected')
 
-                thumbnailjs.getVideoThumbnail(player.files[fileindex].path, 1, 3, "image/jpg").then((thumnaildata) => {
+                thumbnailjs.getVideoThumbnail(files[fileindex], 1, 3, "image/jpg").then((thumnaildata) => {
                     //console.log(thumnaildata)
                     var songicon = document.createElement("img")
                     songicon.className = "songicon"

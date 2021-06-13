@@ -22,46 +22,33 @@ const { Howler } = require('howler');
 const thumbnailjs = require('thumbnail-js');
 const NodeID3 = require('node-id3');
 
-
 const playbtn = document.getElementById('playbtn');
 const nextbtn = document.getElementById('nextbtn');
 const previousbtn = document.getElementById('previousbtn');
-const main_library_view = document.getElementById('main_library_view');
+const repeatbtn = document.getElementById('repeatbtn');
+const shufflebtn = document.getElementById('shufflebtn');
 const song_progress_bar = document.getElementById('song_progress_bar');
 const backgroundmaskimg = document.getElementById('backgroundmaskimg');
 const backgroundvideo = document.getElementById('backgroundvideo');
 const mainmaskcontainer = document.getElementById('mainmaskcontainer');
 const Menupannel_main = document.getElementById('Menupannel_main');
-const repeatbtn = document.getElementById('repeatbtn');
-const shufflebtn = document.getElementById('shufflebtn');
+const main_library_view = document.getElementById('main_library_view');
 const searchput = document.getElementById('searchput');
 const overpain = document.getElementById('overpain');//pannel for queue and search
 const searchbox = document.getElementById('searchbox');
 
-
-let looking = [];//looking timers, only search after stopped typing
+let looking = [];//looking timers, only search after user stops typing
 
 let now_playing_content = {
     duration: 999,
 }
 
 //  Taskbar buttons for frameless window
-document.getElementById('x-button').addEventListener('click', function () {
-    console.log('Quit button')
-    navigator.mediaSession.playbackState = "paused";
-    main.x_button();
-})
+document.getElementById('x-button').addEventListener('click', function () { main.x_button(); })
+document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
+document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })
 
-document.getElementById('maximize-button').addEventListener('click', function () {
-    console.log('maximize button');
-    main.maximize_btn();
-})
-
-document.getElementById('minimize-button').addEventListener('click', function () {
-    console.log('minimize button');
-    main.minimize_btn();
-})
-
+//window loads
 window.addEventListener('load', async function () {
     main_menus();
     console.log('Running from:', process.resourcesPath)
@@ -448,6 +435,7 @@ let player = {//Playback control
                     clearInterval(hold)
                 }
             }, 1000);//retry over and over, again and again-gen
+            setTimeout(()=>{clearInterval(hold);console.error('Coulod not gain files')},10000)
         }
 
         async function getfiles(muzicpaths) {//gets files form array of music folder paths
@@ -497,128 +485,12 @@ let player = {//Playback control
             main_library_view.innerHTML = "";
 
             for (let fileindex in files) {
-                buildsong(fileindex)
-                //setTimeout(async () => { buildsong(fileindex)  }, fileindex * 5);
+                player.build_songbar(fileindex).then((builtbar) => {
+                    builtbar.id = fileindex;
+                    main_library_view.appendChild(builtbar)
+                })
             }
 
-            songTitle.innerText = "Ready to Vibe";
-            function buildsong(fileindex) {
-                var song_bar = document.createElement('div');
-                song_bar.classList = "song_bar";
-                song_bar.id = fileindex;
-                var song_title = document.createElement('div')
-                song_title.className = "song_title";
-                song_title.innerHTML = path.parse(files[fileindex]).name;
-                //song_bar.title = 'click to play';
-                song_bar.appendChild(song_title);
-                main_library_view.appendChild(song_bar);
-
-                functionality(song_bar, fileindex);//make bar functional
-                setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 5);//handle metadata
-
-            }
-
-            async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
-                try {
-                    var song_duration = document.createElement('div');
-                    song_duration.className = "song_duration"
-                    mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
-
-                        //metadata song title
-                        if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title }
-
-                        //file duration
-                        //player.files[fileindex].duration = metadata.format.duration;//raw duration
-                        song_duration.title = `${metadata.format.duration.toPrecision(2)} seconds`;
-                        if (Number(metadata.format.duration % 60) >= 10) {
-                            song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
-                        } else {
-                            song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
-                        }
-                        eliment.appendChild(song_duration)
-
-                        //cover art thumbnail
-
-                        if (path.extname(files[fileindex]) == ".mp4" && mp4count < 200) {
-                            setTimeout(() => {
-                                thumbnailjs.getVideoThumbnail(files[fileindex], 1, 3, "image/jpg").then((thumnaildata) => {
-                                    var songicon = document.createElement("img")
-                                    songicon.className = "songicon"
-                                    songicon.src = thumnaildata;
-                                    eliment.appendChild(songicon)
-                                });
-                            }, fileindex * 500);
-                        } else {
-
-                            const picture = mm.selectCover(metadata.common.picture)
-                            if (typeof (picture) != 'undefined' && picture != null) {
-                                var songicon = document.createElement("img")
-                                songicon.className = "songicon"
-                                songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                                eliment.appendChild(songicon)
-                            }
-                            else {
-                                //use placeholder image
-                                var songicon = document.createElement("div")
-                                songicon.className = "songicon_dfault"
-                                eliment.appendChild(songicon)
-                            }
-                        }
-
-                    });
-                } catch (err) {
-                    console.warn("Metadata error : ", err)
-                }
-            }
-
-            async function functionality(eliment, fileindex) {//context menu and playback on click
-
-                /* Bar context menu and actions */
-                let contextMenu = new Menu.buildFromTemplate([
-                    {//play button
-                        label: "Play",
-                        type: "normal",
-                        click() { player.play(fileindex); }
-                    },
-                    {
-                        label: "add to favourites",
-                        type: "normal",
-                        click() { }
-                    },
-                    {
-                        label: "add to playlist",
-                        type: "normal",
-                        click() { }
-                    },
-                    {
-                        label: "edit tags",
-                        type: "normal",
-                        click() { }
-                    },
-                    { type: "separator" },
-                    {
-                        label: "copy file name",
-                        click() { clipboard.writeText(path.basename(files[fileindex])) }
-                    },
-                    {//open song file in default external application
-                        label: "show in folder",
-                        click() { shell.showItemInFolder(files[fileindex]) }
-                    },
-                    {//copy file path
-                        label: "copy file location",
-                        toolTip: `${files[fileindex]}`,
-                        click() { clipboard.write(files[fileindex]); }
-                    }
-                ])
-
-                eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
-                    e.preventDefault();
-                    e.stopPropagation();//important
-                    contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
-                }, false);
-
-                eliment.addEventListener('click', function () { player.play(fileindex) })//click to play
-            }
         }
 
     },
@@ -853,7 +725,7 @@ let player = {//Playback control
     updatemetadata: async function (fileindex) {//Bste the UI with metadata about the song that is currently playing
 
         navigator.mediaSession.playbackState = "playing";
-        navigator.mediaSession.metadata = new MediaMetadata({ title: path.basename(files[fileindex]) });
+        //navigator.mediaSession.metadata = new MediaMetadata({ title: path.basename(files[fileindex]) });
         navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
         navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
         navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
@@ -906,6 +778,7 @@ let player = {//Playback control
 
             ipcRenderer.send('new_icon', imgscr)
             console.log(imgscr)
+
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: metadata.common.title ? metadata.common.title : path.basename(files[fileindex]),
                 artist: metadata.common.artist ? metadata.common.artist : "unknown",
@@ -943,7 +816,7 @@ let player = {//Playback control
 
         //notification if hidden
         if (remote.getCurrentWindow().isVisible() == false) {
-            const playnotification = new Notification(
+            new Notification(
                 `${metadata.common.title || path.basename(files[fileindex])}`,
                 {
                     body: `Playing ${metadata.common.title || path.basename(files[fileindex])} by ${metadata.common.artist || "unknown"}`,
@@ -951,8 +824,7 @@ let player = {//Playback control
                     image: './img/icon.png',
                     silent: true,
                 }
-            );
-            playnotification.onclick = () => {
+            ).onclick = () => {
                 console.log('Notification clicked')
                 main.Show_window()
             }
@@ -961,7 +833,6 @@ let player = {//Playback control
     },
     lookup: async function (pattern) {//match any pattern to local file name
         console.log('Look for ', pattern)
-
 
         for (let i in looking) { clearInterval(looking.pop()) }//prevent rappid researching
 
@@ -974,13 +845,14 @@ let player = {//Playback control
             for (let fileindex in files) {
                 if (path.basename(files[fileindex]).toLowerCase().search(pattern.toLowerCase()) != -1) {
                     /*setTimeout(async () => {*/
-                        player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
+                    player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
                     /*}, fileindex * 50);*/
                     //buildsong(fileindex) 
                 }
             }
 
         }, 500);
+
         looking.push(lookafor)
 
     },
@@ -1072,7 +944,7 @@ let player = {//Playback control
                     eliment.appendChild(song_duration)
 
                     //cover art
-                    const picture = mm.selectCover(metadata.common.picture)
+                    /*const picture = mm.selectCover(metadata.common.picture)
                     if (typeof (picture) != 'undefined' && picture != null) {
                         var songicon = document.createElement("img")
                         songicon.className = "songicon"
@@ -1084,6 +956,34 @@ let player = {//Playback control
                         var songicon = document.createElement("div")
                         songicon.className = "songicon_dfault"
                         eliment.appendChild(songicon)
+                    }*/
+
+                    //cover art thumbnail
+
+                    if (path.extname(files[fileindex]) == ".mp4" && mp4count < 200) {
+                        setTimeout(() => {
+                            thumbnailjs.getVideoThumbnail(files[fileindex], 1, 3, "image/jpg").then((thumnaildata) => {
+                                var songicon = document.createElement("img")
+                                songicon.className = "songicon"
+                                songicon.src = thumnaildata;
+                                eliment.appendChild(songicon)
+                            });
+                        }, fileindex * 500);
+                    } else {
+
+                        const picture = mm.selectCover(metadata.common.picture)
+                        if (typeof (picture) != 'undefined' && picture != null) {
+                            var songicon = document.createElement("img")
+                            songicon.className = "songicon"
+                            songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                            eliment.appendChild(songicon)
+                        }
+                        else {
+                            //use placeholder image
+                            var songicon = document.createElement("div")
+                            songicon.className = "songicon_dfault"
+                            eliment.appendChild(songicon)
+                        }
                     }
                 });
             } catch (err) {
@@ -1136,7 +1036,8 @@ let player = {//Playback control
 
             eliment.addEventListener('click', function () {
                 player.play(fileindex);
-                setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
+                //eliment.classList = "song_bar_active";
+                //setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
             })//click to play
         }
     }

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain,	/* nativeImage*/ } = require('electron');
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain, Notification/* nativeImage*/ } = require('electron');
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
@@ -29,6 +29,9 @@ let config = {
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (gotTheLock == false) { //stop app if other instence is running
+	/*let notifitcation = new Notification(['already running']);
+	notifitcation.show();*/
+
 	app.quit();
 } else {
 	/*app.setAppUserModelId("Anthonym");*/
@@ -43,17 +46,19 @@ if (gotTheLock == false) { //stop app if other instence is running
 		if (config.data.use_tray == true) {
 			tray.create()
 		}
+
 	})
 
 	app.on('window-all-closed', () => {//kill app immediatly if window closed
 		//if (tray.body == null) {
-			app.quit()
+		app.quit()
 		//}
 	})
 
 	app.on('second-instance', (event) => {
 		mainWindow.show();
 	});
+
 
 }
 
@@ -78,7 +83,7 @@ let mainWindow = {
 			backgroundColor: '#000000',
 			frame: false,
 			center: true, //center the window
-			alwaysOnTop: false,
+			//alwaysOnTop: false,
 			icon: path.join(__dirname, '/build/icons/256x256.png'), //some linux window managers cant process due to bug
 			title: 'Anthonym',
 			show: true,
@@ -224,7 +229,7 @@ let tray = {
 		tray.body = new Tray(path.join(__dirname, '/build/icons/256x256.png'))
 		tray.body.on('click', function () {
 			console.log('tray clicked');
-			console.log("Focused: ",mainWindow.body.isFocused()," Visible: ",mainWindow.body.isVisible())
+			console.log("Focused: ", mainWindow.body.isFocused(), " Visible: ", mainWindow.body.isVisible())
 			if (mainWindow.body.isVisible() == true) {
 				mainWindow.hide()
 			} else {

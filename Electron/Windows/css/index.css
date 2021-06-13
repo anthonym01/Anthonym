@@ -27,6 +27,7 @@
     --repeat_icon: url('../img/play-bck-controls/repeat-dark.webp');
     --repeat_lock_icon: url('../img/play-bck-controls/repeat-lock-dark.webp');
     --vynal_icon: url('../img/vinyl-record-pngrepo-com.png');
+    --video_icon: url('../img/video-pngrepo-com.png');
 }
 
 @media (prefers-color-scheme: dark) {
@@ -55,6 +56,7 @@
         --repeat_icon: url('../img/play-bck-controls/repeat-light.webp');
         --repeat_lock_icon: url('../img/play-bck-controls/repeat-lock-light.webp');
         --vynal_icon: url('../img/vinyl-record-pngrepo-com-white.png');
+        --video_icon: url('../img/video-pngrepo-com-white.png')
     }
 }
 

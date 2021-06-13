@@ -135,3 +135,7 @@ export let config_manage = {
         })
     },
 }
+
+/*module.exports = {
+    rand_number
+}*/

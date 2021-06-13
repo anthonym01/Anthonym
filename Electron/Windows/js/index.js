@@ -1,27 +1,28 @@
 /*
     By samuel A. Matheson
-    samuelmatheson20@gmail.com
+    samuelmatheson15@gmail.com
 */
+const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
 
 const { ipcRenderer, remote, clipboard } = require('electron');
 const { dialog, Menu, MenuItem, nativeTheme, systemPreferences, shell } = remote;
 const main = remote.require('./main');
+
 const fs = require('fs');
 const path = require('path');
-const wallpaper = require('wallpaper');
 
-import { rand_number } from './utils.mjs';
 /*System wallpaper loactions
     - /home/samuel/.local/share/wallpapers
-
 */
+const wallpaper = require('wallpaper');
+import { rand_number } from './utils.mjs';
+
 const mm = require('music-metadata');
-//import { Howler, Howl } from 'howler';
 const { Howler } = require('howler');
 const thumbnailjs = require('thumbnail-js');
 const NodeID3 = require('node-id3');
 
-const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';//my website
+
 const playbtn = document.getElementById('playbtn');
 const nextbtn = document.getElementById('nextbtn');
 const previousbtn = document.getElementById('previousbtn');
@@ -34,12 +35,14 @@ const Menupannel_main = document.getElementById('Menupannel_main');
 const repeatbtn = document.getElementById('repeatbtn');
 const shufflebtn = document.getElementById('shufflebtn');
 const searchput = document.getElementById('searchput');
+const overpain = document.getElementById('overpain');//pannel for queue and search
+const searchbox = document.getElementById('searchbox');
 
 
 let looking = [];//looking timers, only search after stopped typing
 
 let now_playing_content = {
-    duration:999,
+    duration: 999,
 }
 
 //  Taskbar buttons for frameless window
@@ -434,9 +437,9 @@ let player = {//Playback control
             first_settup()//run first settup
         } else {
             await getfiles(main.get.musicfolders())//wait for recursive file checks
-            setTimeout(() => { build_library() }, 0)//imediatly after file checks
+            setTimeout(() => { build_library() }, 500)//imediatly after file checks
             let hold = setInterval(() => {
-                if (main_library_view.childElementCount < files) {
+                if (main_library_view.childElementCount < files.length) {
                     build_library()
                     console.warn('recheck library');
                     //warn the bokens
@@ -473,7 +476,7 @@ let player = {//Playback control
                                         break;
 
                                     case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
-                                        player.playlists.push(fullfilepath);
+                                        playlists.push(fullfilepath);
                                         break;
 
                                     default: console.warn('not supported: ', fullfilepath);//not supported music file
@@ -493,7 +496,11 @@ let player = {//Playback control
         async function build_library() {
             main_library_view.innerHTML = "";
 
-            for (let fileindex in files) { buildsong(fileindex) }
+            for (let fileindex in files) {
+                buildsong(fileindex)
+                //setTimeout(async () => { buildsong(fileindex)  }, fileindex * 5);
+            }
+
             songTitle.innerText = "Ready to Vibe";
             function buildsong(fileindex) {
                 var song_bar = document.createElement('div');
@@ -502,7 +509,7 @@ let player = {//Playback control
                 var song_title = document.createElement('div')
                 song_title.className = "song_title";
                 song_title.innerHTML = path.parse(files[fileindex]).name;
-                song_bar.title = 'click to play';
+                //song_bar.title = 'click to play';
                 song_bar.appendChild(song_title);
                 main_library_view.appendChild(song_bar);
 
@@ -881,11 +888,11 @@ let player = {//Playback control
             previousbtn.style.filter = `blur(${config.background_blur}px)`;
             shufflebtn.style.filter = `blur(${config.background_blur}px)`;
 
-            if (document.getElementById('searchbox').style.display != "block") {//hide it if its not in use
+            if (document.getElementById('overpain').className != "overpain_active") {//hide titlebar buttons if overpain isnt visible
                 document.getElementById('tbuttonholder').className = "tbuttonholder"
             }
 
-            if (config.background_blur == 0) {
+            if (config.background_blur == 0) {//strech song totle as needed
                 document.getElementById('songdetailcontainer').classList = "songdetailcontainer_alt";
             } else {
                 document.getElementById('songdetailcontainer').classList = "songdetailcontainer";
@@ -960,36 +967,91 @@ let player = {//Playback control
 
         let lookafor = setTimeout(() => {
 
-            if (pattern == "") {
-                return "empty"
-            } else {
-                document.getElementById('searchbox').innerHTML = ""
+            if (pattern != "") {
+                searchbox.innerHTML = ""
             }
 
             for (let fileindex in files) {
-                if (files[fileindex].filename.toLowerCase().search(pattern.toLowerCase()) != -1) { buildsong(fileindex) }
+                if (path.basename(files[fileindex]).toLowerCase().search(pattern.toLowerCase()) != -1) {
+                    /*setTimeout(async () => {*/
+                        player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
+                    /*}, fileindex * 50);*/
+                    //buildsong(fileindex) 
+                }
             }
 
-            function buildsong(fileindex) {
-                var song_bar = document.createElement('div');
-                song_bar.classList = "song_bar";
-                var song_title = document.createElement('div')
-                song_title.className = "song_title";
-                song_title.innerHTML = path.basename(files[fileindex]);
-                song_bar.title = `Play ${path.basename(files[fileindex])}`;
-                song_bar.appendChild(song_title);
-                document.getElementById('searchbox').appendChild(song_bar);
-                functionality(song_bar, fileindex);
-                setTimeout(async () => { fillmetadata(song_bar, fileindex, song_title) }, fileindex * 2);
-
-            }
         }, 500);
         looking.push(lookafor)
 
-        /*if (looking != true) {//prevent rapid researching
-            looking = true
-        }*/
+    },
+    lift_coverart: async function (fileindex) {
+        try {
 
+            if (path.extname(files[fileindex]) == ".mp4") {
+                console.warn('mp4 file detected')
+
+                thumbnailjs.getVideoThumbnail(files[fileindex], 1, 3, "image/jpg").then((thumnaildata) => {
+                    //console.log(thumnaildata)
+                    var songicon = document.createElement("img")
+                    songicon.className = "songicon"
+                    songicon.src = thumnaildata;
+                    eliment.appendChild(songicon)
+                })
+
+            } else {
+
+                const picture = mm.selectCover(metadata.common.picture)
+                if (typeof (picture) != 'undefined' && picture != null) {
+                    var songicon = document.createElement("img")
+                    songicon.className = "songicon"
+                    songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                    eliment.appendChild(songicon)
+                }
+                else {
+                    //use placeholder image
+                    var songicon = document.createElement("div")
+                    songicon.className = "songicon_dfault"
+                    eliment.appendChild(songicon)
+                }
+            }
+        } catch (err) {
+
+        } finally {
+
+        }
+
+    },
+    scroll_to_current: async function () {
+        document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
+        document.getElementById(`${player.now_playing}`).className = "song_bar_active"
+        if (document.getElementById(`#${player.now_playing - 2}`)) {
+            window.location.href = `#${player.now_playing - 2}`
+        } else {
+            window.location.href = `#${player.now_playing - 1}`
+        }
+
+    },
+    build_songbar: async function (fileindex) {
+        console.log('Song bar for :', files[fileindex])
+
+        let songbar = buildsong(fileindex);
+
+        return songbar;
+
+        function buildsong(fiso) {
+            var song_bar = document.createElement('div');
+            song_bar.classList = "song_bar";
+            var song_title = document.createElement('div')
+            song_title.className = "song_title";
+            song_title.innerHTML = path.basename(files[fiso]);
+            song_bar.title = `Play ${path.basename(files[fiso])}`;
+            song_bar.appendChild(song_title);
+
+            functionality(song_bar, fiso);
+            fillmetadata(song_bar, fiso, song_title);
+            return song_bar;
+
+        }
 
         async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
             try {
@@ -1075,56 +1137,8 @@ let player = {//Playback control
             eliment.addEventListener('click', function () {
                 player.play(fileindex);
                 setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
-
             })//click to play
         }
-    },
-    lift_coverart: async function (fileindex) {
-        try {
-
-            if (path.extname(files[fileindex]) == ".mp4") {
-                console.warn('mp4 file detected')
-
-                thumbnailjs.getVideoThumbnail(files[fileindex], 1, 3, "image/jpg").then((thumnaildata) => {
-                    //console.log(thumnaildata)
-                    var songicon = document.createElement("img")
-                    songicon.className = "songicon"
-                    songicon.src = thumnaildata;
-                    eliment.appendChild(songicon)
-                })
-
-            } else {
-
-                const picture = mm.selectCover(metadata.common.picture)
-                if (typeof (picture) != 'undefined' && picture != null) {
-                    var songicon = document.createElement("img")
-                    songicon.className = "songicon"
-                    songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                    eliment.appendChild(songicon)
-                }
-                else {
-                    //use placeholder image
-                    var songicon = document.createElement("div")
-                    songicon.className = "songicon_dfault"
-                    eliment.appendChild(songicon)
-                }
-            }
-        } catch (err) {
-
-        } finally {
-
-        }
-
-    },
-    scroll_to_current: async function () {
-        document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
-        document.getElementById(`${player.now_playing}`).className = "song_bar_active"
-        if (document.getElementById(`#${player.now_playing - 2}`)) {
-            window.location.href = `#${player.now_playing - 2}`
-        } else {
-            window.location.href = `#${player.now_playing - 1}`
-        }
-
     }
 }
 
@@ -1155,7 +1169,7 @@ let UI = {
 
         //search trigger
         document.getElementById('search_btn').addEventListener('click', function () {
-            if (document.getElementById('searchbox').style.display == "block") {//hide it
+            if (overpain.className == "overpain_active") {//hide it
                 UI.hide_search()
             } else {//show it
                 UI.show_search()
@@ -1205,13 +1219,13 @@ let UI = {
             document.getElementById('tbuttonholder').className = "tbuttonholder"
         }
         searchput.style.display = ""
-        document.getElementById('searchbox').style.display = ""
+        overpain.className = "overpain"
 
         document.getElementById('main_library_view').style.filter = ""
-        document.getElementById('searchbox').style.width = ""
+        /*document.getElementById('searchbox').style.width = ""*/
         /*} else {
 
-            document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
+            document.getElementById('tbuttonholder').className = "tbutaintonholder_locked"
 
 
             document.getElementById('searchbox').style.display = ""
@@ -1219,11 +1233,11 @@ let UI = {
     },
     show_search: async function () {
         document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
-        document.getElementById('searchbox').style.display = "block"
+        overpain.className = "overpain_active"
         setTimeout(() => { searchput.focus(); searchput.select() }, 100);
         searchput.style.display = "block";
         document.getElementById('main_library_view').style.filter = `blur(${config.background_blur}px)`;
-        document.getElementById('searchbox').style.width = `calc(100% - 15rem + ${config.background_blur})`;
+        //document.getElementById('searchbox').style.width = `calc(100% - 15rem + ${config.background_blur})`;
     },
     settings: {
         animation: {

@@ -57,6 +57,7 @@
         --vynal_icon: url('../img/vinyl-record-pngrepo-com-white.png');
     }
 }
+
 body {
     color: var(--text-color);
     background-color: var(--background-color);
@@ -577,6 +578,18 @@ body {
     filter: blur(0px);
 }
 
+@keyframes fadeintodarkness {
+    0% {
+        opacity: 0;
+        /*width: 0%;*/
+    }
+
+    100% {
+        opacity: 1;
+       /* width: 100%;*/
+    }
+}
+
 .song_bar,
 .song_bar_active {
     /* Representation of a single song file */
@@ -590,7 +603,11 @@ body {
     box-sizing: border-box;
     text-align: right;
     background-color: rgba(0, 0, 0, 0);
+    opacity: 0;
     cursor: pointer;
+    animation: fadeintodarkness 300ms ease-in 50ms 1 forwards;
+    overflow: hidden;
+    /*animation: name duration timing-function delay iteration-count  fill-mode;*/
 }
 
 /*.song_bar {
@@ -793,27 +810,44 @@ body {
     transition: transform 0ms, background-color 300ms;
 }
 
-/*      Search thingies */
-#searchbox {
+/*      Search, recents and play history */
+.overpain,
+.overpain_active {
     position: fixed;
     right: 0;
-    width: calc(100% - 15rem);
+    /*width: calc(100% - 15rem);*/
+    width: 100%;
     top: 28px;
     /*
     left: 175px;
     width: calc(100% - 350px);*/
-    height: fit-content;
+    height: calc(100% - 30px - 7rem);
     min-height: 0;
     max-height: calc(100% - 30px - 7rem);
-    background-color: var(--background-color);
+    background-color: var(--half_background-color);
     z-index: 4;
     overflow-y: auto;
     overflow-x: hidden;
     display: none;
+    justify-content: space-between;
 }
 
+.overpain_active {
+    display: flex;
+    /*flex-direction: column;
+    flex-wrap: nowrap;*/
+}
+
+.overpainin2 {
+    display: block;
+    position: relative;
+    width: 49%;
+    height: 100%;
+}
+
+
 #titlebarfillout {
-    /*   cosmetic    */
+    /*   blackens titlebar when needed   */
     position: fixed;
     top: 0px;
     left: 0;

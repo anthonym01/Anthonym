@@ -45,10 +45,10 @@ if (gotTheLock == false) { //stop app if other instence is running
 		}
 	})
 
-	app.on('window-all-closed', () => {
-		if (tray.body == null) {
+	app.on('window-all-closed', () => {//kill app immediatly if window closed
+		//if (tray.body == null) {
 			app.quit()
-		}
+		//}
 	})
 
 	app.on('second-instance', (event) => {

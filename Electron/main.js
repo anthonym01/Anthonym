@@ -59,7 +59,32 @@ if (gotTheLock == false) { //stop app if other instence is running
 		mainWindow.show();
 	});
 
+	ipcMain.on('x_button', () => {
+		if (config.data.quiton_X != true) {
+			app.quit()
+		} else {
+			if (tray.body != null) {
+				mainWindow.hide()
+			} else {
+				app.quit()
+			}
+		}
+	})
 
+	ipcMain.on('maximize_btn', () => {
+		if (config.data.minimize_to_tray == true) {
+			mainWindow.show()
+		}
+
+		if (mainWindow.body.isMaximized()) { //minimize
+			mainWindow.body.restore()
+		} else { //maximize
+			mainWindow.body.maximize()
+		}
+	})
+	ipcMain.on('minimize_btn', () => {
+		mainWindow.minimize()
+	})
 }
 
 let mainWindow = {
@@ -70,6 +95,7 @@ let mainWindow = {
 			screenwidth,
 			screenheight
 		} = screen.getPrimaryDisplay().workAreaSize //gets screen size
+		
 		let mainWindowState = windowStateKeeper({
 			defaultWidth: screenwidth,
 			defaultHeight: screenheight
@@ -311,6 +337,7 @@ async function write_file(filepath, data) {
 	})
 }
 
+
 module.exports = { //exported modules
 	write_file: async function (filepath, buffer_data) {
 		write_file(filepath, buffer_data)
@@ -337,31 +364,6 @@ module.exports = { //exported modules
 	},
 	remove_tray: function () {
 		tray.destroy()
-	},
-	minimize_btn: async function () {
-		mainWindow.minimize()
-	},
-	maximize_btn: async function () {
-		if (config.data.minimize_to_tray == true) {
-			mainWindow.show()
-		}
-
-		if (mainWindow.body.isMaximized()) { //minimize
-			mainWindow.body.restore()
-		} else { //maximize
-			mainWindow.body.maximize()
-		}
-	},
-	x_button: async function () {
-		if (config.data.quiton_X != true) {
-			app.quit()
-		} else {
-			if (tray.body != null) {
-				mainWindow.hide()
-			} else {
-				app.quit()
-			}
-		}
 	},
 	get: {
 		musicfolders: function () {

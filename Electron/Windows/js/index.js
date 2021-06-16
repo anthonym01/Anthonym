@@ -5,11 +5,18 @@
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
 
 const { ipcRenderer, remote, clipboard } = require('electron');
-const { dialog, Menu, MenuItem, nativeTheme, systemPreferences, shell } = remote;
+const { dialog, Menu, MenuItem, nativeTheme, systemPreferences, shell, screen } = remote;
 const main = remote.require('./main');
 
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
+
+//const { screenwidth, screenheight } = screen.getPrimaryDisplay().workAreaSize.height;
+
+const guestimated_best = ~~(screen.getPrimaryDisplay().workAreaSize.height / 14.5);
+
+
 
 /*System wallpaper loactions
     - /home/samuel/.local/share/wallpapers
@@ -17,6 +24,7 @@ const path = require('path');
 const wallpaper = require('wallpaper');
 import { rand_number } from './utils.mjs';
 
+//import * as mm from 'music-metadata/lib/core';
 const mm = require('music-metadata');
 const { Howler } = require('howler');
 const thumbnailjs = require('thumbnail-js');
@@ -44,13 +52,13 @@ let now_playing_content = {
 }
 
 //  Taskbar buttons for frameless window
-document.getElementById('x-button').addEventListener('click', function () { main.x_button(); })
-document.getElementById('maximize-button').addEventListener('click', function () { main.maximize_btn() })
-document.getElementById('minimize-button').addEventListener('click', function () { main.minimize_btn() })
+document.getElementById('x-button').addEventListener('click', function () { ipcRenderer.send('x_button'); })
+document.getElementById('maximize-button').addEventListener('click', function () { ipcRenderer.send('maximize_btn') })
+document.getElementById('minimize-button').addEventListener('click', function () { ipcRenderer.send('minimize_btn') })
 
 //window loads
 window.addEventListener('load', async function () {
-    main_menus();
+    main_menus(); UI.notify.new(guestimated_best)
     console.log('Running from:', process.resourcesPath)
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
 
@@ -58,6 +66,32 @@ window.addEventListener('load', async function () {
     UI.initalize()
     player.initalize()
     maininitalizer()
+
+
+    console.log("                       dxxxxdoc,.                  ");
+    console.log("                       NMMMMMMMMMMXkc.             ");
+    console.log("           .:          OMMMMMMMMMMMMMMNd.          ");
+    console.log("         ,0MM;         oMMMMMMMMMMMMMMMMMK;        ");
+    console.log("       .KMMMMW.        :MMMMMMMMMMMMMMMMMMMK'      ");
+    console.log("      oMMMMMMMX        'MMMMMMMMMMMMMMMW0dc'       ");
+    console.log("     OMMMMMMMMMO       .MMMMMMMMMMWOo;.            ");
+    console.log("    xMMMMMMMMMMMx       MMMMMMKd;.                 ");
+    console.log("   .MMMMMMMMMMMMMo      MMWk;                      ");
+    console.log("   KMMMMMMMMMMMMMMo    .MM.                        ");
+    console.log("   MMMMMMMMMMMMMMMMk   :MMNOxdollloooddxkkO0KXNWM  ");
+    console.log("   MMMMMMMMMMMMMMMMMNdoWMMMMWloNMMMMMMMMMMMMMMMMM  ");
+    console.log("   WNXK00OkxddoollllllodONMMc   xMMMMMMMMMMMMMMMM  ");
+    console.log('                         .WM.    lMMMMMMMMMMMMMMl  ');
+    console.log('                       ;kWMM.     lMMMMMMMMMMMMM   ');
+    console.log('                  .:dKMMMMMM.      dMMMMMMMMMMM.   ');
+    console.log('             .;o0WMMMMMMMMMM.       kMMMMMMMMM.    ');
+    console.log("        'cxKWMMMMMMMMMMMMMMM,        KMMMMMMN      ");
+    console.log('         MMMMMMMMMMMMMMMMMMMc        .NMMMM.       ');
+    console.log("           MMMMMMMMMMMMMMMMMd         'MM          ");
+    console.log('              MMMMMMMMMMMMMM0                      ');
+    console.log('                  dMMMMMMMMMW                      ');
+
+
 })
 
 window.addEventListener('keydown', function (e) {//keyboard actions
@@ -135,6 +169,7 @@ async function main_menus() {
 async function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
     //reset players state to default
+    main_library_view.innerHTML = ""
     player.pause();
     player.stop_seeking();
     files = [];//path and other details of song files
@@ -197,88 +232,6 @@ let config_manage = {
         main.set.alt_location(false)
         main.set.musicfolders([])
         config_manage.save()
-    },
-    backup: async function () {//backup configuration to a file
-        console.warn('Configuration backup initiated')
-
-        var date = new Date();
-        dialog.showSaveDialog({//electron file save dialogue
-            defaultPath: "Anthonymcfg backup " + Number(date.getMonth() + 1) + " - " + date.getDate() + " - " + date.getFullYear() + ".json",
-            buttonLabel: "Save"
-        }).then((filepath) => {
-            console.log(filepath)
-            if (filepath.canceled == true) {//the file save dialogue was canceled my the user
-                console.warn('The file dialogue was canceled by the user')
-            } else {
-                main.write_file(filepath.filePath, JSON.stringify(config))//hand off writing the file to main process
-            }
-        }).catch((err) => {//catch error
-            alert('An error occured ', err.message);
-        })
-
-    },
-    restore: async function () {//restore configuration from a file
-        console.warn('Configuration restoration initiated')
-
-        dialog.showOpenDialog({
-            buttonLabel: "open", filters: [
-                { name: 'Custom File Type', extensions: ['json'] },
-                { name: 'All Files', extensions: ['*'] }
-            ]
-        }).then((filepath) => {
-            console.log(filepath)
-            if (filepath.canceled == true) {//diologue ccanceled
-                console.log("diologue ccanceled");
-            } else {
-                fs.readFile(filepath.filePaths[0], 'utf-8', (err, data) => {//load data from file
-                    if (err) {
-                        alert("An error ocurred reading the file :" + err.message)
-                    } else {
-                        console.log("The file content is : " + data);
-                        var fileout = JSON.parse(data)
-                        if (fileout.key == "Anthonymcfg") {//check if this file is a timetable backup file
-                            config = fileout
-                            config_manage.save();
-                            maininitalizer()
-                        } else {
-                            console.warn(filepath.filePaths[0] + ' is not a backup file')
-                        }
-                    }
-                })
-            }
-        }).catch((err) => {
-            alert('An error occured, ', err)
-        })
-    },
-    selectlocation: async function () {//select location for configuration storage
-        console.log('Select config location')
-        var altpath
-
-        var alt_location = main.get.alt_location()
-        if (alt_location != false) {
-            altpath = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'], defaultPath: alt_location })
-        } else {
-            altpath = dialog.showOpenDialog({ properties: ['createDirectory', 'openDirectory'], })
-        }
-
-        await altpath.then((altpath) => {
-            if (altpath.canceled == true) {//user canceled dialogue
-                main.set.alt_location(false)
-            } else {
-                console.warn('Alternate configuration path :', altpath.filePaths[0])
-
-                main.set.alt_location(altpath.filePaths[0])
-
-                if (fs.existsSync(altpath + "/Anthonymcfg config.json")) {//config file already exist there
-                    config_manage.load()
-                } else {//no config file exist there
-                    config_manage.save();
-                }
-            }
-        }).catch((err) => {
-            main.set.alt_location(false)
-            alert('An error occured ', err.message)
-        })
     },
 }
 
@@ -435,7 +388,7 @@ let player = {//Playback control
                     clearInterval(hold)
                 }
             }, 1000);//retry over and over, again and again-gen
-            setTimeout(()=>{clearInterval(hold);console.error('Coulod not gain files')},10000)
+            setTimeout(() => { clearInterval(hold); console.error('Coulod not gain files') }, 10000)
         }
 
         async function getfiles(muzicpaths) {//gets files form array of music folder paths
@@ -485,7 +438,7 @@ let player = {//Playback control
             main_library_view.innerHTML = "";
 
             for (let fileindex in files) {
-                player.build_songbar(fileindex).then((builtbar) => {
+                UI.build_songbar(fileindex).then((builtbar) => {
                     builtbar.id = fileindex;
                     main_library_view.appendChild(builtbar)
                 })
@@ -546,12 +499,12 @@ let player = {//Playback control
             return 0;
         }
 
-        if (fileindex != player.now_playing && player.playstate != false) {
+        /*if (fileindex != player.now_playing && player.playstate != false) {
             //await player.stream1.unload();//unlock the stream thats gonna be used
             //Howler.unload()
             /*backgroundvideo.src = "";
-            backgroundvideo.style.display = "none"*/
-        }
+            backgroundvideo.style.display = "none"
+        }*/
 
         try {
             //await player.stream1.unload();//unlock the stream thats gonna be used
@@ -625,6 +578,7 @@ let player = {//Playback control
         } finally {
             document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
             document.getElementById(fileindex).className = 'song_bar_active'
+            UI.build_songbar(fileindex).then((songbar) => { document.getElementById('playhistory').appendChild(songbar) })
         }
     },
     pause: function () {
@@ -845,7 +799,7 @@ let player = {//Playback control
             for (let fileindex in files) {
                 if (path.basename(files[fileindex]).toLowerCase().search(pattern.toLowerCase()) != -1) {
                     /*setTimeout(async () => {*/
-                    player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
+                    UI.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
                     /*}, fileindex * 50);*/
                     //buildsong(fileindex) 
                 }
@@ -903,144 +857,6 @@ let player = {//Playback control
         }
 
     },
-    build_songbar: async function (fileindex) {
-        console.log('Song bar for :', files[fileindex])
-
-        let songbar = buildsong(fileindex);
-
-        return songbar;
-
-        function buildsong(fiso) {
-            var song_bar = document.createElement('div');
-            song_bar.classList = "song_bar";
-            var song_title = document.createElement('div')
-            song_title.className = "song_title";
-            song_title.innerHTML = path.basename(files[fiso]);
-            song_bar.title = `Play ${path.basename(files[fiso])}`;
-            song_bar.appendChild(song_title);
-
-            functionality(song_bar, fiso);
-            fillmetadata(song_bar, fiso, song_title);
-            return song_bar;
-
-        }
-
-        async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
-            try {
-                var song_duration = document.createElement('div')
-                song_duration.className = "song_duration"
-                mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
-
-                    //metadata song title
-                    if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
-
-                    //file duration
-                    song_duration.title = `${metadata.format.duration} seconds`;
-                    if (Number(metadata.format.duration % 60) >= 10) {
-                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
-                    } else {
-                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
-                    }
-                    eliment.appendChild(song_duration)
-
-                    //cover art
-                    /*const picture = mm.selectCover(metadata.common.picture)
-                    if (typeof (picture) != 'undefined' && picture != null) {
-                        var songicon = document.createElement("img")
-                        songicon.className = "songicon"
-                        songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                        eliment.appendChild(songicon)
-                    }
-                    else {
-                        //use placeholder image
-                        var songicon = document.createElement("div")
-                        songicon.className = "songicon_dfault"
-                        eliment.appendChild(songicon)
-                    }*/
-
-                    //cover art thumbnail
-
-                    if (path.extname(files[fileindex]) == ".mp4" && mp4count < 200) {
-                        setTimeout(() => {
-                            thumbnailjs.getVideoThumbnail(files[fileindex], 1, 3, "image/jpg").then((thumnaildata) => {
-                                var songicon = document.createElement("img")
-                                songicon.className = "songicon"
-                                songicon.src = thumnaildata;
-                                eliment.appendChild(songicon)
-                            });
-                        }, fileindex * 500);
-                    } else {
-
-                        const picture = mm.selectCover(metadata.common.picture)
-                        if (typeof (picture) != 'undefined' && picture != null) {
-                            var songicon = document.createElement("img")
-                            songicon.className = "songicon"
-                            songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                            eliment.appendChild(songicon)
-                        }
-                        else {
-                            //use placeholder image
-                            var songicon = document.createElement("div")
-                            songicon.className = "songicon_dfault"
-                            eliment.appendChild(songicon)
-                        }
-                    }
-                });
-            } catch (err) {
-                console.warn("Metadata error : ", err)
-            }
-        }
-
-        async function functionality(eliment, fileindex) {//context menu and playback on click
-
-            let contextMenu = new Menu.buildFromTemplate([
-                {//play button
-                    label: "Play",
-                    type: "normal",
-                    click() {
-                        player.play(fileindex);
-                        setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
-                    }
-                },
-                {
-                    label: "add to favourites",
-                    type: "normal",
-                    click() { }
-                },
-                {
-                    label: "add to playlist",
-                    type: "normal",
-                    click() { }
-                },
-                { type: "separator" },
-                {
-                    label: "copy file name",
-                    click() { clipboard.writeText(path.basename(files[fileindex])) }
-                },
-                {//open song file in default external application
-                    label: "show in folder",
-                    click() { shell.showItemInFolder(files[fileindex]) }
-                },
-                {//copy file path
-                    label: "copy file location",
-                    //toolTip: `${player.files[fileindex].path}`,
-                    click() { clipboard.write(files[fileindex]); }
-                }
-            ])
-
-            eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
-                e.preventDefault();
-                e.stopPropagation();//important
-                contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
-            }, false);
-
-            eliment.addEventListener('click', function () {
-                player.play(fileindex);
-                //eliment.classList = "song_bar_active";
-                //setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
-            })//click to play
-        }
-    }
 }
 
 let UI = {
@@ -1332,7 +1148,137 @@ let UI = {
             })
         return returned;
     },
+    build_songbar: async function (fileindex) {
+        //console.log('Song bar for :', files[fileindex])
 
+        let songbar = buildsong(fileindex);
+
+        return songbar;
+
+        function buildsong(fiso) {
+            var song_bar = document.createElement('div');
+            song_bar.classList = "song_bar";
+            var song_title = document.createElement('div')
+            song_title.className = "song_title";
+            song_title.innerHTML = path.basename(files[fiso]);
+            song_bar.title = `Play ${path.basename(files[fiso])}`;
+            song_bar.appendChild(song_title);
+
+            functionality(song_bar, fiso);
+            fillmetadata(song_bar, fiso, song_title);
+
+            //            setTimeout(() => { fillmetadata(song_bar, fiso, song_title); }, 5 * fiso);
+            return song_bar;
+
+        }
+
+        async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
+            try {
+                var song_duration = document.createElement('div')
+                song_duration.className = "song_duration"
+                mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
+
+                    //metadata song title
+                    if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
+
+                    //file duration
+                    song_duration.title = `${metadata.format.duration} seconds`;
+                    if (Number(metadata.format.duration % 60) >= 10) {
+                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
+                    } else {
+                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
+                    }
+                    eliment.appendChild(song_duration)
+
+
+                    if (path.extname(files[fileindex]) == ".mp4" && mp4count < 200) {
+                        setTimeout(() => {
+                            thumbnailjs.getVideoThumbnail(files[fileindex], 1, 3, "image/jpg").then((thumnaildata) => {
+                                var songicon = document.createElement("img")
+                                songicon.className = "songicon"
+                                //songicon.src = thumnaildata;
+                                songicon.src = '/img/video-pngrepo-com-white.png';
+                                eliment.appendChild(songicon)
+                            });
+                        }, fileindex * 500);
+                    } else {
+                        const picture = mm.selectCover(metadata.common.picture)
+                        if (typeof (picture) != 'undefined' && picture != null) {
+                            var songicon = document.createElement("img")
+                            songicon.className = "songicon"
+
+                            eliment.appendChild(songicon)
+                            const shapimg = await sharp(picture.data).resize(guestimated_best, guestimated_best).toFormat('webp').toBuffer();
+
+                            songicon.src = URL.createObjectURL(
+                                new Blob([shapimg], { type: 'image/webp' } /* (1) */)
+                            );
+                            //songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                            eliment.appendChild(songicon)
+                        }
+                        else {
+                            //use placeholder image
+                            var songicon = document.createElement("div")
+                            songicon.className = "songicon_dfault"
+                            eliment.appendChild(songicon)
+                        }
+                    }
+                });
+            } catch (err) {
+                console.warn("Metadata error : ", err)
+            }
+        }
+
+        async function functionality(eliment, fileindex) {//context menu and playback on click
+
+            let contextMenu = new Menu.buildFromTemplate([
+                {//play button
+                    label: "Play",
+                    type: "normal",
+                    click() {
+                        player.play(fileindex);
+                        setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
+                    }
+                },
+                {
+                    label: "add to favourites",
+                    type: "normal",
+                    click() { }
+                },
+                {
+                    label: "add to playlist",
+                    type: "normal",
+                    click() { }
+                },
+                { type: "separator" },
+                {
+                    label: "copy file name",
+                    click() { clipboard.writeText(path.basename(files[fileindex])) }
+                },
+                {//open song file in default external application
+                    label: "show in folder",
+                    click() { shell.showItemInFolder(files[fileindex]) }
+                },
+                {//copy file path
+                    label: "copy file location",
+                    //toolTip: `${player.files[fileindex].path}`,
+                    click() { clipboard.write(files[fileindex]); }
+                }
+            ])
+
+            eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
+                e.preventDefault();
+                e.stopPropagation();//important
+                contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
+            }, false);
+
+            eliment.addEventListener('click', function () {
+                player.play(fileindex);
+                //eliment.classList = "song_bar_active";
+                //setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
+            })//click to play
+        }
+    }
 }
 
 

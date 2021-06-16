@@ -558,6 +558,45 @@ body {
     /*top and bottom*/
     width: 15rem;
     z-index: 3;
+    display: flex;
+}
+
+.menupa_btn {
+    height: 3.5rem;
+    width: 100%;
+    background-color: red;
+    border-radius: 1rem;
+}
+
+.menupa_btn_icon {
+    height: 3.5rem;
+    width: 3.5rem;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-image: url('../img/icon.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    cursor: pointer;
+}
+
+.menupa_btn_text_container {
+    height: 3.5rem;
+    width: calc(100% - 3.5rem);
+    position: absolute;
+    left: 3.5rem;
+    top: 0;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+}
+
+.menupa_btn_text {
+    position: relative;
+    height: 1.8rem;
+    font-size: 1.6rem;
 }
 
 
@@ -588,7 +627,7 @@ body {
 
     100% {
         opacity: 1;
-       /* width: 100%;*/
+        /* width: 100%;*/
     }
 }
 

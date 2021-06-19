@@ -564,8 +564,14 @@ body {
 .menupa_btn {
     height: 3.5rem;
     width: 100%;
-    background-color: red;
+    background-color: transparent;
     border-radius: 1rem;
+    cursor: pointer;
+    transition: background-color 300ms;
+
+}
+.menupa_btn:hover {
+    background-color: var(--half_background-color);
 }
 
 .menupa_btn_icon {
@@ -578,7 +584,7 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;
-    cursor: pointer;
+    
 }
 
 .menupa_btn_text_container {
@@ -597,8 +603,14 @@ body {
     position: relative;
     height: 1.8rem;
     font-size: 1.6rem;
+    transform: translateY(0rem);
+    transition:font-size 300ms, transform 300ms;
 }
-
+.menupa_btn:hover .menupa_btn_text{
+    transform: translateY(-0.5rem);
+    font-size: 2rem;
+    transition:font-size 50ms, transform 50ms;
+}
 
 /* Main library view */
 .library_view {

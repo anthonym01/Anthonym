@@ -10,11 +10,11 @@ const main = remote.require('./main');
 
 const fs = require('fs');
 const path = require('path');
-const sharp = require('sharp');
+//const sharp = require('sharp');//prebuilt binars incompatible with electron-builder
 
 //const { screenwidth, screenheight } = screen.getPrimaryDisplay().workAreaSize.height;
 
-const guestimated_best = ~~(screen.getPrimaryDisplay().workAreaSize.height / 14.5);
+//const guestimated_best = ~~(screen.getPrimaryDisplay().workAreaSize.height / 14.5);
 
 
 
@@ -58,7 +58,7 @@ document.getElementById('minimize-button').addEventListener('click', function ()
 
 //window loads
 window.addEventListener('load', async function () {
-    main_menus(); UI.notify.new(guestimated_best)
+    main_menus();
     console.log('Running from:', process.resourcesPath)
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
 
@@ -388,7 +388,7 @@ let player = {//Playback control
                     clearInterval(hold)
                 }
             }, 1000);//retry over and over, again and again-gen
-            setTimeout(() => { clearInterval(hold); console.error('Coulod not gain files') }, 10000)
+            setTimeout(() => { clearInterval(hold); console.error('Could not gain some files') }, 10000)
         }
 
         async function getfiles(muzicpaths) {//gets files form array of music folder paths
@@ -728,7 +728,13 @@ let player = {//Playback control
 
             //let imgscr = `data:${picture.format};base64,${picture.data.toString('base64')}`;
             //let imgscr = new Blob([picture.data], { type: picture.format });
-            let imgscr = URL.createObjectURL(new Blob([picture.data], { type: picture.format }))
+            /*let imgscr = URL.createObjectURL(
+                new Blob([picture.data], { type: picture.format })
+            );*/
+
+            let imgscr = URL.createObjectURL(
+                new Blob([picture.data], { type: picture.format })
+            );
 
             ipcRenderer.send('new_icon', imgscr)
             console.log(imgscr)
@@ -737,7 +743,10 @@ let player = {//Playback control
                 title: metadata.common.title ? metadata.common.title : path.basename(files[fileindex]),
                 artist: metadata.common.artist ? metadata.common.artist : "unknown",
                 album: metadata.common.album ? metadata.common.album : "unknown",
-                artwork: picture ? [{ src: imgscr }] : null,
+                artwork: [
+                    { src: 'https://raw.githubusercontent.com/anthonym01/Anthonym/main/icon.png', size: "1024x1024", type: 'image/png' }
+                ],
+                //artwork: picture ? [{ src: imgscr,sizes: '96x96',type: picture.format }] : null,
             });
 
         } else {
@@ -758,13 +767,13 @@ let player = {//Playback control
             UI.get_desktop_wallpaper().then((wallpaperpath) => {
                 mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')`
             });
-            navigator.mediaSession.metadata = new MediaMetadata({
+            /*navigator.mediaSession.metadata = new MediaMetadata({
                 title: metadata.common.title || path.basename(files[fileindex]),
                 artist: metadata.common.artist || "unknown artist",
                 //artist: metadata.common.artist ? metadata.common.artist : "unknown",
                 album: metadata.common.album || "unknown",
                 //album: metadata.common.album ? metadata.common.album : "unknown",
-            });
+            });*/
         }
         if (backgroundvideo.style.display == "block") { document.getElementById('tbuttonholder').className = "tbuttonholder" }
 
@@ -1183,11 +1192,13 @@ let UI = {
 
                     //file duration
                     song_duration.title = `${metadata.format.duration} seconds`;
-                    if (Number(metadata.format.duration % 60) >= 10) {
+                    /*if (Number(metadata.format.duration % 60) >= 10) {
                         song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
                     } else {
                         song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
-                    }
+                    }*/
+                    song_duration.innerHTML = `${~~(Number((metadata.format.duration - metadata.format.duration % 60) / 60))}:${~~(Number(metadata.format.duration % 60))}`;
+
                     eliment.appendChild(song_duration)
 
 
@@ -1208,10 +1219,14 @@ let UI = {
                             songicon.className = "songicon"
 
                             eliment.appendChild(songicon)
-                            const shapimg = await sharp(picture.data).resize(guestimated_best, guestimated_best).toFormat('webp').toBuffer();
+
+                            /*const shapimg = await sharp(picture.data).resize(guestimated_best, guestimated_best).toFormat('webp').toBuffer();
 
                             songicon.src = URL.createObjectURL(
-                                new Blob([shapimg], { type: 'image/webp' } /* (1) */)
+                                new Blob([shapimg], { type: 'image/webp' })
+                            );*/
+                            songicon.src = URL.createObjectURL(
+                                new Blob([picture.data], { type: picture.format })
                             );
                             //songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
                             eliment.appendChild(songicon)

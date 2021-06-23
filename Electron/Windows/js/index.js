@@ -279,7 +279,7 @@ let player = {//Playback control
             if (e.key == "Escape") {
                 UI.overpain.hide()
             } else {
-                setTimeout(() => { player.lookup(this.value); }, 300);
+                player.lookup();
             }
         })
 
@@ -798,23 +798,19 @@ let player = {//Playback control
         }
 
     },
-    lookup: async function (pattern) {//match any pattern to local file name
-        console.log('Look for ', pattern)
+    lookup: async function () {//match any pattern to local file name
 
         for (let i in looking) { clearInterval(looking.pop()) }//prevent rappid researching
 
         let lookafor = setTimeout(() => {
 
-            if (pattern != "") {
-                searchbox.innerHTML = ""
-            }
+            let pattern = searchput.value;
+            console.log('Look for ', pattern)
+            if (pattern != "") { searchbox.innerHTML = "" }
 
             for (let fileindex in files) {
                 if (path.basename(files[fileindex]).toLowerCase().search(pattern.toLowerCase()) != -1) {
-                    /*setTimeout(async () => {*/
                     player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
-                    /*}, fileindex * 50);*/
-                    //buildsong(fileindex) 
                 }
             }
 

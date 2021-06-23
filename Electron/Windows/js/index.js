@@ -22,7 +22,8 @@ const path = require('path');
     - /home/samuel/.local/share/wallpapers
 */
 const wallpaper = require('wallpaper');
-import { rand_number } from './utils.mjs';
+const utils = require('../Windows/js/utils.js');
+//import { rand_number } from './utils.mjs';
 
 //import * as mm from 'music-metadata/lib/core';
 const mm = require('music-metadata');
@@ -42,8 +43,9 @@ const mainmaskcontainer = document.getElementById('mainmaskcontainer');
 const Menupannel_main = document.getElementById('Menupannel_main');
 const main_library_view = document.getElementById('main_library_view');
 const searchput = document.getElementById('searchput');
-const overpain = document.getElementById('overpain');//pannel for queue and search
+const overpainelm = document.getElementById('overpain');//pannel for queue and search
 const searchbox = document.getElementById('searchbox');
+const coverartsmall = document.getElementById('coverartsmall');
 
 let looking = [];//looking timers, only search after user stops typing
 
@@ -98,7 +100,13 @@ window.addEventListener('keydown', function (e) {//keyboard actions
     console.log('Keypress: ', e.key)
     switch (e.key) {
         case " ": case "p": case "enter": e.preventDefault(); player.play(); break;
-        case "f": e.preventDefault(); UI.show_search(); break;
+        case "Escape":
+            e.preventDefault();
+            if (overpainelm.classList == "overpain_active") {
+                UI.overpain.hide()
+            }
+            break;
+        case "f": e.preventDefault(); UI.overpain.show(); break;
         case "n":
             e.preventDefault();
             console.log('Seekforward on keypress');
@@ -255,19 +263,26 @@ let player = {//Playback control
         setTimeout(async () => {//set last palyed song
             player.play(config.last_played, false);
             player.pause();
-            window.location.href = `#${config.last_played - 2}`;
-        }, 500);
+            if (config.last_played < 2) {
+                window.location.href = `#${config.last_played}`;
+            } else {
+                window.location.href = `#${config.last_played - 2}`;
+            }
 
-        document.getElementById('coverartsmall').addEventListener('click', function () { player.scroll_to_current() })
+        }, 5000);
 
-        //searchput
+        coverartsmall.addEventListener('click', function () { player.scroll_to_current() })
+
+        //search input
         searchput.addEventListener('keydown', function (e) {//keyboard actions
             e.stopImmediatePropagation();
-            //setTimeout(() => {
-            //console.log(this.value)
-            player.lookup(this.value);
-            //}, 0);
+            if (e.key == "Escape") {
+                UI.overpain.hide()
+            } else {
+                setTimeout(() => { player.lookup(this.value); }, 300);
+            }
         })
+
         //shuffle button
         switch (config.shuffle) {
             case false://no shuffle
@@ -371,7 +386,7 @@ let player = {//Playback control
     },
     fetch_library: async function () {
         //build library inteligentlly
-        let mp4count = 0;
+        //let mp4count = 0;
         files = [];
         if (main.get.musicfolders() == [] || main.get.musicfolders() == undefined || main.get.musicfolders() < 1) {
             first_settup()//run first settup
@@ -409,8 +424,7 @@ let player = {//Playback control
                             } else {//file to handle
 
                                 switch (path.parse(fullfilepath).ext) {//check file types
-                                    case ".mp4": mp4count++;
-                                    case ".mp3": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
+                                    case ".mp4": case ".mp3": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
                                     case ".aac": case ".caf": case ".m4b": case ".m4v": case ".m4a": case ".weba":
                                     case ".webm": case ".dolby": case ".flac": //playable as music files
                                         files.push(fullfilepath);
@@ -438,7 +452,7 @@ let player = {//Playback control
             main_library_view.innerHTML = "";
 
             for (let fileindex in files) {
-                UI.build_songbar(fileindex).then((builtbar) => {
+                player.build_songbar(fileindex).then((builtbar) => {
                     builtbar.id = fileindex;
                     main_library_view.appendChild(builtbar)
                 })
@@ -454,7 +468,6 @@ let player = {//Playback control
         */
         console.log('Attempt to play: ', fileindex);
 
-        //UI.hide_search();
 
         if (player.playstate != false) {//if is playing something
             if (fileindex == undefined) {//pause playback
@@ -578,7 +591,7 @@ let player = {//Playback control
         } finally {
             document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
             document.getElementById(fileindex).className = 'song_bar_active'
-            UI.build_songbar(fileindex).then((songbar) => { document.getElementById('playhistory').appendChild(songbar) })
+            player.build_songbar(fileindex).then((songbar) => { document.getElementById('playhistory').appendChild(songbar) })
         }
     },
     pause: function () {
@@ -612,7 +625,7 @@ let player = {//Playback control
         //prototype shuffle
         let nextsong;
         if (config.shuffle == true) {
-            nextsong = rand_number(files.length - 1, 0, player.now_playing);
+            nextsong = utils.rand_number(files.length - 1, 0, player.now_playing);
         } else {
             nextsong = files[player.now_playing + 1] ? Number(player.now_playing + 1) : 0;
         }
@@ -707,14 +720,9 @@ let player = {//Playback control
             backgroundmaskimg.src = processed_picture;
             backgroundmaskimg.style.display = "block";
 
-            //backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
-            repeatbtn.style.filter = `blur(${config.background_blur}px)`;
-            playbtn.style.filter = `blur(${config.background_blur}px)`;
-            nextbtn.style.filter = `blur(${config.background_blur}px)`;
-            previousbtn.style.filter = `blur(${config.background_blur}px)`;
-            shufflebtn.style.filter = `blur(${config.background_blur}px)`;
+            UI.blurse()
 
-            if (document.getElementById('overpain').className != "overpain_active") {//hide titlebar buttons if overpain isnt visible
+            if (overpainelm.className != "overpain_active") {//hide titlebar buttons if overpain isnt visible
                 document.getElementById('tbuttonholder').className = "tbuttonholder"
             }
 
@@ -751,16 +759,12 @@ let player = {//Playback control
 
         } else {
             //use placeholder image
-            document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
+            document.getElementById('coverartsmall').src = "/img/vinyl-record-pngrepo-com-white.png"
             document.getElementById('coverartsmall').name = "vibecat"
             backgroundmaskimg.src = "";
             backgroundmaskimg.style.display = "none";
 
-            repeatbtn.style.filter = `blur(0)`;
-            playbtn.style.filter = `blur(0)`;
-            nextbtn.style.filter = `blur(0)`;
-            previousbtn.style.filter = `blur(0)`;
-            shufflebtn.style.filter = `blur(0)`;
+            UI.unblurse()
 
             document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
             document.getElementById('songdetailcontainer').classList = "songdetailcontainer_alt";
@@ -808,7 +812,7 @@ let player = {//Playback control
             for (let fileindex in files) {
                 if (path.basename(files[fileindex]).toLowerCase().search(pattern.toLowerCase()) != -1) {
                     /*setTimeout(async () => {*/
-                    UI.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
+                    player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
                     /*}, fileindex * 50);*/
                     //buildsong(fileindex) 
                 }
@@ -866,6 +870,144 @@ let player = {//Playback control
         }
 
     },
+
+    build_songbar: async function (fileindex) {
+        //console.log('Song bar for :', files[fileindex])
+
+        let songbar = buildsong(fileindex);
+
+        return songbar;
+
+        function buildsong(fiso) {
+            var song_bar = document.createElement('div');
+            song_bar.classList = "song_bar";
+            var song_title = document.createElement('div')
+            song_title.className = "song_title";
+            song_title.innerHTML = path.basename(files[fiso]);
+            song_bar.title = `Play ${path.basename(files[fiso])}`;
+            song_bar.appendChild(song_title);
+
+            functionality(song_bar, fiso);
+            fillmetadata(song_bar, fiso, song_title);
+
+            //            setTimeout(() => { fillmetadata(song_bar, fiso, song_title); }, 5 * fiso);
+            return song_bar;
+
+        }
+
+        async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
+            try {
+                var song_duration = document.createElement('div')
+                song_duration.className = "song_duration"
+                mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
+
+                    //metadata song title
+                    if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
+
+                    //file duration
+                    song_duration.title = `${metadata.format.duration} seconds`;
+                    /*if (Number(metadata.format.duration % 60) >= 10) {
+                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
+                    } else {
+                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
+                    }*/
+                    song_duration.innerHTML = `${~~(Number((metadata.format.duration - metadata.format.duration % 60) / 60))}:${~~(Number(metadata.format.duration % 60))}`;
+
+                    eliment.appendChild(song_duration)
+
+
+                    if (path.extname(files[fileindex]) == ".mp4") {
+                        setTimeout(() => {
+                            thumbnailjs.getVideoThumbnail(files[fileindex], 0.2, 3, "image/jpg").then((thumnaildata) => {
+                                var songicon = document.createElement("img")
+                                songicon.className = "songicon"
+                                songicon.src = thumnaildata;
+
+                                eliment.appendChild(songicon)
+                            });
+                        }, fileindex * 500);
+                    } else {
+                        const picture = mm.selectCover(metadata.common.picture)
+                        if (typeof (picture) != 'undefined' && picture != null) {
+                            var songicon = document.createElement("img")
+                            songicon.className = "songicon"
+
+                            eliment.appendChild(songicon)
+
+                            /*const shapimg = await sharp(picture.data).resize(guestimated_best, guestimated_best).toFormat('webp').toBuffer();
+
+                            songicon.src = URL.createObjectURL(
+                                new Blob([shapimg], { type: 'image/webp' })
+                            );*/
+                            songicon.src = URL.createObjectURL(
+                                new Blob([picture.data], { type: picture.format })
+                            );
+                            //songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                            eliment.appendChild(songicon)
+                        }
+                        else {
+                            //use placeholder image
+                            var songicon = document.createElement("div")
+                            songicon.className = "songicon_dfault"
+                            eliment.appendChild(songicon)
+                        }
+                    }
+                });
+            } catch (err) {
+                console.warn("Metadata error : ", err)
+            }
+        }
+
+        async function functionality(eliment, fileindex) {//context menu and playback on click
+
+            let contextMenu = new Menu.buildFromTemplate([
+                {//play button
+                    label: "Play",
+                    type: "normal",
+                    click() {
+                        player.play(fileindex);
+                        setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
+                    }
+                },
+                {
+                    label: "add to favourites",
+                    type: "normal",
+                    click() { }
+                },
+                {
+                    label: "add to playlist",
+                    type: "normal",
+                    click() { }
+                },
+                { type: "separator" },
+                {
+                    label: "copy file name",
+                    click() { clipboard.writeText(path.basename(files[fileindex])) }
+                },
+                {//open song file in default external application
+                    label: "show in folder",
+                    click() { shell.showItemInFolder(files[fileindex]) }
+                },
+                {//copy file path
+                    label: "copy file location",
+                    //toolTip: `${player.files[fileindex].path}`,
+                    click() { clipboard.write(files[fileindex]); }
+                }
+            ])
+
+            eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
+                e.preventDefault();
+                e.stopPropagation();//important
+                contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
+            }, false);
+
+            eliment.addEventListener('click', function () {
+                player.play(fileindex);
+                //eliment.classList = "song_bar_active";
+                //setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
+            })//click to play
+        }
+    }
 }
 
 let UI = {
@@ -895,31 +1037,25 @@ let UI = {
 
         //search trigger
         document.getElementById('search_btn').addEventListener('click', function () {
-            if (overpain.className == "overpain_active") {//hide it
-                UI.hide_search()
+            if (overpainelm.className == "overpain_active") {//hide it
+                UI.overpain.hide()
             } else {//show it
-                UI.show_search()
+                UI.overpain.show()
             }
         })
 
-        document.getElementById('Menupannel_main').addEventListener('mouseenter', function () { UI.hide_search() })
-        document.getElementById('main_library_view').addEventListener('mouseenter', function () { UI.hide_search() })
-        document.getElementById('Playbar').addEventListener('mouseenter', function () { UI.hide_search() })
-        document.getElementById('setting_view').addEventListener('mouseenter', function () { UI.hide_search() })
+        document.getElementById('Menupannel_main').addEventListener('mouseenter', function () { UI.overpain.hide() })
+        document.getElementById('main_library_view').addEventListener('mouseenter', function () { UI.overpain.hide() })
+        document.getElementById('Playbar').addEventListener('mouseenter', function () { UI.overpain.hide() })
+        document.getElementById('setting_view').addEventListener('mouseenter', function () { UI.overpain.hide() })
 
         //background blur
         backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
         document.getElementById('background_blur_put').value = config.background_blur;
         document.getElementById('background_blur_put').addEventListener('change', function () {
-            let puts = this.value;
-            backgroundmaskimg.style.filter = `blur(${puts}px)`;
-            repeatbtn.style.filter = `blur(${puts}px)`;
-            playbtn.style.filter = `blur(${puts}px)`;
-            nextbtn.style.filter = `blur(${puts}px)`;
-            previousbtn.style.filter = `blur(${puts}px)`;
-            shufflebtn.style.filter = `blur(${puts}px)`;
-            config.background_blur = puts;
-            config_manage.save()
+            config.background_blur = this.value;
+            config_manage.save();
+            UI.blurse()
         })
     },
     navigate: {
@@ -936,34 +1072,6 @@ let UI = {
             main_library_view.style.display = "none";
             Menupannel_main.style.display = "none";
         }
-    },
-    hide_search: async function () {
-        //if (searchput.value != "" || document.getElementById('searchbox').style.display == "block") {
-        if (backgroundmaskimg.style.display == "none" && backgroundvideo.style.display == "none") {
-            document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
-        } else {
-            document.getElementById('tbuttonholder').className = "tbuttonholder"
-        }
-        searchput.style.display = ""
-        overpain.className = "overpain"
-
-        document.getElementById('main_library_view').style.filter = ""
-        /*document.getElementById('searchbox').style.width = ""*/
-        /*} else {
-
-            document.getElementById('tbuttonholder').className = "tbutaintonholder_locked"
-
-
-            document.getElementById('searchbox').style.display = ""
-        }*/
-    },
-    show_search: async function () {
-        document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
-        overpain.className = "overpain_active"
-        setTimeout(() => { searchput.focus(); searchput.select() }, 100);
-        searchput.style.display = "block";
-        document.getElementById('main_library_view').style.filter = `blur(${config.background_blur}px)`;
-        //document.getElementById('searchbox').style.width = `calc(100% - 15rem + ${config.background_blur})`;
     },
     settings: {
         animation: {
@@ -1141,6 +1249,53 @@ let UI = {
             })
         }
     },
+    overpain: {
+        hide: async function () {
+            //if (searchput.value != "" || document.getElementById('searchbox').style.display == "block") {
+            if (backgroundmaskimg.style.display == "none" && backgroundvideo.style.display == "none") {
+                document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
+            } else {
+                document.getElementById('tbuttonholder').className = "tbuttonholder"
+            }
+            searchput.style.display = ""
+            overpainelm.className = "overpain"
+            main_library_view.style.filter = ""
+            /*document.getElementById('searchbox').style.width = ""*/
+            /*} else {
+    
+                document.getElementById('tbuttonholder').className = "tbutaintonholder_locked"
+    
+    
+                document.getElementById('searchbox').style.display = ""
+            }*/
+        },
+        show: async function () {
+            document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
+            overpainelm.className = "overpain_active"
+            setTimeout(() => { searchput.focus(); searchput.select() }, 100);
+            searchput.style.display = "block";
+            document.getElementById('main_library_view').style.filter = `blur(${config.background_blur}px)`;
+            //document.getElementById('searchbox').style.width = `calc(100% - 15rem + ${config.background_blur})`;
+        },
+    },
+    blurse: async function () {
+        backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
+        repeatbtn.style.filter = `blur(${config.background_blur}px)`;
+        playbtn.style.filter = `blur(${config.background_blur}px)`;
+        nextbtn.style.filter = `blur(${config.background_blur}px)`;
+        previousbtn.style.filter = `blur(${config.background_blur}px)`;
+        shufflebtn.style.filter = `blur(${config.background_blur}px)`;
+    },
+    unblurse: async function () {
+        backgroundmaskimg.style.filter = `blur(0)`;
+        repeatbtn.style.filter = `blur(0)`;
+        playbtn.style.filter = `blur(0)`;
+        nextbtn.style.filter = `blur(0)`;
+        previousbtn.style.filter = `blur(0)`;
+        shufflebtn.style.filter = `blur(0)`;
+    },
+
+
     get_desktop_wallpaper: async function () {
         let returned = await wallpaper.get()
             .then((wallpaperpath) => {//gets desktop wallpaper
@@ -1157,143 +1312,6 @@ let UI = {
             })
         return returned;
     },
-    build_songbar: async function (fileindex) {
-        //console.log('Song bar for :', files[fileindex])
-
-        let songbar = buildsong(fileindex);
-
-        return songbar;
-
-        function buildsong(fiso) {
-            var song_bar = document.createElement('div');
-            song_bar.classList = "song_bar";
-            var song_title = document.createElement('div')
-            song_title.className = "song_title";
-            song_title.innerHTML = path.basename(files[fiso]);
-            song_bar.title = `Play ${path.basename(files[fiso])}`;
-            song_bar.appendChild(song_title);
-
-            functionality(song_bar, fiso);
-            fillmetadata(song_bar, fiso, song_title);
-
-            //            setTimeout(() => { fillmetadata(song_bar, fiso, song_title); }, 5 * fiso);
-            return song_bar;
-
-        }
-
-        async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
-            try {
-                var song_duration = document.createElement('div')
-                song_duration.className = "song_duration"
-                mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
-
-                    //metadata song title
-                    if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
-
-                    //file duration
-                    song_duration.title = `${metadata.format.duration} seconds`;
-                    /*if (Number(metadata.format.duration % 60) >= 10) {
-                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
-                    } else {
-                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
-                    }*/
-                    song_duration.innerHTML = `${~~(Number((metadata.format.duration - metadata.format.duration % 60) / 60))}:${~~(Number(metadata.format.duration % 60))}`;
-
-                    eliment.appendChild(song_duration)
-
-
-                    if (path.extname(files[fileindex]) == ".mp4" && mp4count < 200) {
-                        setTimeout(() => {
-                            thumbnailjs.getVideoThumbnail(files[fileindex], 1, 3, "image/jpg").then((thumnaildata) => {
-                                var songicon = document.createElement("img")
-                                songicon.className = "songicon"
-                                //songicon.src = thumnaildata;
-                                songicon.src = '/img/video-pngrepo-com-white.png';
-                                eliment.appendChild(songicon)
-                            });
-                        }, fileindex * 500);
-                    } else {
-                        const picture = mm.selectCover(metadata.common.picture)
-                        if (typeof (picture) != 'undefined' && picture != null) {
-                            var songicon = document.createElement("img")
-                            songicon.className = "songicon"
-
-                            eliment.appendChild(songicon)
-
-                            /*const shapimg = await sharp(picture.data).resize(guestimated_best, guestimated_best).toFormat('webp').toBuffer();
-
-                            songicon.src = URL.createObjectURL(
-                                new Blob([shapimg], { type: 'image/webp' })
-                            );*/
-                            songicon.src = URL.createObjectURL(
-                                new Blob([picture.data], { type: picture.format })
-                            );
-                            //songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                            eliment.appendChild(songicon)
-                        }
-                        else {
-                            //use placeholder image
-                            var songicon = document.createElement("div")
-                            songicon.className = "songicon_dfault"
-                            eliment.appendChild(songicon)
-                        }
-                    }
-                });
-            } catch (err) {
-                console.warn("Metadata error : ", err)
-            }
-        }
-
-        async function functionality(eliment, fileindex) {//context menu and playback on click
-
-            let contextMenu = new Menu.buildFromTemplate([
-                {//play button
-                    label: "Play",
-                    type: "normal",
-                    click() {
-                        player.play(fileindex);
-                        setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
-                    }
-                },
-                {
-                    label: "add to favourites",
-                    type: "normal",
-                    click() { }
-                },
-                {
-                    label: "add to playlist",
-                    type: "normal",
-                    click() { }
-                },
-                { type: "separator" },
-                {
-                    label: "copy file name",
-                    click() { clipboard.writeText(path.basename(files[fileindex])) }
-                },
-                {//open song file in default external application
-                    label: "show in folder",
-                    click() { shell.showItemInFolder(files[fileindex]) }
-                },
-                {//copy file path
-                    label: "copy file location",
-                    //toolTip: `${player.files[fileindex].path}`,
-                    click() { clipboard.write(files[fileindex]); }
-                }
-            ])
-
-            eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
-                e.preventDefault();
-                e.stopPropagation();//important
-                contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
-            }, false);
-
-            eliment.addEventListener('click', function () {
-                player.play(fileindex);
-                //eliment.classList = "song_bar_active";
-                //setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
-            })//click to play
-        }
-    }
 }
 
 

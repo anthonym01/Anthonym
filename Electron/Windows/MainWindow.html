@@ -28,6 +28,20 @@
 
     <div class="background_shade" id="background_shade"></div>
 
+    <!-- Main library view -->
+    <div class="library_view" id="main_library_view" style="display: block;">
+
+    </div>
+
+    <div class="Menupannel_main" id="Menupannel_main">
+        <div class="menupa_btn" title="go to Main song library" id="library_btn">
+            <div class="menupa_btn_icon"></div>
+            <div class="menupa_btn_text_container">
+                <div class="menupa_btn_text">Library</div>
+            </div>
+        </div>
+    </div>
+
     <div class="setting_view" id="setting_view">
         <div title="does not apply to videos">
             <div>background blur</div><input id="background_blur_put" type="number" min="0" max="100"
@@ -61,20 +75,6 @@
 
     </div>
 
-    <!-- Main library view -->
-    <div class="library_view" id="main_library_view" style="display: block;">
-
-    </div>
-
-    <div class="Menupannel_main" id="Menupannel_main">
-        <div class="menupa_btn" title="go to Main song library" id="library_btn">
-            <div class="menupa_btn_icon"></div>
-            <div class="menupa_btn_text_container">
-                <div class="menupa_btn_text">Library</div>
-            </div>
-        </div>
-    </div>
-
     <!-- Play back controls -->
     <div class="Playbar" id="Playbar">
         <img id="coverartsmall" height="auto" src="img/memes/Cats/comfuz.jpg" alt="cover">
@@ -100,8 +100,6 @@
         <button id="first_finish_btn">Finish</button>
     </div>
 
-
-
     <!-- Search, recents and play history  -->
     <div class="overpain" id="overpain">
         <div class="overpainin2" id="playhistory">
@@ -123,11 +121,12 @@
         <div class="tbutton" id="maximize-button" title="Maximize"></div>
         <div class="tbutton" id="minimize-button" title="Minimize"></div>
     </div>
+
     <input type="text" id="searchput">
 
     <div class="titlcon" id="titlcon"></div>
 
-    <script type="module" src="js/index.js"></script>
+    <script src="js/index.js"></script>
 </body>
 
 </html>

@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 /* Random numeber for playback selection */
-export function rand_number(max, min, cant_be) {
+function rand_number(max, min, cant_be) {
     let randowm = Math.floor(Math.random() * (max - min + 1)) + min;
     if (randowm == cant_be) {
         return rand_number(max, min, cant_be);
@@ -11,7 +11,7 @@ export function rand_number(max, min, cant_be) {
 }
 
 /* rework to be module */
-export let config_manage = {
+/*let config_manage = {
     save: async function () {//Save the config file
         console.table('Configuration is being saved', config);
         var stringeddata = JSON.stringify(config);
@@ -134,8 +134,8 @@ export let config_manage = {
             alert('An error occured ', err.message)
         })
     },
-}
-
-/*module.exports = {
-    rand_number
 }*/
+
+module.exports = {
+    rand_number
+}

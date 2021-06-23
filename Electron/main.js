@@ -1,8 +1,7 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain, Notification/* nativeImage*/ } = require('electron');
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain/* nativeImage*/ } = require('electron');
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
-//const os = require('os-utils')
 const windowStateKeeper = require('electron-window-state');
 const Store = require('electron-store');
 const storeinator = new Store;

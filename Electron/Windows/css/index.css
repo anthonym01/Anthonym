@@ -136,6 +136,7 @@ body {
     background-repeat: no-repeat;
     background-image: url('../img/icon.png');
     -webkit-app-region: drag;
+    /*z-index: 5000;*/
 }
 
 .tbuttonholder,
@@ -495,17 +496,17 @@ body {
     bottom: 0rem;
 }
 
-.songdetailcontainer_alt {
+/*.songdetailcontainer_alt {
     white-space: wrap;
     max-width: calc(100% - 55vw - 16rem);
-}
+}*/
 
 #songTitle {
     /* Song title in playbar */
     position: relative;
-    min-height: 1.8rem;
+    min-height: 1.4rem;
     height: fit-content;
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     width: auto;
     text-align: left;
     line-height: 100%;
@@ -708,10 +709,10 @@ body {
 
 .song_duration {
     position: absolute;
-    left: 3.8rem;
+    left: 3.5rem;
     width: 3.5rem;
     bottom: 0.2rem;
-    font-size: 0.9rem;
+    font-size: 1rem;
     text-align: center;
 }
 

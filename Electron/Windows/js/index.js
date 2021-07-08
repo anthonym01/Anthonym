@@ -259,7 +259,22 @@ let player = {//Playback control
     playstate: false,//is (should be) playing music or video
     now_playing: null,//Song thats currently playing
     initalize: async function () {
+        try {
 
+            navigator.mediaSession.playbackState = "paused";
+            //navigator.mediaSession.metadata = new MediaMetadata({ title: path.basename(files[fileindex]) });
+            navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
+            navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
+            navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
+            navigator.mediaSession.setActionHandler('seekbackward', function () { });
+            navigator.mediaSession.setActionHandler('seekforward', function () { });
+            //navigator.mediaSession.setActionHandler('shuffle', function () { });
+            navigator.mediaSession.setActionHandler('seekto', function () { });
+            navigator.mediaSession.setActionHandler('previoustrack', function () { console.log('External previous command'); player.previous() });
+            navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
+        } catch (err) {
+            console.warn('mediasession error :', err)
+        }
         setTimeout(async () => {//set last palyed song
             player.play(config.last_played, false);
             player.pause();
@@ -641,6 +656,7 @@ let player = {//Playback control
         if (player.playstate == true) {
             if (player.stream1.seek() > 3) {//reset seek on back if less 
                 player.stream1.seek(0)
+                backgroundvideo.currentTime = 0
                 return 0;
             }
         }
@@ -692,16 +708,6 @@ let player = {//Playback control
     updatemetadata: async function (fileindex) {//Bste the UI with metadata about the song that is currently playing
 
         navigator.mediaSession.playbackState = "playing";
-        //navigator.mediaSession.metadata = new MediaMetadata({ title: path.basename(files[fileindex]) });
-        navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
-        navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
-        navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
-        navigator.mediaSession.setActionHandler('seekbackward', function () { });
-        navigator.mediaSession.setActionHandler('seekforward', function () { });
-        //navigator.mediaSession.setActionHandler('shuffle', function () { });
-        navigator.mediaSession.setActionHandler('seekto', function () { });
-        navigator.mediaSession.setActionHandler('previoustrack', function () { console.log('External previous command'); player.previous() });
-        navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
 
         /* pull file data */
         const metadata = await mm.parseFile(files[fileindex]);
@@ -1276,19 +1282,19 @@ let UI = {
     },
     blurse: async function () {
         backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
-        repeatbtn.style.filter = `blur(${config.background_blur}px)`;
+        /*repeatbtn.style.filter = `blur(${config.background_blur}px)`;
         playbtn.style.filter = `blur(${config.background_blur}px)`;
         nextbtn.style.filter = `blur(${config.background_blur}px)`;
         previousbtn.style.filter = `blur(${config.background_blur}px)`;
-        shufflebtn.style.filter = `blur(${config.background_blur}px)`;
+        shufflebtn.style.filter = `blur(${config.background_blur}px)`;*/
     },
     unblurse: async function () {
         backgroundmaskimg.style.filter = `blur(0)`;
-        repeatbtn.style.filter = `blur(0)`;
+        /*repeatbtn.style.filter = `blur(0)`;
         playbtn.style.filter = `blur(0)`;
         nextbtn.style.filter = `blur(0)`;
         previousbtn.style.filter = `blur(0)`;
-        shufflebtn.style.filter = `blur(0)`;
+        shufflebtn.style.filter = `blur(0)`;*/
     },
 
 

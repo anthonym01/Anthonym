@@ -765,7 +765,7 @@ let player = {//Playback control
 
         } else {
             //use placeholder image
-            document.getElementById('coverartsmall').src = "/img/vinyl-record-pngrepo-com-white.png"
+            document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
             document.getElementById('coverartsmall').name = "vibecat"
             backgroundmaskimg.src = "";
             backgroundmaskimg.style.display = "none";

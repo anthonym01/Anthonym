@@ -49,6 +49,8 @@ const coverartsmall = document.getElementById('coverartsmall');
 
 let looking = [];//looking timers, only search after user stops typing
 
+let actiontimeout = false;
+
 let now_playing_content = {
     duration: 999,
 }
@@ -259,23 +261,62 @@ let player = {//Playback control
     playstate: false,//is (should be) playing music or video
     now_playing: null,//Song thats currently playing
     initalize: async function () {
-        try {
 
-            navigator.mediaSession.playbackState = "paused";
-            //navigator.mediaSession.metadata = new MediaMetadata({ title: path.basename(files[fileindex]) });
-            navigator.mediaSession.setActionHandler('play', function () { console.log('External play command'); player.play() });
-            navigator.mediaSession.setActionHandler('pause', function () { console.log('External pause command'); player.pause() });
-            navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
-            navigator.mediaSession.setActionHandler('seekbackward', function () { });
-            navigator.mediaSession.setActionHandler('seekforward', function () { });
-            //navigator.mediaSession.setActionHandler('shuffle', function () { });
-            navigator.mediaSession.setActionHandler('seekto', function () { });
-            navigator.mediaSession.setActionHandler('previoustrack', function () { console.log('External previous command'); player.previous() });
-            navigator.mediaSession.setActionHandler('nexttrack', function () { console.log('External next command'); player.next() });
-        } catch (err) {
-            console.warn('mediasession error :', err)
-        }
-        setTimeout(async () => {//set last palyed song
+        navigator.mediaSession.playbackState = "none";
+        //navigator.mediaSession.metadata = new MediaMetadata({ title: path.basename(files[fileindex]) });
+        navigator.mediaSession.setActionHandler('play', function () {
+            console.log('External play command');
+            if (!actiontimeout) {
+                actiontimeout = true;
+                setTimeout(() => { actiontimeout = false }, 20)
+                player.play();
+            } else {
+                console.warn('Hit action timeout')
+            }
+
+        });
+        navigator.mediaSession.setActionHandler('pause', function () {
+            console.log('External pause command');
+            /*          if (!actiontimeout) {
+                          actiontimeout = true;
+                          setTimeout(() => { actiontimeout = false }, 500)
+                          player.pause()
+                      } else {
+                          console.warn('Hit action timeout')
+                      }
+          */
+            player.pause()
+        });
+        navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
+        navigator.mediaSession.setActionHandler('seekbackward', function () { });
+        navigator.mediaSession.setActionHandler('seekforward', function () { });
+        //navigator.mediaSession.setActionHandler('shuffle', function () { });
+        navigator.mediaSession.setActionHandler('seekto', function () { });
+        navigator.mediaSession.setActionHandler('previoustrack', function () {
+            console.log('External previous command');
+            if (!actiontimeout) {
+                actiontimeout = true;
+                setTimeout(() => { actiontimeout = false }, 20)
+                player.previous();
+            } else {
+                console.warn('Hit action timeout')
+            }
+
+
+        });
+        navigator.mediaSession.setActionHandler('nexttrack', function () {
+            console.log('External next command');
+            if (!actiontimeout) {
+                actiontimeout = true;
+                setTimeout(() => { actiontimeout = false }, 20)
+                player.next()
+            } else {
+                console.warn('Hit action timeout')
+            }
+
+        });
+
+        /*setTimeout(async () => {//set last palyed song
             player.play(config.last_played, false);
             player.pause();
             if (config.last_played < 2) {
@@ -284,7 +325,7 @@ let player = {//Playback control
                 window.location.href = `#${config.last_played - 2}`;
             }
 
-        }, 5000);
+        }, 5000);*/
 
         coverartsmall.addEventListener('click', function () { player.scroll_to_current() })
 
@@ -582,20 +623,19 @@ let player = {//Playback control
 
                     }
                     backgroundvideo.currentTime = 0;
-                    config_manage.save();
                 },
                 onplay: async function () {
                     //playback of loaded song file sucessfull
                     player.playstate = true;//now playing and play pause functionality
                     player.now_playing = Number(fileindex);//remove if you want a brain ache
                     config.last_played = Number(fileindex);
-                    config_manage.save();
                     player.updatemetadata(fileindex);
                     ipcRenderer.send('Play_msg', path.basename(files[fileindex]), 'pause')//Send playing song to main
                     playbtn.classList = "pausebtn"
                     playbtn.title = "pause"
                     player.start_seeking()
                     console.log('Playing: ', files[fileindex]);
+                    config_manage.save();
                 }
             });
 
@@ -608,6 +648,9 @@ let player = {//Playback control
             document.getElementById(fileindex).className = 'song_bar_active'
             player.build_songbar(fileindex).then((songbar) => { document.getElementById('playhistory').appendChild(songbar) })
         }
+    },
+    external_play: async function () {//fix for a bug on a specific linux dde
+        player.stream1.play();
     },
     pause: function () {
         console.log('Pause functionaliy');

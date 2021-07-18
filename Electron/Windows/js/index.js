@@ -271,22 +271,16 @@ let player = {//Playback control
                 setTimeout(() => { actiontimeout = false }, 20)
                 player.play();
             } else {
-                console.warn('Hit action timeout')
+                console.warn('2 simultanius commands, Hit action timeout')
             }
 
         });
+        
         navigator.mediaSession.setActionHandler('pause', function () {
             console.log('External pause command');
-            /*          if (!actiontimeout) {
-                          actiontimeout = true;
-                          setTimeout(() => { actiontimeout = false }, 500)
-                          player.pause()
-                      } else {
-                          console.warn('Hit action timeout')
-                      }
-          */
             player.pause()
         });
+
         navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
         navigator.mediaSession.setActionHandler('seekbackward', function () { });
         navigator.mediaSession.setActionHandler('seekforward', function () { });
@@ -299,7 +293,7 @@ let player = {//Playback control
                 setTimeout(() => { actiontimeout = false }, 20)
                 player.previous();
             } else {
-                console.warn('Hit action timeout')
+                console.warn('2 simultanius commands, Hit action timeout')
             }
 
 
@@ -311,21 +305,10 @@ let player = {//Playback control
                 setTimeout(() => { actiontimeout = false }, 20)
                 player.next()
             } else {
-                console.warn('Hit action timeout')
+                console.warn('2 simultanius commands, Hit action timeout')
             }
 
         });
-
-        /*setTimeout(async () => {//set last palyed song
-            player.play(config.last_played, false);
-            player.pause();
-            if (config.last_played < 2) {
-                window.location.href = `#${config.last_played}`;
-            } else {
-                window.location.href = `#${config.last_played - 2}`;
-            }
-
-        }, 5000);*/
 
         coverartsmall.addEventListener('click', function () { player.scroll_to_current() })
 
@@ -524,6 +507,11 @@ let player = {//Playback control
         */
         console.log('Attempt to play: ', fileindex);
 
+        if (player.now_playing == null && fileindex == undefined) {//play last known song
+            player.play(config.last_played ? config.last_played : 1);
+            setTimeout(() => { player.scroll_to_current() }, 500);
+            return 0;
+        }
 
         if (player.playstate != false) {//if is playing something
             if (fileindex == undefined) {//pause playback

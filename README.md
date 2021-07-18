@@ -24,11 +24,13 @@ An Electron based media player with working media controls
   - webm  
   - dolby  
   - flac  
-- support playlist files
+
+- support for playlist files
   - m3u
   - pls
   - xml
   - json
+
 - Smart playlists
   - No reliance on file paths*
   - Never played songs*  
@@ -36,8 +38,10 @@ An Electron based media player with working media controls
   - "Overplayed" songs*
   - Recommended random songs from libraries based on your interests*
   - Favorites*
+
 - media session support
   - Toggleable Enable/disable media reporting  
+
 - Toggle-able (Actual) random shuffle
 - Discord rich presence
 - Enable/disable media reporting  

@@ -8,6 +8,8 @@
     --text-color: rgb(0, 0, 0);
     --background-color: rgb(255, 255, 255);
     --half_background-color: rgba(255, 255, 255, 0.4);
+    --ninest_background: rgba(255, 255, 255, 0.9);
+    --eightest_background: rgba(255, 255, 255, 0.8);
     --accent_color: rgb(0, 153, 255);
     --grey: rgb(122, 122, 122);
     --off_grey: rgb(205, 205, 205);
@@ -37,6 +39,9 @@
         --text-color: rgb(255, 255, 255);
         --background-color: rgb(0, 0, 0);
         --half_background-color: rgba(0, 0, 0, 0.2);
+        --ninest_background: rgba(0, 0, 0, 0.9);
+        --eightest_background: rgba(0, 0, 0, 0.8);
+
         --accent_color: rgb(0, 153, 255);
         --grey: rgb(122, 122, 122);
         --off_grey: rgb(50, 50, 50);
@@ -571,6 +576,7 @@ body {
     transition: background-color 300ms;
 
 }
+
 .menupa_btn:hover {
     background-color: var(--half_background-color);
 }
@@ -585,7 +591,7 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;
-    
+
 }
 
 .menupa_btn_text_container {
@@ -605,12 +611,13 @@ body {
     height: 1.8rem;
     font-size: 1.6rem;
     transform: translateY(0rem);
-    transition:font-size 300ms, transform 300ms;
+    transition: font-size 300ms, transform 300ms;
 }
-.menupa_btn:hover .menupa_btn_text{
+
+.menupa_btn:hover .menupa_btn_text {
     transform: translateY(-0.5rem);
     font-size: 2rem;
-    transition:font-size 50ms, transform 50ms;
+    transition: font-size 50ms, transform 50ms;
 }
 
 /* Main library view */
@@ -932,7 +939,8 @@ body {
 }
 
 /*      settings        */
-.setting_view {
+.setting_view,
+.setting_view_active {
     position: fixed;
     top: 0px;
     padding-top: 30px;
@@ -947,9 +955,102 @@ body {
     z-index: 5;
 }
 
-.setting_bar {}
+.setting_view_active {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
 
-.Bar_title {}
+.setting_block {
+    position: relative;
+    min-width: 25vw;
+    min-height: 5rem;
+    height: fit-content;
+    width: 49%;
+    box-sizing: border-box;
+    padding: 0.4rem;
+    /*margin: 0.4rem;*/
+    background-color: var(--eightest_background);
+    box-shadow: 0rem 0rem 0rem 0rem var(--accent_color);
+    border-radius: 0.2rem;
+    transform: none;
+    transition: transform 300ms, background-color 300ms, box-shadow 300ms;
+}
+
+.setting_block:hover {
+    box-shadow: 0rem 0rem 0.2rem 0rem var(--accent_color);
+    background-color: var(--background-color);
+    transform: translateY(0.2rem);
+    transition: transform 50ms, background-color 50ms, box-shadow 0ms;
+
+}
+
+.setting_block_title {
+    position: relative;
+    width: 100%;
+    height: fit-content;
+    font-size: 1.5rem;
+    text-align: center;
+
+}
+
+/*   Blurput    */
+.plurputcontainer {
+    position: relative;
+    height: 2rem;
+    width: 100%;
+    margin-top: 0.2rem;
+}
+
+#background_blur_put {
+    width: 100%;
+    cursor: pointer;
+    background: red;
+    outline: none;
+    /*appearance: none;*/
+    background: var(--text-color);
+    align-self: center;
+}
+
+.plurputcontainer .leftward,
+.plurputcontainer .rightward {
+    position: absolute;
+    right: unset;
+    left: 0;
+    height: 100%;
+    width: 80%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    align-items: center;
+    justify-content: center;
+}
+
+.plurputcontainer .rightward {
+    position: absolute;
+    right: 0;
+    left: unset;
+    height: 100%;
+    width: 20%;
+}
+
+.bluroutsight {
+    position: relative;
+    font-size: 1.6rem;
+    background-color: none;
+    text-shadow: 0rem 0rem 2rem var(--accent_color);
+}
+
+/*#background_blur_put::-webkit-slider-thumb {
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    background: red;
+    cursor: pointer;
+}*/
+
 
 /*  In page notification  */
 

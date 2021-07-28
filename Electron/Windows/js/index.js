@@ -10,6 +10,10 @@ const main = remote.require('./main');
 
 const fs = require('fs');
 const path = require('path');
+
+//import SiriWave from "siriwave";
+//const SiriWave = require("siriwave");
+
 //const sharp = require('sharp');//prebuilt binars incompatible with electron-builder
 
 //const { screenwidth, screenheight } = screen.getPrimaryDisplay().workAreaSize.height;
@@ -275,7 +279,7 @@ let player = {//Playback control
             }
 
         });
-        
+
         navigator.mediaSession.setActionHandler('pause', function () {
             console.log('External pause command');
             player.pause()
@@ -664,17 +668,22 @@ let player = {//Playback control
             case 1:// repeat all
                 break;
             case 2://replay current song
+                player.stream1.seek(0);
+                player.play();
+                return 0;
                 break;
             default:
         }
 
         //prototype shuffle
         let nextsong;
-        if (config.shuffle == true) {
+
+        if (config.shuffle == true) {//the next song is choosen at random
             nextsong = utils.rand_number(files.length - 1, 0, player.now_playing);
-        } else {
+        } else {//next song inline unless at the end
             nextsong = files[player.now_playing + 1] ? Number(player.now_playing + 1) : 0;
         }
+
         player.play(nextsong)
         player.now_playing = nextsong;
         song_progress_bar.value = 0;//reset seek value
@@ -847,11 +856,13 @@ let player = {//Playback control
 
             for (let fileindex in files) {
                 if (path.basename(files[fileindex]).toLowerCase().search(pattern.toLowerCase()) != -1) {
-                    player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
+                    setTimeout(() => {
+                        player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
+                    }, fileindex * 5);
                 }
             }
 
-        }, 500);
+        }, 1000);
 
         looking.push(lookafor)
 
@@ -1024,7 +1035,7 @@ let player = {//Playback control
                 {//copy file path
                     label: "copy file location",
                     //toolTip: `${player.files[fileindex].path}`,
-                    click() { clipboard.write(files[fileindex]); }
+                    click() { clipboard.writeText(files[fileindex]); }
                 }
             ])
 
@@ -1085,23 +1096,31 @@ let UI = {
         //background blur
         backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
         document.getElementById('background_blur_put').value = config.background_blur;
-        document.getElementById('background_blur_put').addEventListener('change', function () {
+        document.getElementById('bluroutsight').innerHTML = `${config.background_blur}px`;
+        document.getElementById('background_blur_put').addEventListener('change',async function () {
             config.background_blur = this.value;
             config_manage.save();
             UI.blurse()
-        })
+        },false)
+        document.getElementById('background_blur_put').addEventListener('input',async function () {
+            config.background_blur = this.value;
+            UI.blurse()
+        },false)
     },
     navigate: {
         main_library_view: function () {
             console.log('Navigate main library')
-            document.getElementById('setting_view').style.display = "none";
+            document.getElementById('setting_view').className = "setting_view"
             main_library_view.style.display = "block";
             Menupannel_main.style.display = "block";
         },
         setting_view: function () {
             console.log('Navigate settings')
-            if (main_library_view.style.display == "none") { this.main_library_view(); return 0; }
-            document.getElementById('setting_view').style.display = "block";
+            if (main_library_view.style.display == "none") {
+                this.main_library_view();
+                return 0;
+            }
+            document.getElementById('setting_view').className = "setting_view_active"
             main_library_view.style.display = "none";
             Menupannel_main.style.display = "none";
         }
@@ -1318,6 +1337,8 @@ let UI = {
         nextbtn.style.filter = `blur(${config.background_blur}px)`;
         previousbtn.style.filter = `blur(${config.background_blur}px)`;
         shufflebtn.style.filter = `blur(${config.background_blur}px)`;*/
+        document.getElementById('bluroutsight').innerHTML = `${config.background_blur}px`;
+        /*document.getElementById('bluroutsight').style.textShadow = `0px 0px ${config.background_blur}px var(--accent_color)`;*/
     },
     unblurse: async function () {
         backgroundmaskimg.style.filter = `blur(0)`;

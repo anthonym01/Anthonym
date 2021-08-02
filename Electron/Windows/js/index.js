@@ -429,12 +429,13 @@ let player = {//Playback control
         //build library inteligentlly
         //let mp4count = 0;
         files = [];
+
         if (main.get.musicfolders() == [] || main.get.musicfolders() == undefined || main.get.musicfolders() < 1) {
             first_settup()//run first settup
         } else {
-            await getfiles(main.get.musicfolders())//wait for recursive file checks
-            setTimeout(() => { build_library() }, 500)//imediatly after file checks
-            let hold = setInterval(() => {
+            getfiles(main.get.musicfolders())
+            //setTimeout(() => { build_library() }, 500)//imediatly after file checks
+            /*let hold = setInterval(() => {
                 if (main_library_view.childElementCount < files.length) {
                     build_library()
                     console.warn('recheck library');
@@ -444,55 +445,74 @@ let player = {//Playback control
                     clearInterval(hold)
                 }
             }, 1000);//retry over and over, again and again-gen
-            setTimeout(() => { clearInterval(hold); console.error('Could not gain some files') }, 10000)
+            setTimeout(() => { clearInterval(hold); console.error('Could not gain some files') }, 10000)*/
+            //build_library()
         }
 
         async function getfiles(muzicpaths) {//gets files form array of music folder paths
             console.log('Searching directory: ', muzicpaths)
+            try {
+                muzicpaths.forEach(folder => {//for each folder in the array
 
-            muzicpaths.forEach(folder => {//for each folder in the array
+                    fs.readdir(folder, async function (err, dfiles) {//files from the directory
+                        try {
+                            if (err) { throw err }//yeet
 
-                fs.readdir(folder, function (err, dfiles) {//files from the directory
-                    try {
-                        if (err) { throw err }//yeet
+                            dfiles.forEach(file => {//for each file in the folder
 
-                        dfiles.forEach(file => {//for each file in the folder
+                                var fullfilepath = path.join(folder, file);
+                                if (fs.statSync(fullfilepath).isDirectory()) {//sud-directory to search
+                                    getfiles([fullfilepath]);
+                                    return 0;
+                                } else {//file to handle
 
-                            var fullfilepath = path.join(folder, file);
-                            if (fs.statSync(fullfilepath).isDirectory()) {//sud-directory to search
-                                getfiles([fullfilepath]);
-                                return 0;
-                            } else {//file to handle
+                                    switch (path.parse(fullfilepath).ext) {//check file types
+                                        case ".mp4": case ".mp3": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
+                                        case ".aac": case ".caf": case ".m4b": case ".m4v": case ".m4a": case ".weba":
+                                        case ".webm": case ".dolby": case ".flac": //playable as music files
+                                            files.push(fullfilepath);
+                                            player.build_songbar(files.length - 1).then((builtbar) => {
 
-                                switch (path.parse(fullfilepath).ext) {//check file types
-                                    case ".mp4": case ".mp3": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
-                                    case ".aac": case ".caf": case ".m4b": case ".m4v": case ".m4a": case ".weba":
-                                    case ".webm": case ".dolby": case ".flac": //playable as music files
-                                        files.push(fullfilepath);
-                                        break;
+                                                
+                                                main_library_view.appendChild(builtbar)
+                                            })
+                                            break;
 
-                                    case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
-                                        playlists.push(fullfilepath);
-                                        break;
+                                        case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
+                                            playlists.push(fullfilepath);
+                                            break;
 
-                                    default: console.warn('not supported: ', fullfilepath);//not supported music file
+                                        default: console.warn('not supported: ', fullfilepath);//not supported music file
+                                    }
                                 }
-                            }
-                        })
 
-                    }//error accessing directory due to it not existing or locked permissions
-                    catch (err) {
-                        console.warn('File error', err)
-                        UI.notify.new('Error', `Could not access ${folder}`)
-                    }
+                                //build library part here
+
+
+
+                            })
+
+                        }//error accessing directory due to it not existing or locked permissions
+                        catch (err) {
+                            console.warn('File error', err)
+                            UI.notify.new('Error', `Could not access ${folder}`)
+                        } finally {
+                            //build_library()
+
+                        }
+                    })
                 })
-            })
+            } catch (err) {
+                console.warn(err)
+            } finally { }
+            return 0;
         }
 
         async function build_library() {
+
+            console.warn('build pain library')
+
             main_library_view.innerHTML = "";
-
-
 
             for (let fileindex in files) {
                 player.build_songbar(fileindex).then((builtbar) => {
@@ -781,15 +801,11 @@ let player = {//Playback control
             }
 
 
-            //let imgscr = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-            //let imgscr = new Blob([picture.data], { type: picture.format });
+            var imgscr = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+
             /*let imgscr = URL.createObjectURL(
                 new Blob([picture.data], { type: picture.format })
             );*/
-
-            let imgscr = URL.createObjectURL(
-                new Blob([picture.data], { type: picture.format })
-            );
 
             ipcRenderer.send('new_icon', imgscr)
             console.log(imgscr)
@@ -833,7 +849,6 @@ let player = {//Playback control
         player.playback_notification(processed_picture, metadata, fileindex)
 
     },
-
     lookup: async function () {//match any pattern to local file name
 
         for (let i in looking) { clearInterval(looking.pop()) }//prevent rappid researching
@@ -842,15 +857,18 @@ let player = {//Playback control
 
             let pattern = searchput.value;
             console.log('Look for ', pattern)
-            if (pattern != "") { searchbox.innerHTML = "" }
-
-            for (let fileindex in files) {
-                if (path.basename(files[fileindex]).toLowerCase().search(pattern.toLowerCase()) != -1) {
-                    setTimeout(() => {
-                        player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
-                    }, fileindex * 5);
+            if (pattern != "" || pattern!=" ") { 
+                searchbox.innerHTML = "" 
+                for (let fileindex in files) {
+                    if (path.basename(files[fileindex]).toLowerCase().search(pattern.toLowerCase()) != -1) {
+                        //setTimeout(() => {
+                            player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
+                        //}, fileindex * 5);
+                    }
                 }
             }
+
+            
 
         }, 1000);
 
@@ -904,7 +922,6 @@ let player = {//Playback control
         }
 
     },
-
     build_songbar: async function (fileindex) {
         //console.log('Song bar for :', files[fileindex])
 
@@ -912,9 +929,10 @@ let player = {//Playback control
 
         return songbar;
 
-        function buildsong(fiso) {
+        async function buildsong(fiso) {
             //song_bar here becomes songbar above after ops are complete
             var song_bar = document.createElement('div');
+            song_bar.id = fiso;
             song_bar.classList = "song_bar";
             var song_title = document.createElement('div')
             song_title.className = "song_title";
@@ -932,10 +950,23 @@ let player = {//Playback control
 
         async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
             try {
-                let observer = new IntersectionObserver(async function (entries) {
-                    if (entries[0].isIntersecting) {
-                        console.log('observed :', entries, eliment)
+
+                /* Clean up repitiition when you feel better */
+                setTimeout(() => {
+                    if(isElementInViewport(eliment)){
+                        var song_duration = document.createElement('div')
+                        song_duration.className = "song_duration"
                         mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
+
+                            //metadata song title
+                            if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
+
+                            //file duration
+                            song_duration.title = `${metadata.format.duration} seconds`;
+
+                            song_duration.innerHTML = `${~~(Number((metadata.format.duration - metadata.format.duration % 60) / 60))}:${~~(Number(metadata.format.duration % 60))}`;
+
+                            eliment.appendChild(song_duration)
 
                             if (path.extname(files[fileindex]) == ".mp4") {
                                 thumbnailjs.getVideoThumbnail(files[fileindex], 0.2, 3, "image/jpg").then((thumnaildata) => {
@@ -969,69 +1000,109 @@ let player = {//Playback control
                             }
                         });
                     }
-                }, { root: null, threshold: 0.1 });
+                    
+                    
+                }, 1000);
+
+
+                let observer = new IntersectionObserver(async function (entries) {
+                    if (entries[0].isIntersecting) {
+                        observer.disconnect()
+                        console.log('observed :', entries[0].target,)
+
+                        var song_duration = document.createElement('div')
+                        song_duration.className = "song_duration"
+                        mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
+
+                            //metadata song title
+                            if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
+
+                            //file duration
+                            song_duration.title = `${metadata.format.duration} seconds`;
+                            /*if (Number(metadata.format.duration % 60) >= 10) {
+                                song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
+                            } else {
+                                song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
+                            }*/
+                            song_duration.innerHTML = `${~~(Number((metadata.format.duration - metadata.format.duration % 60) / 60))}:${~~(Number(metadata.format.duration % 60))}`;
+
+                            eliment.appendChild(song_duration)
+
+                            /*
+                            
+                                                if (path.extname(files[fileindex]) == ".mp4") {
+                                                    setTimeout(() => {
+                                                        thumbnailjs.getVideoThumbnail(files[fileindex], 0.2, 3, "image/jpg").then((thumnaildata) => {
+                                                            var songicon = document.createElement("img")
+                                                            songicon.className = "songicon"
+                                                            songicon.loading = "lazy"
+                                                            songicon.src = thumnaildata;
+                            
+                                                            eliment.appendChild(songicon)
+                                                        });
+                                                    }, fileindex * 500);
+                                                } else {
+                                                    const picture = mm.selectCover(metadata.common.picture)
+                                                    if (typeof (picture) != 'undefined' && picture != null) {
+                                                        var songicon = document.createElement("img")
+                                                        //songicon.
+                                                        songicon.className = "songicon"
+                                                        songicon.loading = "lazy"
+                            
+                                                        eliment.appendChild(songicon)
+                            
+                                                        /*const shapimg = await sharp(picture.data).resize(guestimated_best, guestimated_best).toFormat('webp').toBuffer();
+                            
+                                                        songicon.src = URL.createObjectURL(
+                                                            new Blob([shapimg], { type: 'image/webp' })
+                                                        );
+                                                        songicon.src = URL.createObjectURL(
+                                                            new Blob([picture.data], { type: picture.format })
+                                                        );
+                                                        //songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                                                        eliment.appendChild(songicon)
+                                                    }
+                                                    else {
+                                                        //use placeholder image
+                                                        var songicon = document.createElement("div")
+                                                        songicon.className = "songicon_dfault"
+                                                        eliment.appendChild(songicon)
+                                                    }
+                                                }*/
+                            if (path.extname(files[fileindex]) == ".mp4") {
+                                thumbnailjs.getVideoThumbnail(files[fileindex], 0.2, 3, "image/jpg").then((thumnaildata) => {
+                                    var songicon = document.createElement("img")
+                                    songicon.className = "songicon"
+                                    songicon.loading = "lazy"
+                                    songicon.src = thumnaildata;
+
+                                    eliment.appendChild(songicon)
+                                });
+                            } else {
+                                const picture = mm.selectCover(metadata.common.picture)
+                                if (typeof (picture) != 'undefined' && picture != null) {
+                                    var songicon = document.createElement("img")
+                                    songicon.className = "songicon"
+                                    songicon.loading = "lazy"
+
+                                    eliment.appendChild(songicon)
+
+                                    /*songicon.src = URL.createObjectURL(
+                                        new Blob([picture.data], { type: picture.format })
+                                    );*/
+                                    songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                                    eliment.appendChild(songicon)
+                                } else {
+                                    //use placeholder image
+                                    var songicon = document.createElement("div")
+                                    songicon.className = "songicon_dfault"
+                                    eliment.appendChild(songicon)
+                                }
+                            }
+                        });
+                    }
+                }, { root: null,rootMargin:'4000px 4000px 4000px 4000px', threshold: 0.1 });
                 observer.observe(eliment)
-
-                var song_duration = document.createElement('div')
-                song_duration.className = "song_duration"
-                mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
-
-                    //metadata song title
-                    if (metadata.common.title != undefined) { song_title.innerHTML = metadata.common.title; }
-
-                    //file duration
-                    song_duration.title = `${metadata.format.duration} seconds`;
-                    /*if (Number(metadata.format.duration % 60) >= 10) {
-                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
-                    } else {
-                        song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
-                    }*/
-                    song_duration.innerHTML = `${~~(Number((metadata.format.duration - metadata.format.duration % 60) / 60))}:${~~(Number(metadata.format.duration % 60))}`;
-
-                    eliment.appendChild(song_duration)
-
-                    /*
-                    
-                                        if (path.extname(files[fileindex]) == ".mp4") {
-                                            setTimeout(() => {
-                                                thumbnailjs.getVideoThumbnail(files[fileindex], 0.2, 3, "image/jpg").then((thumnaildata) => {
-                                                    var songicon = document.createElement("img")
-                                                    songicon.className = "songicon"
-                                                    songicon.loading = "lazy"
-                                                    songicon.src = thumnaildata;
-                    
-                                                    eliment.appendChild(songicon)
-                                                });
-                                            }, fileindex * 500);
-                                        } else {
-                                            const picture = mm.selectCover(metadata.common.picture)
-                                            if (typeof (picture) != 'undefined' && picture != null) {
-                                                var songicon = document.createElement("img")
-                                                //songicon.
-                                                songicon.className = "songicon"
-                                                songicon.loading = "lazy"
-                    
-                                                eliment.appendChild(songicon)
-                    
-                                                /*const shapimg = await sharp(picture.data).resize(guestimated_best, guestimated_best).toFormat('webp').toBuffer();
-                    
-                                                songicon.src = URL.createObjectURL(
-                                                    new Blob([shapimg], { type: 'image/webp' })
-                                                );
-                                                songicon.src = URL.createObjectURL(
-                                                    new Blob([picture.data], { type: picture.format })
-                                                );
-                                                //songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                                                eliment.appendChild(songicon)
-                                            }
-                                            else {
-                                                //use placeholder image
-                                                var songicon = document.createElement("div")
-                                                songicon.className = "songicon_dfault"
-                                                eliment.appendChild(songicon)
-                                            }
-                                        }*/
-                });
             } catch (err) {
                 console.warn("Metadata error : ", err)
             }
@@ -1161,6 +1232,7 @@ let UI = {
             UI.blurse()
         }, false)
 
+        UI.blurse()
         document.getElementById('blurpan').addEventListener('wheel', function (ev) {
             ev.stopPropagation()
             ev.preventDefault()
@@ -1174,7 +1246,7 @@ let UI = {
                         config.background_blur = 100;
 
                     } else {
-                        config.background_blur = config.background_blur + 1;
+                        config.background_blur++
 
                     }
                 } else {
@@ -1183,7 +1255,7 @@ let UI = {
                         config.background_blur = 0;
 
                     } else {
-                        config.background_blur = config.background_blur - 1;
+                        config.background_blur--
 
                     }
                 }
@@ -1536,4 +1608,17 @@ async function first_settup() {
             }).finally(() => { buildfirst_folders() })//rebuild folders with new data
         })
     }
+}
+
+
+function isElementInViewport (el) {
+
+    var rect = el.getBoundingClientRect();
+
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /* or $(window).height() */
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth) /* or $(window).width() */
+    );
 }

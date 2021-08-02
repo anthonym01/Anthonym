@@ -663,8 +663,9 @@ body {
     user-select: none;
     box-sizing: border-box;
     text-align: right;
-    background-color: rgba(0, 0, 0, 0);
-    opacity: 0;
+    /*background-color: rgba(0, 0, 0, 0);*/
+    background-color: none;
+    opacity: 1;
     cursor: pointer;
     animation: fadeintodarkness 300ms ease-in 50ms 1 forwards;
     overflow: hidden;

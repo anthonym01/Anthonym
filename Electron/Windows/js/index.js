@@ -492,8 +492,11 @@ let player = {//Playback control
         async function build_library() {
             main_library_view.innerHTML = "";
 
+
+
             for (let fileindex in files) {
                 player.build_songbar(fileindex).then((builtbar) => {
+
                     builtbar.id = fileindex;
                     main_library_view.appendChild(builtbar)
                 })
@@ -929,6 +932,46 @@ let player = {//Playback control
 
         async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
             try {
+                let observer = new IntersectionObserver(async function (entries) {
+                    if (entries[0].isIntersecting) {
+                        console.log('observed :', entries, eliment)
+                        mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
+
+                            if (path.extname(files[fileindex]) == ".mp4") {
+                                thumbnailjs.getVideoThumbnail(files[fileindex], 0.2, 3, "image/jpg").then((thumnaildata) => {
+                                    var songicon = document.createElement("img")
+                                    songicon.className = "songicon"
+                                    songicon.loading = "lazy"
+                                    songicon.src = thumnaildata;
+
+                                    eliment.appendChild(songicon)
+                                });
+                            } else {
+                                const picture = mm.selectCover(metadata.common.picture)
+                                if (typeof (picture) != 'undefined' && picture != null) {
+                                    var songicon = document.createElement("img")
+                                    songicon.className = "songicon"
+                                    songicon.loading = "lazy"
+
+                                    eliment.appendChild(songicon)
+
+                                    /*songicon.src = URL.createObjectURL(
+                                        new Blob([picture.data], { type: picture.format })
+                                    );*/
+                                    songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                                    eliment.appendChild(songicon)
+                                } else {
+                                    //use placeholder image
+                                    var songicon = document.createElement("div")
+                                    songicon.className = "songicon_dfault"
+                                    eliment.appendChild(songicon)
+                                }
+                            }
+                        });
+                    }
+                }, { root: null, threshold: 0.1 });
+                observer.observe(eliment)
+
                 var song_duration = document.createElement('div')
                 song_duration.className = "song_duration"
                 mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
@@ -947,46 +990,47 @@ let player = {//Playback control
 
                     eliment.appendChild(song_duration)
 
-
-                    if (path.extname(files[fileindex]) == ".mp4") {
-                        setTimeout(() => {
-                            thumbnailjs.getVideoThumbnail(files[fileindex], 0.2, 3, "image/jpg").then((thumnaildata) => {
-                                var songicon = document.createElement("img")
-                                songicon.className = "songicon"
-                                songicon.loading = "lazy"
-                                songicon.src = thumnaildata;
-
-                                eliment.appendChild(songicon)
-                            });
-                        }, fileindex * 500);
-                    } else {
-                        const picture = mm.selectCover(metadata.common.picture)
-                        if (typeof (picture) != 'undefined' && picture != null) {
-                            var songicon = document.createElement("img")
-                            songicon.
-                            songicon.className = "songicon"
-                            songicon.loading = "lazy"
-
-                            eliment.appendChild(songicon)
-
-                            /*const shapimg = await sharp(picture.data).resize(guestimated_best, guestimated_best).toFormat('webp').toBuffer();
-
-                            songicon.src = URL.createObjectURL(
-                                new Blob([shapimg], { type: 'image/webp' })
-                            );*/
-                            songicon.src = URL.createObjectURL(
-                                new Blob([picture.data], { type: picture.format })
-                            );
-                            //songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                            eliment.appendChild(songicon)
-                        }
-                        else {
-                            //use placeholder image
-                            var songicon = document.createElement("div")
-                            songicon.className = "songicon_dfault"
-                            eliment.appendChild(songicon)
-                        }
-                    }
+                    /*
+                    
+                                        if (path.extname(files[fileindex]) == ".mp4") {
+                                            setTimeout(() => {
+                                                thumbnailjs.getVideoThumbnail(files[fileindex], 0.2, 3, "image/jpg").then((thumnaildata) => {
+                                                    var songicon = document.createElement("img")
+                                                    songicon.className = "songicon"
+                                                    songicon.loading = "lazy"
+                                                    songicon.src = thumnaildata;
+                    
+                                                    eliment.appendChild(songicon)
+                                                });
+                                            }, fileindex * 500);
+                                        } else {
+                                            const picture = mm.selectCover(metadata.common.picture)
+                                            if (typeof (picture) != 'undefined' && picture != null) {
+                                                var songicon = document.createElement("img")
+                                                //songicon.
+                                                songicon.className = "songicon"
+                                                songicon.loading = "lazy"
+                    
+                                                eliment.appendChild(songicon)
+                    
+                                                /*const shapimg = await sharp(picture.data).resize(guestimated_best, guestimated_best).toFormat('webp').toBuffer();
+                    
+                                                songicon.src = URL.createObjectURL(
+                                                    new Blob([shapimg], { type: 'image/webp' })
+                                                );
+                                                songicon.src = URL.createObjectURL(
+                                                    new Blob([picture.data], { type: picture.format })
+                                                );
+                                                //songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+                                                eliment.appendChild(songicon)
+                                            }
+                                            else {
+                                                //use placeholder image
+                                                var songicon = document.createElement("div")
+                                                songicon.className = "songicon_dfault"
+                                                eliment.appendChild(songicon)
+                                            }
+                                        }*/
                 });
             } catch (err) {
                 console.warn("Metadata error : ", err)

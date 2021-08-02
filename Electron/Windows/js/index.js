@@ -2,6 +2,7 @@
     By samuel A. Matheson
     samuelmatheson15@gmail.com
 */
+
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
 
 const { ipcRenderer, remote, clipboard } = require('electron');
@@ -10,21 +11,6 @@ const main = remote.require('./main');
 
 const fs = require('fs');
 const path = require('path');
-
-//import SiriWave from "siriwave";
-//const SiriWave = require("siriwave");
-
-//const sharp = require('sharp');//prebuilt binars incompatible with electron-builder
-
-//const { screenwidth, screenheight } = screen.getPrimaryDisplay().workAreaSize.height;
-
-//const guestimated_best = ~~(screen.getPrimaryDisplay().workAreaSize.height / 14.5);
-
-
-
-/*System wallpaper loactions
-    - /home/samuel/.local/share/wallpapers
-*/
 const wallpaper = require('wallpaper');
 const utils = require('../Windows/js/utils.js');
 //import { rand_number } from './utils.mjs';
@@ -266,8 +252,6 @@ let player = {//Playback control
     now_playing: null,//Song thats currently playing
     initalize: async function () {
 
-        navigator.mediaSession.playbackState = "none";
-        //navigator.mediaSession.metadata = new MediaMetadata({ title: path.basename(files[fileindex]) });
         navigator.mediaSession.setActionHandler('play', function () {
             console.log('External play command');
             if (!actiontimeout) {
@@ -426,6 +410,20 @@ let player = {//Playback control
                 player.start_seeking()
             }
         })
+
+
+        /* Polish when done */
+        /*setTimeout(() => {
+            navigator.mediaSession.playbackState = "none";
+            
+            player.play(config.last_played, true).then(() => { })
+            setTimeout(() => {
+                player.pause()
+                player.seekbackward()
+                Howler.mute(false)
+            }, 1000);
+            
+        }, 4000);*/
     },
     fetch_library: async function () {
         //build library inteligentlly
@@ -827,23 +825,12 @@ let player = {//Playback control
         }
         if (backgroundvideo.style.display == "block") { document.getElementById('tbuttonholder').className = "tbuttonholder" }
 
-        //notification if hidden
-        if (remote.getCurrentWindow().isVisible() == false) {
-            new Notification(
-                `${metadata.common.title || path.basename(files[fileindex])}`,
-                {
-                    body: `Playing ${metadata.common.title || path.basename(files[fileindex])} by ${metadata.common.artist || "unknown"}`,
-                    icon: processed_picture,
-                    image: './img/icon.png',
-                    silent: true,
-                }
-            ).onclick = () => {
-                console.log('Notification clicked')
-                main.Show_window()
-            }
-        }
+        player.songbarmenu_build(coverartsmall, fileindex);
+
+        player.playback_notification(processed_picture, metadata, fileindex)
 
     },
+
     lookup: async function () {//match any pattern to local file name
 
         for (let i in looking) { clearInterval(looking.pop()) }//prevent rappid researching
@@ -923,6 +910,7 @@ let player = {//Playback control
         return songbar;
 
         function buildsong(fiso) {
+            //song_bar here becomes songbar above after ops are complete
             var song_bar = document.createElement('div');
             song_bar.classList = "song_bar";
             var song_title = document.createElement('div')
@@ -965,6 +953,7 @@ let player = {//Playback control
                             thumbnailjs.getVideoThumbnail(files[fileindex], 0.2, 3, "image/jpg").then((thumnaildata) => {
                                 var songicon = document.createElement("img")
                                 songicon.className = "songicon"
+                                songicon.loading = "lazy"
                                 songicon.src = thumnaildata;
 
                                 eliment.appendChild(songicon)
@@ -974,7 +963,9 @@ let player = {//Playback control
                         const picture = mm.selectCover(metadata.common.picture)
                         if (typeof (picture) != 'undefined' && picture != null) {
                             var songicon = document.createElement("img")
+                            songicon.
                             songicon.className = "songicon"
+                            songicon.loading = "lazy"
 
                             eliment.appendChild(songicon)
 
@@ -1004,52 +995,70 @@ let player = {//Playback control
 
         async function functionality(eliment, fileindex) {//context menu and playback on click
 
-            let contextMenu = new Menu.buildFromTemplate([
-                {//play button
-                    label: "Play",
-                    type: "normal",
-                    click() {
-                        player.play(fileindex);
-                        setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
-                    }
-                },
-                {
-                    label: "add to favourites",
-                    type: "normal",
-                    click() { }
-                },
-                {
-                    label: "add to playlist",
-                    type: "normal",
-                    click() { }
-                },
-                { type: "separator" },
-                {
-                    label: "copy file name",
-                    click() { clipboard.writeText(path.basename(files[fileindex])) }
-                },
-                {//open song file in default external application
-                    label: "show in folder",
-                    click() { shell.showItemInFolder(files[fileindex]) }
-                },
-                {//copy file path
-                    label: "copy file location",
-                    //toolTip: `${player.files[fileindex].path}`,
-                    click() { clipboard.writeText(files[fileindex]); }
+            player.songbarmenu_build(eliment, fileindex)
+
+            eliment.addEventListener('click', function () { player.play(fileindex); })
+        }
+    },
+    songbarmenu_build: async function (eliment, fileindex) {
+
+        let contextMenu = new Menu.buildFromTemplate([
+            {//play button
+                label: "Play",
+                type: "normal",
+                click() {
+                    player.play(fileindex);
+                    //setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
                 }
-            ])
+            },
+            {
+                label: "add to favourites",
+                type: "normal",
+                click() { }
+            },
+            {
+                label: "add to playlist",
+                type: "normal",
+                click() { }
+            },
+            { type: "separator" },
+            {
+                label: "copy file name",
+                click() { clipboard.writeText(path.basename(files[fileindex])) }
+            },
+            {//open song file in default external application
+                label: "show in folder",
+                click() { shell.showItemInFolder(files[fileindex]) }
+            },
+            {//copy file path
+                label: "copy file location",
+                //toolTip: `${player.files[fileindex].path}`,
+                click() { clipboard.writeText(files[fileindex]); }
+            }
+        ])
 
-            eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
-                e.preventDefault();
-                e.stopPropagation();//important
-                contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
-            }, false);
+        eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
+            e.preventDefault();
+            e.stopPropagation();//important
+            contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
+        }, false);
 
-            eliment.addEventListener('click', function () {
-                player.play(fileindex);
-                //eliment.classList = "song_bar_active";
-                //setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
-            })//click to play
+    },
+    playback_notification: async function (processed_picture, metadata, fileindex) {
+        //notification if hidden
+        if (remote.getCurrentWindow().isVisible() == false || remote.getCurrentWindow().isFocused() == false) {
+            new Notification(
+                `${metadata.common.title || path.basename(files[fileindex])}`,
+                {
+                    body: `Playing ${metadata.common.title || path.basename(files[fileindex])} by ${metadata.common.artist || "unknown"}`,
+                    icon: processed_picture || null,
+                    image: './img/icon.png',
+                    silent: true,
+                }
+            ).onclick = () => {
+                console.log('Notification clicked')
+                main.Show_window()
+            }
         }
     }
 }
@@ -1097,15 +1106,49 @@ let UI = {
         backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
         document.getElementById('background_blur_put').value = config.background_blur;
         document.getElementById('bluroutsight').innerHTML = `${config.background_blur}px`;
-        document.getElementById('background_blur_put').addEventListener('change',async function () {
+        document.getElementById('background_blur_put').addEventListener('change', async function () {
             config.background_blur = this.value;
             config_manage.save();
             UI.blurse()
-        },false)
-        document.getElementById('background_blur_put').addEventListener('input',async function () {
+        }, false)
+
+        document.getElementById('background_blur_put').addEventListener('input', async function () {
             config.background_blur = this.value;
             UI.blurse()
-        },false)
+        }, false)
+
+        document.getElementById('blurpan').addEventListener('wheel', function (ev) {
+            ev.stopPropagation()
+            ev.preventDefault()
+            if (!actiontimeout) {
+                actiontimeout = true;
+                setTimeout(() => { actiontimeout = false }, 50)
+
+                if (ev.deltaY < 0) {
+                    //scroll up
+                    if (config.background_blur >= 100) {
+                        config.background_blur = 100;
+
+                    } else {
+                        config.background_blur = config.background_blur + 1;
+
+                    }
+                } else {
+                    //scroll down
+                    if (config.background_blur <= 0) {
+                        config.background_blur = 0;
+
+                    } else {
+                        config.background_blur = config.background_blur - 1;
+
+                    }
+                }
+                document.getElementById('bluroutsight').innerHTML = `${config.background_blur}px`;
+                document.getElementById('background_blur_put').value = config.background_blur;
+                UI.blurse()
+            }
+
+        }, false)
     },
     navigate: {
         main_library_view: function () {

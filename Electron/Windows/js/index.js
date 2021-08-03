@@ -473,7 +473,7 @@ let player = {//Playback control
                                             files.push(fullfilepath);
                                             player.build_songbar(files.length - 1).then((builtbar) => {
 
-                                                
+
                                                 main_library_view.appendChild(builtbar)
                                             })
                                             break;
@@ -857,59 +857,22 @@ let player = {//Playback control
 
             let pattern = searchput.value;
             console.log('Look for ', pattern)
-            if (pattern != "" || pattern!=" ") { 
-                searchbox.innerHTML = "" 
+            if (pattern != "" || pattern != " ") {
+                searchbox.innerHTML = ""
                 for (let fileindex in files) {
                     if (path.basename(files[fileindex]).toLowerCase().search(pattern.toLowerCase()) != -1) {
                         //setTimeout(() => {
-                            player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
+                        player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
                         //}, fileindex * 5);
                     }
                 }
             }
 
-            
+
 
         }, 1000);
 
         looking.push(lookafor)
-
-    },
-    lift_coverart: async function (fileindex) {
-        try {
-
-            if (path.extname(files[fileindex]) == ".mp4") {
-                console.warn('mp4 file detected')
-
-                thumbnailjs.getVideoThumbnail(files[fileindex], 1, 3, "image/jpg").then((thumnaildata) => {
-                    //console.log(thumnaildata)
-                    var songicon = document.createElement("img")
-                    songicon.className = "songicon"
-                    songicon.src = thumnaildata;
-                    eliment.appendChild(songicon)
-                })
-
-            } else {
-
-                const picture = mm.selectCover(metadata.common.picture)
-                if (typeof (picture) != 'undefined' && picture != null) {
-                    var songicon = document.createElement("img")
-                    songicon.className = "songicon"
-                    songicon.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
-                    eliment.appendChild(songicon)
-                }
-                else {
-                    //use placeholder image
-                    var songicon = document.createElement("div")
-                    songicon.className = "songicon_dfault"
-                    eliment.appendChild(songicon)
-                }
-            }
-        } catch (err) {
-
-        } finally {
-
-        }
 
     },
     scroll_to_current: async function () {
@@ -953,7 +916,7 @@ let player = {//Playback control
 
                 /* Clean up repitiition when you feel better */
                 setTimeout(() => {
-                    if(isElementInViewport(eliment)){
+                    if (isElementInViewport(eliment)) {
                         var song_duration = document.createElement('div')
                         song_duration.className = "song_duration"
                         mm.parseFile(files[fileindex], { duration: false }).then(async (metadata) => {
@@ -1000,8 +963,8 @@ let player = {//Playback control
                             }
                         });
                     }
-                    
-                    
+
+
                 }, 1000);
 
 
@@ -1019,12 +982,12 @@ let player = {//Playback control
 
                             //file duration
                             song_duration.title = `${metadata.format.duration} seconds`;
-                            /*if (Number(metadata.format.duration % 60) >= 10) {
+                            if (Number(metadata.format.duration % 60) >= 10) {
                                 song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:${Number(metadata.format.duration % 60).toPrecision(2)}`;//seconds to representation of minutes and seconds
                             } else {
                                 song_duration.innerHTML = `${Number((metadata.format.duration - metadata.format.duration % 60) / 60)}:0${Number(metadata.format.duration % 60).toPrecision(1) % 1}`;//seconds to representation of minutes and seconds
-                            }*/
-                            song_duration.innerHTML = `${~~(Number((metadata.format.duration - metadata.format.duration % 60) / 60))}:${~~(Number(metadata.format.duration % 60))}`;
+                            }
+                            /*song_duration.innerHTML = `${~~(Number((metadata.format.duration - metadata.format.duration % 60) / 60))}:${~~(Number(metadata.format.duration % 60))}`;*/
 
                             eliment.appendChild(song_duration)
 
@@ -1101,7 +1064,7 @@ let player = {//Playback control
                             }
                         });
                     }
-                }, { root: null,rootMargin:'4000px 4000px 4000px 4000px', threshold: 0.1 });
+                }, { root: null, rootMargin: '4000px 4000px 4000px 4000px', threshold: 0.1 });
                 observer.observe(eliment)
             } catch (err) {
                 console.warn("Metadata error : ", err)
@@ -1174,6 +1137,31 @@ let player = {//Playback control
                 console.log('Notification clicked')
                 main.Show_window()
             }
+        }
+    },
+    yoink_metadata: async function (information) {
+        console.log('Pull metadat for :', information)
+
+        if (!isNaN(information)) {
+            information = files[information]
+            console.log('is point to: ', information)
+        }
+
+        let metadata = await mm.parseFile(information, { duration: false })
+
+        console.log(metadata)
+        var thumnaildata;
+        if (path.extname(information) == ".mp4") {
+            thumnaildata = await thumbnailjs.getVideoThumbnail(information, 0.2, 3, "image/jpg")
+        } else {
+            const picture = mm.selectCover(metadata.common.picture)
+            thumnaildata = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+        }
+
+        return {
+            title: metadata.common.title,//title as a string
+            duration: metadata.format.duration,//durration in seconds
+            image: thumnaildata,//thumbnail data as a string
         }
     }
 }
@@ -1611,7 +1599,7 @@ async function first_settup() {
 }
 
 
-function isElementInViewport (el) {
+function isElementInViewport(el) {
 
     var rect = el.getBoundingClientRect();
 

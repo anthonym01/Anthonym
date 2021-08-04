@@ -1,10 +1,13 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain } = require('electron');
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
 const windowStateKeeper = require('electron-window-state');
 const Store = require('electron-store');
 const storeinator = new Store;
+const mm = require('music-metadata');
+const thumbnailjs = require('thumbnail-js');
+const NodeID3 = require('node-id3');
 //const tray = require('./tray.js');
 
 console.log('Running from:', process.resourcesPath)
@@ -328,7 +331,7 @@ async function write_file(filepath, data) {
 let filetable = []
 
 async function pullmetadata(fileidentifier) {
-	
+
 	console.log('Pull metadat for :', information)
 
 	if (!isNaN(information)) {
@@ -355,6 +358,7 @@ async function pullmetadata(fileidentifier) {
 }
 
 module.exports = { //exported modules
+	pullmetadata,
 	write_file: async function (filepath, buffer_data) {
 		write_file(filepath, buffer_data)
 	},

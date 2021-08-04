@@ -132,10 +132,10 @@ window.addEventListener('keydown', async function (e) {//keyboard actions
 //window loads
 window.addEventListener('load', async function () {
 
-    setTimeout(() => { 
+    setTimeout(() => {
         document.body.removeChild(document.getElementById('loading_screen'))
         console.warn('Clapped loading screen after 10 second timeout')
-     }, 10000);//close loading screen
+    }, 10000);//close loading screen
 
     console.log("                       dxxxxdoc,.                  ");
     console.log("                       NMMMMMMMMMMXkc.             ");
@@ -199,44 +199,14 @@ let config = {
 let config_manage = {
     save: async function () {//Save the config file
         console.table('Configuration is being saved', config);
-        var stringeddata = JSON.stringify(config);
-        localStorage.setItem("Anthonymcfg", stringeddata);
-        main.write_alt_storage_location(stringeddata);
+        localStorage.setItem("Anthonymcfg", JSON.stringify(config));
     },
     load: function () {//Load the config file
         console.warn('Configuration is being loaded')
-        var alt_location = main.get.alt_location();
-        if (alt_location != false) {//Load from alt location
-            //load from alternate storage location
-            if (fs.existsSync(alt_location + "/Anthonymcfg config.json")) {//Directory exists
-                var fileout = fs.readFileSync(alt_location + "/Anthonymcfg config.json", { encoding: 'utf8' })//Read from file with charset utf8
-                console.warn('config Loaded from: ', alt_location, 'Data from fs read operation: ', fileout)
-                fileout = JSON.parse(fileout)//parse the json
-                if (fileout.key == "Anthonymcfg") {//check if file has key
-                    config = fileout;
-                    console.warn('configuration applied from file')
-                } else {//no key, not correct file, load from application storage
-                    console.warn('The file is not a config file, internal configuration will be used')
-                    config = JSON.parse(localStorage.getItem("Anthonymcfg"))
-                }
-            } else {//file does not exist, was moved, deleted or is inaccesible
-                config = JSON.parse(localStorage.getItem("Anthonymcfg"))
-                alert("file does not exist, was moved, deleted or is otherwise inaccesible, please select a new location to save app data ")
-                config_manage.selectlocation();
-            }
-        } else {//load from application storage
-            config = JSON.parse(localStorage.getItem("Anthonymcfg"))
-            console.log('config Loaded from application storage')
-        }
-
+        config = JSON.parse(localStorage.getItem("Anthonymcfg"))
         console.table(config)
     },
-    delete: function () {//Wjipe stowage
-        localStorage.clear("Anthonymcfg")//yeet storage key
-        main.set.alt_location(false)
-        main.set.musicfolders([])
-        config_manage.save()
-    },
+    delete: function () { localStorage.clear("Anthonymcfg") },
 }
 
 let files = [];
@@ -438,31 +408,18 @@ let player = {//Playback control
             first_settup()//run first settup
         } else {
             await getfiles(main.get.musicfolders())
-            setTimeout(() => { 
+            setTimeout(() => {
                 document.body.removeChild(document.getElementById('loading_screen'));
-                 console.warn('Clapped loading screen after leading files')
-                }, 0);
-            //setTimeout(() => { build_library() }, 500)//imediatly after file checks
-            /*let hold = setInterval(() => {
-                if (main_library_view.childElementCount < files.length) {
-                    build_library()
-                    console.warn('recheck library');
-                    //warn the bokens
-                    UI.notify.new('Slow file access', 'took more than 10ms to gain acces to files');
-                } else {
-                    clearInterval(hold)
-                }
-            }, 1000);//retry over and over, again and again-gen
-            setTimeout(() => { clearInterval(hold); console.error('Could not gain some files') }, 10000)*/
-            //build_library()
+                console.warn('Clapped loading screen after leading files')
+            }, 0);
         }
 
         async function getfiles(muzicpaths) {//gets files form array of music folder paths
             console.log('Searching directory: ', muzicpaths)
-            
+
             try {
                 muzicpaths.forEach(folder => {//for each folder in the array
-                    progression_view.innerText=`searching: ${folder}`
+                    progression_view.innerText = `searching: ${folder}`
                     fs.readdir(folder, async function (err, dfiles) {//files from the directory
                         try {
                             if (err) { throw err }//yeet
@@ -514,7 +471,7 @@ let player = {//Playback control
             } catch (err) {
                 console.warn(err)
             } finally {
-                
+
             }
             //return 0;
         }

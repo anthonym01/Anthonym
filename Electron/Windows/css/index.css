@@ -75,6 +75,62 @@ body {
     user-select: none;
 }
 
+@keyframes blonkaway {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes spinnnnn {
+    0%{
+        transform: rotate(0deg);
+    }
+    25%{
+        transform: rotate(90deg);
+    }
+    50%{
+        transform: rotate(180deg);
+    }
+    75%{
+        transform: rotate(270deg);
+    }
+    100%{
+        transform: rotate(360deg);
+    }
+}
+.loading_screen {
+    position: fixed;
+    top: 30px;
+    right: 0;
+    height: calc(100% - 30px);
+    width: 100%;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    z-index: 1000;
+    /*-webkit-app-region: drag;*/
+    opacity: 1;
+    /*animation: blonkaway 500ms ease 2500ms 1 forwards;*/
+}
+
+.spinner {
+    position: absolute;
+    width: 5rem;
+    height: 5rem;
+    background-image: url('../img/icons/icon@512x512.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    animation: spinnnnn 2s ease infinite;
+}
+
+.progression_view{
+    
+}
+
 .background_mask {
     position: fixed;
     top: 0px;

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain/* nativeImage*/ } = require('electron');
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain, nativeImage } = require('electron');
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
@@ -7,6 +7,7 @@ const Store = require('electron-store');
 const storeinator = new Store;
 //const tray = require('./tray.js');
 
+console.log('Running from:', process.resourcesPath)
 
 /* Configuration, application properties or persistent user settings */
 let config = {
@@ -25,33 +26,24 @@ let config = {
 	}
 }
 
-const gotTheLock = app.requestSingleInstanceLock();
-
-if (gotTheLock == false) { //stop app if other instence is running
-	/*let notifitcation = new Notification(['already running']);
-	notifitcation.show();*/
-
+if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 	app.quit();
 } else {
-	/*app.setAppUserModelId("Anthonym");*/
+
 	app.name = "Anthonym";
-	if (storeinator.get('default')) {
-		config.load()
-	} //load config
+
+	if (storeinator.get('default')) { config.load() }
 
 	app.on('ready', function () { //App ready to roll
 		app.allowRendererProcessReuse = true; //Allow render processes to be reused
 		mainWindow.create();
-		if (config.data.use_tray == true) {
-			tray.create()
-		}
-
+		if (config.data.use_tray == true) { tray.create() }
 	})
 
 	app.on('window-all-closed', () => {//kill app immediatly if window closed
-		//if (tray.body == null) {
-		app.quit()
-		//}
+		if (tray.body == null) {
+			app.quit()
+		}
 	})
 
 	app.on('second-instance', (event) => {
@@ -81,9 +73,8 @@ if (gotTheLock == false) { //stop app if other instence is running
 			mainWindow.body.maximize()
 		}
 	})
-	ipcMain.on('minimize_btn', () => {
-		mainWindow.minimize()
-	})
+
+	ipcMain.on('minimize_btn', () => { mainWindow.minimize() })
 }
 
 let mainWindow = {
@@ -94,7 +85,7 @@ let mainWindow = {
 			screenwidth,
 			screenheight
 		} = screen.getPrimaryDisplay().workAreaSize //gets screen size
-		
+
 		let mainWindowState = windowStateKeeper({
 			defaultWidth: screenwidth,
 			defaultHeight: screenheight
@@ -244,7 +235,7 @@ let tray = {
 		}
 	}),
 	new_icon: ipcMain.on('new_icon', (event, image) => { //Receive Song data from mainwindow and apply to tray
-		console.log('new tray icon: ', image, /*event*/);
+		/*console.log('new tray icon: ', image, /*event);*/
 		if (tray.body != null) {
 			tray.seticon(image)
 		}
@@ -306,9 +297,6 @@ let tray = {
 		tray.body.setContextMenu(contextMenu) //Set tray menu
 		tray.body.setToolTip(`Playing: ${now_playing}`) //Set tray tooltip
 	},
-	seticon: async function (image) {
-		//tray.body.setImage(nativeImage.createFromPath(image)) 
-	},
 	playpause: async function () {
 		mainWindow.body.webContents.send('tray_play_pause')
 	},
@@ -324,7 +312,7 @@ let tray = {
 	}
 }
 
-//Schortcut to write changes to files because i keep forgetting the fs writefile
+//clap an entire file buffer down
 async function write_file(filepath, data) {
 	console.log(filepath, data)
 	fs.writeFile(filepath, data, 'utf8', (err) => { //write config to file as json
@@ -336,6 +324,35 @@ async function write_file(filepath, data) {
 	})
 }
 
+
+let filetable = []
+
+async function pullmetadata(fileidentifier) {
+	
+	console.log('Pull metadat for :', information)
+
+	if (!isNaN(information)) {
+		information = files[information]
+		console.log('is point to: ', information)
+	}
+
+	let metadata = await mm.parseFile(information, { duration: false })
+
+	console.log(metadata)
+	var thumnaildata;
+	if (path.extname(information) == ".mp4") {
+		thumnaildata = await thumbnailjs.getVideoThumbnail(information, 0.2, 3, "image/jpg")
+	} else {
+		const picture = mm.selectCover(metadata.common.picture)
+		thumnaildata = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+	}
+
+	return {
+		title: metadata.common.title,//title as a string
+		duration: metadata.format.duration,//durration in seconds
+		image: thumnaildata,//thumbnail data as a string
+	}
+}
 
 module.exports = { //exported modules
 	write_file: async function (filepath, buffer_data) {

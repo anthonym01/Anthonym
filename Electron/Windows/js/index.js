@@ -6,16 +6,13 @@
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
 
 const { ipcRenderer, remote, clipboard } = require('electron');
-const { dialog, Menu, MenuItem, nativeTheme, systemPreferences, shell, screen } = remote;
+const { dialog, Menu, nativeTheme, systemPreferences, shell } = remote;
 const main = remote.require('./main');
 
 const fs = require('fs');
 const path = require('path');
 const wallpaper = require('wallpaper');
 const utils = require('../Windows/js/utils.js');
-//import { rand_number } from './utils.mjs';
-
-//import * as mm from 'music-metadata/lib/core';
 const mm = require('music-metadata');
 const { Howler } = require('howler');
 const thumbnailjs = require('thumbnail-js');
@@ -36,12 +33,13 @@ const searchput = document.getElementById('searchput');
 const overpainelm = document.getElementById('overpain');//pannel for queue and search
 const searchbox = document.getElementById('searchbox');
 const coverartsmall = document.getElementById('coverartsmall');
+const progression_view = document.getElementById('progression_view');
 
 let looking = [];//looking timers, only search after user stops typing
 
-let actiontimeout = false;
+let actiontimeout = false;//boolean set when actions cannot happen twice
 
-let now_playing_content = {
+let now_playing_content = {//relivant details abou the song thats playing now
     duration: 999,
 }
 
@@ -50,52 +48,57 @@ document.getElementById('x-button').addEventListener('click', function () { ipcR
 document.getElementById('maximize-button').addEventListener('click', function () { ipcRenderer.send('maximize_btn') })
 document.getElementById('minimize-button').addEventListener('click', function () { ipcRenderer.send('minimize_btn') })
 
-//window loads
-window.addEventListener('load', async function () {
-    main_menus();
-    console.log('Running from:', process.resourcesPath)
-    console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
+//Main body menu
+const menu_body = new Menu.buildFromTemplate([
+    { role: 'reload' },
+    { label: 'Refresh Library', click() { maininitalizer() } },
+    { type: 'separator' },
+    { role: 'zoomIn' },
+    { role: 'resetZoom' },
+    { role: 'zoomOut' },
+    { type: 'separator' },
+    { label: 'Contact developer', click() { shell.openExternal(my_website) } },
+    { role: 'toggledevtools' },
+]);
 
-    if (localStorage.getItem("Anthonymcfg")) { config_manage.load() }
-    UI.initalize()
-    player.initalize()
-    maininitalizer()
+//Menu.setApplicationMenu(menu_body);
+window.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    menu_body.popup({ window: remote.getCurrentWindow() })
+}, false);
 
+//text box menu
+const text_box_menu = new Menu.buildFromTemplate([
+    { role: 'cut' },
+    { role: 'copy' },
+    { role: 'paste' },
+    { role: 'selectAll' },
+    //{ role: 'seperator' },
+    { role: 'undo' },
+    { role: 'redo' },
+]);
 
-    console.log("                       dxxxxdoc,.                  ");
-    console.log("                       NMMMMMMMMMMXkc.             ");
-    console.log("           .:          OMMMMMMMMMMMMMMNd.          ");
-    console.log("         ,0MM;         oMMMMMMMMMMMMMMMMMK;        ");
-    console.log("       .KMMMMW.        :MMMMMMMMMMMMMMMMMMMK'      ");
-    console.log("      oMMMMMMMX        'MMMMMMMMMMMMMMMW0dc'       ");
-    console.log("     OMMMMMMMMMO       .MMMMMMMMMMWOo;.            ");
-    console.log("    xMMMMMMMMMMMx       MMMMMMKd;.                 ");
-    console.log("   .MMMMMMMMMMMMMo      MMWk;                      ");
-    console.log("   KMMMMMMMMMMMMMMo    .MM.                        ");
-    console.log("   MMMMMMMMMMMMMMMMk   :MMNOxdollloooddxkkO0KXNWM  ");
-    console.log("   MMMMMMMMMMMMMMMMMNdoWMMMMWloNMMMMMMMMMMMMMMMMM  ");
-    console.log("   WNXK00OkxddoollllllodONMMc   xMMMMMMMMMMMMMMMM  ");
-    console.log('                         .WM.    lMMMMMMMMMMMMMMl  ');
-    console.log('                       ;kWMM.     lMMMMMMMMMMMMM   ');
-    console.log('                  .:dKMMMMMM.      dMMMMMMMMMMM.   ');
-    console.log('             .;o0WMMMMMMMMMM.       kMMMMMMMMM.    ');
-    console.log("        'cxKWMMMMMMMMMMMMMMM,        KMMMMMMN      ");
-    console.log('         MMMMMMMMMMMMMMMMMMMc        .NMMMM.       ');
-    console.log("           MMMMMMMMMMMMMMMMMd         'MM          ");
-    console.log('              MMMMMMMMMMMMMM0                      ');
-    console.log('                  dMMMMMMMMMW                      ');
+searchput.addEventListener('contextmenu', (event) => { popupmenu(event) }, false)
 
+function popupmenu(event) {//Popup the menu in this window
+    event.preventDefault()
+    event.stopPropagation()
+    text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
+}
 
-})
-
-window.addEventListener('keydown', function (e) {//keyboard actions
+window.addEventListener('keydown', async function (e) {//keyboard actions
     console.log('Keypress: ', e.key)
     switch (e.key) {
-        case " ": case "p": case "enter": e.preventDefault(); player.play(); break;
+        case " ": case "p": case "enter":
+            e.preventDefault();
+            player.play();
+            break;
         case "Escape":
             e.preventDefault();
             if (overpainelm.classList == "overpain_active") {
                 UI.overpain.hide()
+            } else if (document.getElementById('setting_view').classList == "setting_view_active") {
+                UI.navigate.main_library_view()
             }
             break;
         case "f": e.preventDefault(); UI.overpain.show(); break;
@@ -124,47 +127,48 @@ window.addEventListener('keydown', function (e) {//keyboard actions
             break;
         default: console.log('No action')
     }
+}, false)
+
+//window loads
+window.addEventListener('load', async function () {
+
+    setTimeout(() => { 
+        document.body.removeChild(document.getElementById('loading_screen'))
+        console.warn('Clapped loading screen after 10 second timeout')
+     }, 10000);//close loading screen
+
+    console.log("                       dxxxxdoc,.                  ");
+    console.log("                       NMMMMMMMMMMXkc.             ");
+    console.log("           .:          OMMMMMMMMMMMMMMNd.          ");
+    console.log("         ,0MM;         oMMMMMMMMMMMMMMMMMK;        ");
+    console.log("       .KMMMMW.        :MMMMMMMMMMMMMMMMMMMK'      ");
+    console.log("      oMMMMMMMX        'MMMMMMMMMMMMMMMW0dc'       ");
+    console.log("     OMMMMMMMMMO       .MMMMMMMMMMWOo;.            ");
+    console.log("    xMMMMMMMMMMMx       MMMMMMKd;.                 ");
+    console.log("   .MMMMMMMMMMMMMo      MMWk;                      ");
+    console.log("   KMMMMMMMMMMMMMMo    .MM.                        ");
+    console.log("   MMMMMMMMMMMMMMMMk   :MMNOxdollloooddxkkO0KXNWM  ");
+    console.log("   MMMMMMMMMMMMMMMMMNdoWMMMMWloNMMMMMMMMMMMMMMMMM  ");
+    console.log("   WNXK00OkxddoollllllodONMMc   xMMMMMMMMMMMMMMMM  ");
+    console.log('                         .WM.    lMMMMMMMMMMMMMMl  ');
+    console.log('                       ;kWMM.     lMMMMMMMMMMMMM   ');
+    console.log('                  .:dKMMMMMM.      dMMMMMMMMMMM.   ');
+    console.log('             .;o0WMMMMMMMMMM.       kMMMMMMMMM.    ');
+    console.log("        'cxKWMMMMMMMMMMMMMMM,        KMMMMMMN      ");
+    console.log('         MMMMMMMMMMMMMMMMMMMc        .NMMMM.       ');
+    console.log("           MMMMMMMMMMMMMMMMMd         'MM          ");
+    console.log('              MMMMMMMMMMMMMM0                      ');
+    console.log('                  dMMMMMMMMMW                      ');
+
+    console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
+
+    if (localStorage.getItem("Anthonymcfg")) { config_manage.load() }
+    UI.initalize()
+    player.initalize()
+    maininitalizer()
+
 })
 
-async function main_menus() {
-
-    //Main body menu
-    const menu_body = new Menu.buildFromTemplate([
-        { role: 'reload' },
-        { label: 'Refresh Library', click() { maininitalizer() } },
-        { type: 'separator' },
-        { role: 'zoomIn' },
-        { role: 'resetZoom' },
-        { role: 'zoomOut' },
-        { type: 'separator' },
-        { label: 'Contact developer', click() { shell.openExternal(my_website) } },
-        { role: 'toggledevtools' },
-    ]);
-    //Menu.setApplicationMenu(menu_body);
-    window.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        menu_body.popup({ window: remote.getCurrentWindow() })
-    }, false);
-
-    //text box menu
-    const text_box_menu = new Menu.buildFromTemplate([
-        { role: 'cut' },
-        { role: 'copy' },
-        { role: 'paste' },
-        { role: 'selectAll' },
-        //{ role: 'seperator' },
-        { role: 'undo' },
-        { role: 'redo' },
-    ]);
-    document.getElementById('background_blur_put').addEventListener('contextmenu', (event) => { popupmenu(event) }, false)
-    searchput.addEventListener('contextmenu', (event) => { popupmenu(event) }, false)
-
-    function popupmenu(event) {//Popup the menu in this window
-        event.preventDefault()
-        event.stopPropagation()
-        text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
-    }
-}
 
 async function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
@@ -433,7 +437,11 @@ let player = {//Playback control
         if (main.get.musicfolders() == [] || main.get.musicfolders() == undefined || main.get.musicfolders() < 1) {
             first_settup()//run first settup
         } else {
-            getfiles(main.get.musicfolders())
+            await getfiles(main.get.musicfolders())
+            setTimeout(() => { 
+                document.body.removeChild(document.getElementById('loading_screen'));
+                 console.warn('Clapped loading screen after leading files')
+                }, 0);
             //setTimeout(() => { build_library() }, 500)//imediatly after file checks
             /*let hold = setInterval(() => {
                 if (main_library_view.childElementCount < files.length) {
@@ -451,9 +459,10 @@ let player = {//Playback control
 
         async function getfiles(muzicpaths) {//gets files form array of music folder paths
             console.log('Searching directory: ', muzicpaths)
+            
             try {
                 muzicpaths.forEach(folder => {//for each folder in the array
-
+                    progression_view.innerText=`searching: ${folder}`
                     fs.readdir(folder, async function (err, dfiles) {//files from the directory
                         try {
                             if (err) { throw err }//yeet
@@ -504,25 +513,27 @@ let player = {//Playback control
                 })
             } catch (err) {
                 console.warn(err)
-            } finally { }
-            return 0;
-        }
-
-        async function build_library() {
-
-            console.warn('build pain library')
-
-            main_library_view.innerHTML = "";
-
-            for (let fileindex in files) {
-                player.build_songbar(fileindex).then((builtbar) => {
-
-                    builtbar.id = fileindex;
-                    main_library_view.appendChild(builtbar)
-                })
+            } finally {
+                
             }
-
+            //return 0;
         }
+        /*
+                    async function build_library() {
+        
+                        console.warn('build pain library')
+        
+                        main_library_view.innerHTML = "";
+        
+                        for (let fileindex in files) {
+                            player.build_songbar(fileindex).then((builtbar) => {
+        
+                                builtbar.id = fileindex;
+                                main_library_view.appendChild(builtbar)
+                            })
+                        }
+        
+                    }*/
 
     },
     play: async function (fileindex, load) {
@@ -780,7 +791,7 @@ let player = {//Playback control
         song_progress_bar.max = metadata.format.duration;
         //picture
         const picture = mm.selectCover(metadata.common.picture) || undefined;
-        const processed_picture = picture ? `data:${picture.format};base64,${picture.data.toString('base64')}` : './img/icon.png';
+        const processed_picture = picture ? `data:${picture.format};base64,${picture.data.toString('base64')}` : './img/icons/icon@64x64.png';
         if (typeof (picture) != 'undefined' && picture != undefined) {
             console.log('Cover art info: ', picture)
             document.getElementById('coverartsmall').src = processed_picture;
@@ -807,16 +818,19 @@ let player = {//Playback control
                 new Blob([picture.data], { type: picture.format })
             );*/
 
-            ipcRenderer.send('new_icon', imgscr)
-            console.log(imgscr)
+            /*ipcRenderer.send('new_icon', imgscr)*/
+            //console.log(imgscr)
 
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: metadata.common.title ? metadata.common.title : path.basename(files[fileindex]),
                 artist: metadata.common.artist ? metadata.common.artist : "unknown",
                 album: metadata.common.album ? metadata.common.album : "unknown",
-                artwork: [
-                    { src: 'https://raw.githubusercontent.com/anthonym01/Anthonym/main/icon.png', size: "1024x1024", type: 'image/png' }
-                ],
+                /*artwork: [
+                    //{ src: './img/icon.png', sizes: '64x64', type: 'image/png' },
+                    //{ scr: URL.createObjectURL(new Blob([picture.data], { type: picture.format })) },
+                    { src: 'https://www.pngrepo.com/png/337425/512/volume-down.png', sizes: '512x512', type: 'image/png' },
+ 
+                ],*/
                 //artwork: picture ? [{ src: imgscr,sizes: '96x96',type: picture.format }] : null,
             });
 
@@ -834,13 +848,15 @@ let player = {//Playback control
             UI.get_desktop_wallpaper().then((wallpaperpath) => {
                 mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')`
             });
-            /*navigator.mediaSession.metadata = new MediaMetadata({
+
+            navigator.mediaSession.metadata = new MediaMetadata({
                 title: metadata.common.title || path.basename(files[fileindex]),
                 artist: metadata.common.artist || "unknown artist",
-                //artist: metadata.common.artist ? metadata.common.artist : "unknown",
                 album: metadata.common.album || "unknown",
-                //album: metadata.common.album ? metadata.common.album : "unknown",
-            });*/
+                artwork: [
+                    { src: './img/icon.png', sizes: '64x64', type: 'image/png' },
+                ],
+            });
         }
         if (backgroundvideo.style.display == "block") { document.getElementById('tbuttonholder').className = "tbuttonholder" }
 
@@ -971,7 +987,7 @@ let player = {//Playback control
                 let observer = new IntersectionObserver(async function (entries) {
                     if (entries[0].isIntersecting) {
                         observer.disconnect()
-                        console.log('observed :', entries[0].target,)
+                        //console.log('observed :', entries[0].target,)
 
                         var song_duration = document.createElement('div')
                         song_duration.className = "song_duration"
@@ -1125,10 +1141,9 @@ let player = {//Playback control
     playback_notification: async function (processed_picture, metadata, fileindex) {
         //notification if hidden
         if (remote.getCurrentWindow().isVisible() == false || remote.getCurrentWindow().isFocused() == false) {
-            new Notification(
-                `${metadata.common.title || path.basename(files[fileindex])}`,
+            new Notification(`${metadata.common.title || path.basename(files[fileindex])}`,
                 {
-                    body: `Playing ${metadata.common.title || path.basename(files[fileindex])} by ${metadata.common.artist || "unknown"}`,
+                    body: metadata.common.artist ? ` by ${metadata.common.artist}` : "artist unknown",
                     icon: processed_picture || null,
                     image: './img/icon.png',
                     silent: true,
@@ -1495,8 +1510,6 @@ let UI = {
         previousbtn.style.filter = `blur(0)`;
         shufflebtn.style.filter = `blur(0)`;*/
     },
-
-
     get_desktop_wallpaper: async function () {
         let returned = await wallpaper.get()
             .then((wallpaperpath) => {//gets desktop wallpaper

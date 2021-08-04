@@ -49,11 +49,13 @@
             <div class="plurputcontainer">
                 <div class="leftward">
                     <input title="does not apply to videos" id="background_blur_put" type="range" min="0" max="100"
-                    placeholder="1-100">
+                        placeholder="1-100">
                 </div>
-                <div class="rightward"><div class="bluroutsight" id="bluroutsight"></div></div>
+                <div class="rightward">
+                    <div class="bluroutsight" id="bluroutsight"></div>
+                </div>
 
-                
+
             </div>
         </div>
 
@@ -98,150 +100,7 @@
         <div class="setting_block">
             <div class="setting_block_title">placeholder</div>
         </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
-        <div class="setting_block">
-            <div class="setting_block_title">placeholder</div>
-        </div>
+
     </div>
 
     <!-- Play back controls -->
@@ -279,6 +138,11 @@
         </div>
     </div>
 
+    <div class="loading_screen" id="loading_screen">
+        <div class="spinner"></div>
+        <div class="progression_view" id="progression_view"></div>
+    </div>
+
     <!-- Titlebar stuff -->
     <div id="Title_bar"></div>
     <!--<div class="title_menu_background"></div>-->
@@ -295,7 +159,7 @@
 
     <!--<div class="titlcon" id="titlcon"></div>-->
 
-    <script  src="js/index.js"></script>
+    <script src="js/index.js"></script>
 </body>
 
 </html>

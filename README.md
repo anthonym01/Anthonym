@@ -2,7 +2,7 @@
 
 An Electron based media player with working media controls  
 
-![Latest screenshot](https://raw.githubusercontent.com/anthonym01/Anthonym/main/screenshots/Screenshot_20210510_213510.png)
+![Latest screenshot](https://raw.githubusercontent.com/anthonym01/Anthonym/main/docs/img/screenshots/Screenshot_20210805_212807.jpeg)
 
 ## Features  
 

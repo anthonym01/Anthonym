@@ -751,19 +751,18 @@ let player = {//Playback control
 
     },
     build_songbar: async function (fileindex) {
-        //console.log('Song bar for :', files[fileindex])
+        /*
+            Song bars constructed in series normally from an array or 1 at a time in the case of history, fileindex points to an index in an array of paths to local files
+        */
 
-        let songbar = buildsong(fileindex);
-
+        let songbar = buildsong(fileindex);// data filled in later assigned and sent back immediatly
         return songbar;
 
         async function buildsong(fiso) {
-            //song_bar here becomes songbar above after ops are complete
             var song_bar = document.createElement('div');
 
             song_bar.addEventListener('click', function () { player.play(fiso); })
 
-            //song_bar.id = fiso;
             song_bar.classList = "song_bar";
             var song_title = document.createElement('div')
             song_title.className = "song_title";
@@ -781,7 +780,6 @@ let player = {//Playback control
                     fillmetadata(song_bar, fiso, song_title);
                 }
             }, 1000);
-
 
             let observer = new IntersectionObserver(async function (entries) {
                 if (entries[0].isIntersecting) {

@@ -12,8 +12,8 @@ const main = remote.require('./main');
 const path = require('path');
 const wallpaper = require('wallpaper');
 const utils = require('../Windows/js/utils.js');
-const { Howler } = require('howler'); 
-//const thumbnailjs = require('thumbnail-js');
+const { Howler } = require('howler');
+const thumbnailjs = require('thumbnail-js');
 
 const playbtn = document.getElementById('playbtn');
 const nextbtn = document.getElementById('nextbtn');
@@ -774,110 +774,64 @@ let player = {//Playback control
             //functionality(song_bar, fiso);
             player.songbarmenu_build(song_bar, fiso)
 
-            fillmetadata(song_bar, fiso, song_title);
 
-            //            setTimeout(() => { fillmetadata(song_bar, fiso, song_title); }, 5 * fiso);
+            /* Clean up repitiition when you feel better */
+            setTimeout(async () => {
+                if (isElementInViewport(song_bar)) {
+                    fillmetadata(song_bar, fiso, song_title);
+                }
+            }, 1000);
+
+
+            let observer = new IntersectionObserver(async function (entries) {
+                if (entries[0].isIntersecting) {
+                    observer.disconnect()
+                    fillmetadata(song_bar, fiso, song_title);
+                }
+            }, { root: null, rootMargin: '4000px 4000px 4000px 4000px', threshold: 0.1 });
+            observer.observe(song_bar)
+
             return song_bar;
 
         }
 
         async function fillmetadata(eliment, fileindex, song_title) {//set meta properties
-            try {
 
-                /* Clean up repitiition when you feel better */
-                setTimeout(async () => {
-                    if (isElementInViewport(eliment)) {
-                        var song_duration = document.createElement('div')
-                        song_duration.className = "song_duration"
-                        //mm.parseFile(main.get.localfile(fileindex), { duration: false }).then(async (metadata) => {
-                        const metadata = await main.pullmetadata(fileindex);
+            var song_duration = document.createElement('div')
+            song_duration.className = "song_duration"
+            //mm.parseFile(main.get.localfile(fileindex), { duration: false }).then(async (metadata) => {
+            const metadata = await main.pullmetadata(fileindex);
 
-                        //metadata song title
-                        song_title.innerHTML = metadata.title;
+            //metadata song title
+            song_title.innerHTML = metadata.title;
 
-                        //file duration
-                        song_duration.title = `${metadata.duration} seconds`;
+            //file duration
+            song_duration.title = `${metadata.duration} seconds`;
 
-                        song_duration.innerHTML = `${~~(Number((metadata.duration - metadata.duration % 60) / 60))}:${~~(Number(metadata.duration % 60))}`;
+            song_duration.innerHTML = `${~~(Number((metadata.duration - metadata.duration % 60) / 60))}:${~~(Number(metadata.duration % 60))}`;
 
-                        eliment.appendChild(song_duration)
+            eliment.appendChild(song_duration)
 
-                        if (metadata.image != null) {
-                            var songicon = document.createElement("img")
-                            songicon.className = "songicon"
-                            songicon.loading = "lazy"
+            if (metadata.image != null) {
+                var songicon = document.createElement("img")
+                songicon.className = "songicon"
+                songicon.loading = "lazy"
 
-                            eliment.appendChild(songicon)
+                eliment.appendChild(songicon)
 
-                            /*songicon.src = URL.createObjectURL(
-                                new Blob([picture.data], { type: picture.format })
-                            );*/
-                            songicon.src = metadata.image;
-                            eliment.appendChild(songicon)
-                        } else {
-                            //use placeholder image
-                            var songicon = document.createElement("div")
-                            songicon.className = "songicon_dfault"
-                            eliment.appendChild(songicon)
-                        }
-
-                    }
-
-                }, 1000);
-
-
-                let observer = new IntersectionObserver(async function (entries) {
-                    if (entries[0].isIntersecting) {
-                        observer.disconnect()
-                        //console.log('observed :', entries[0].target,)
-
-                        var song_duration = document.createElement('div')
-                        song_duration.className = "song_duration"
-                        //mm.parseFile(main.get.localfile(fileindex), { duration: false }).then(async (metadata) => {
-                        const metadata = await main.pullmetadata(fileindex);
-
-                        //metadata song title
-                        song_title.innerHTML = metadata.title;
-
-                        //file duration
-                        song_duration.title = `${metadata.duration} seconds`;
-
-                        song_duration.innerHTML = `${~~(Number((metadata.duration - metadata.duration % 60) / 60))}:${~~(Number(metadata.duration % 60))}`;
-
-                        eliment.appendChild(song_duration)
-
-                        if (metadata.image != null) {
-                            var songicon = document.createElement("img")
-                            songicon.className = "songicon"
-                            songicon.loading = "lazy"
-
-                            eliment.appendChild(songicon)
-
-                            /*songicon.src = URL.createObjectURL(
-                                new Blob([picture.data], { type: picture.format })
-                            );*/
-                            songicon.src = metadata.image;
-                            eliment.appendChild(songicon)
-                        } else {
-                            //use placeholder image
-                            var songicon = document.createElement("div")
-                            songicon.className = "songicon_dfault"
-                            eliment.appendChild(songicon)
-                        }
-
-
-                    }
-                }, { root: null, rootMargin: '4000px 4000px 4000px 4000px', threshold: 0.1 });
-                observer.observe(eliment)
-            } catch (err) {
-                console.warn("Metadata error : ", err)
+                songicon.src = metadata.image;
+                eliment.appendChild(songicon)
+            } else {
+                //use placeholder image
+                var songicon = document.createElement("div")
+                songicon.className = "songicon_dfault"
+                eliment.appendChild(songicon)
             }
+
         }
 
-       /* async function functionality(eliment, fileindex) {//context menu and playback on click
 
 
-        }*/
     },
     songbarmenu_build: async function (eliment, fileindex) {
 

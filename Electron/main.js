@@ -6,11 +6,19 @@ const windowStateKeeper = require('electron-window-state');
 const Store = require('electron-store');
 const storeinator = new Store;
 const mm = require('music-metadata');
-const thumbnailjs = require('thumbnail-js');
 const NodeID3 = require('node-id3');
 //const tray = require('./tray.js');
 
 console.log('Running from:', process.resourcesPath)
+
+let localtable = []
+
+let playlists = [//playlists
+	/*{
+		path: "path  to playlist file, if any",
+		files: [0, 5, 23, 6, 7]//file indexes
+	}*/
+];
 
 /* Configuration, application properties or persistent user settings */
 let config = {
@@ -53,7 +61,7 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 		mainWindow.show();
 	});
 
-	ipcMain.on('x_button', () => {
+	ipcMain.on('x_button', () => {//close button signal
 		if (config.data.quiton_X != true) {
 			app.quit()
 		} else {
@@ -78,6 +86,11 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 	})
 
 	ipcMain.on('minimize_btn', () => { mainWindow.minimize() })
+
+	ipcMain.on('Ready_for_action', () => { mainWindow.body.webContents.send('got_local_library', localtable) })//mainwindow is ready for action
+
+	fetch_local_library()
+
 }
 
 let mainWindow = {
@@ -327,31 +340,117 @@ async function write_file(filepath, data) {
 	})
 }
 
+async function fetch_local_library() {
+	console.log('Getting local library from: ', config.data.music_folders)
 
-let filetable = []
+	localtable = [];
 
-async function pullmetadata(fileidentifier) {
+	if (config.data.music_folders == [] || config.data.music_folders == undefined || config.data.music_folders.length < 1) {
+		first_settup()//run first settup
+	} else {
+		await getfiles(config.data.music_folders)
+		//		console.log('Local library ', localtable)
+		console.log('Sending package')
+		try {
+			mainWindow.body.webContents.send('got_local_library', localtable)
+		} catch (error) {
+			console.warn('mainwindow not ready to receive')
+		}
+	}
+
+	async function getfiles(muzicpaths) {//gets files form array of music folder paths
+		console.log('Searching directory: ', muzicpaths)
+
+		try {
+			muzicpaths.forEach(folder => {//for each folder in the array
+				//progression_view.innerText = `searching: ${folder}`
+				console.log('Searching: ', folder)
+				//mainWindow.body.webContents.send('progression_view', folder)
+
+				fs.readdir(folder, async function (err, dfiles) {//files from the directory
+					try {
+						if (err) { throw err }//yeet
+
+						dfiles.forEach(file => {//for each file in the folder
+
+							var fullfilepath = path.join(folder, file);
+							if (fs.statSync(fullfilepath).isDirectory()) {//sud-directory to search
+								getfiles([fullfilepath]);
+								return 0;
+							} else {//file to handle
+
+								switch (path.parse(fullfilepath).ext) {//check file types
+									case ".mp4": case ".mp3": case ".mpeg": case ".opus": case ".ogg": case ".oga": case ".wav":
+									case ".aac": case ".caf": case ".m4b": case ".m4v": case ".m4a": case ".weba":
+									case ".webm": case ".dolby": case ".flac": //playable as music files
+										localtable.push(fullfilepath);
+										/*player.build_songbar(files.length - 1).then((builtbar) => {
+
+
+											main_library_view.appendChild(builtbar)
+										})*/
+										break;
+
+									case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
+										playlists.push(fullfilepath);
+										break;
+
+									default: console.warn('not supported: ', fullfilepath);//not supported music file
+								}
+							}
+
+							//build library part here
+
+
+
+						})
+
+					}//error accessing directory due to it not existing or locked permissions
+					catch (err) {
+						console.warn('File error', err)
+						//UI.notify.new('Error', `Could not access ${folder}`)
+
+						//better warning
+
+					} finally {
+						//build_library()
+
+					}
+				})
+			})
+		} catch (err) {
+			console.warn(err)
+		} finally {
+
+		}
+	}
+}
+
+async function pullmetadata(information) {
 
 	console.log('Pull metadat for :', information)
 
 	if (!isNaN(information)) {
-		information = files[information]
+		information = localtable[information]
 		console.log('is point to: ', information)
 	}
 
 	let metadata = await mm.parseFile(information, { duration: false })
 
 	console.log(metadata)
-	var thumnaildata;
+	var thumnaildata = null;
 	if (path.extname(information) == ".mp4") {
-		thumnaildata = await thumbnailjs.getVideoThumbnail(information, 0.2, 3, "image/jpg")
+		//thumnaildata = await thumbnailjs.getVideoThumbnail(information, 0.2, 3, "image/jpg")
+		thumnaildata  = null;//find a more effective way later
 	} else {
-		const picture = mm.selectCover(metadata.common.picture)
-		thumnaildata = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+		const picture = mm.selectCover(metadata.common.picture) || null;
+		thumnaildata = picture ? `data:${picture.format};base64,${picture.data.toString('base64')}` : null;
 	}
 
 	return {
-		title: metadata.common.title,//title as a string
+		title: metadata.common.title || path.basename(information),//title as a string
+		artist: metadata.common.artist || "unknown",
+		album :metadata.common.album || "unknown",
 		duration: metadata.format.duration,//durration in seconds
 		image: thumnaildata,//thumbnail data as a string
 	}
@@ -359,17 +458,10 @@ async function pullmetadata(fileidentifier) {
 
 module.exports = { //exported modules
 	pullmetadata,
-	write_file: async function (filepath, buffer_data) {
-		write_file(filepath, buffer_data)
-	},
-	write_alt_storage_location: async function (data) { //write data to alt storage location
-		if (config.data.alt_location != false) {
-			write_file(config.data.alt_location + "/Anthonymcfg config.data.json", data)
-		}
-	},
+	write_file,
 	setontop: async function () {
-		mainWindow.body.setAlwaysOnTop(true)
-	}, //always on top the window
+		mainWindow.body.setAlwaysOnTop(true)//always on top the window
+	},
 	setnotontop: async function () {
 		mainWindow.body.setAlwaysOnTop(false)
 	}, //always on top'nt the window
@@ -386,6 +478,15 @@ module.exports = { //exported modules
 		tray.destroy()
 	},
 	get: {
+		localtable: function () {
+			return localtable
+		},
+		localfile: function (id) {
+			return localtable[id]
+		},
+		localtable_length:function(){
+			return localtable.length
+		},
 		musicfolders: function () {
 			return config.data.music_folders
 		},
@@ -405,10 +506,6 @@ module.exports = { //exported modules
 	set: {
 		musicfolders: async function (music_folders) {
 			config.data.music_folders = music_folders;
-			config.save();
-		},
-		alt_location: async function (alt_location) {
-			config.data.alt_location = alt_location;
 			config.save();
 		},
 		minimize_to_tray: async function (minimize_to_tray) {

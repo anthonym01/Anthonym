@@ -6,7 +6,7 @@
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
 
 const { ipcRenderer, remote, clipboard } = require('electron');
-const { dialog, Menu, nativeTheme, systemPreferences, shell } = remote;
+const { Menu, nativeTheme, systemPreferences, shell } = remote;
 const main = remote.require('./main');
 
 const path = require('path');
@@ -30,7 +30,6 @@ const searchput = document.getElementById('searchput');
 const overpainelm = document.getElementById('overpain');//pannel for queue and search
 const searchbox = document.getElementById('searchbox');
 const coverartsmall = document.getElementById('coverartsmall');
-const progression_view = document.getElementById('progression_view');
 
 let looking = [];//looking timers, only search after user stops typing
 
@@ -38,6 +37,7 @@ let actiontimeout = false;//boolean set when actions cannot happen twice
 
 let now_playing_content = {//relivant details abou the song thats playing now
     duration: 999,
+    id: null
 }
 
 //  Taskbar buttons for frameless window
@@ -130,6 +130,7 @@ window.addEventListener('keydown', async function (e) {//keyboard actions
 window.addEventListener('load', async function () {
     setTimeout(() => {
         document.body.removeChild(document.getElementById('loading_screen'))
+        document.getElementById('songTitle').innerHTML = "Ready to Vibe"
         console.warn('Clapped loading screen after 10 second timeout')
     }, 10000);//close loading screen
 
@@ -219,8 +220,10 @@ ipcRenderer.on('got_local_library', (event, sentarray) => {//listening on channe
             main_library_view.appendChild(builtbar)
         })
     }
-    setTimeout(() => {
+    setTimeout(async () => {
         document.body.removeChild(document.getElementById('loading_screen'));
+        document.getElementById('songTitle').innerHTML = "Ready to Vibe"
+        coverartsmall.src = "img/memes/Cats/headphone cat.gif"
         console.warn('Clapped loading screen after leading files')
     }, 0);
 })
@@ -231,7 +234,6 @@ let player = {//Playback control
     stream1: null,//stream for howler
     seekterval: null,//looping seek time update
     playstate: false,//is (should be) playing music or video
-    now_playing: null,//Song thats currently playing
     initalize: async function () {
 
         navigator.mediaSession.setActionHandler('play', function () {
@@ -414,7 +416,7 @@ let player = {//Playback control
         */
         console.log('Attempt to play: ', fileindex);
 
-        if (player.now_playing == null && fileindex == undefined) {//play last known song
+        if (now_playing_content.id == null && fileindex == undefined) {//play last known song
             player.play(config.last_played ? config.last_played : 1);
             setTimeout(() => { player.scroll_to_current() }, 500);
             return 0;
@@ -426,7 +428,7 @@ let player = {//Playback control
                 return 0;
             }
         } else {//playing something
-            if (fileindex == player.now_playing) {
+            if (fileindex == now_playing_content.id) {
                 player.stream1.play();
                 if (backgroundvideo.style.display != "none") {
                     backgroundvideo.play();
@@ -435,12 +437,12 @@ let player = {//Playback control
                     backgroundvideo.muted = true;
                     backgroundvideo.pause()
                 }
-                console.log('resume : ', main.get.localfile(player.now_playing));
+                console.log('resume : ', main.get.localfile(now_playing_content.id));
                 return 0;
             }
         }
 
-        if (fileindex == undefined && player.now_playing != null) {//resume playback
+        if (fileindex == undefined && now_playing_content.id != null) {//resume playback
             player.stream1.play();
             if (backgroundvideo.style.display != "none") {
 
@@ -450,11 +452,11 @@ let player = {//Playback control
                 backgroundvideo.muted = true;
                 backgroundvideo.pause()
             }
-            console.log('resume : ', main.get.localfile(player.now_playing));
+            console.log('resume : ', main.get.localfile(now_playing_content.id));
             return 0;
         }
 
-        if (fileindex == player.now_playing) {//pause playback
+        if (fileindex == now_playing_content.id) {//pause playback
             if (player.playstate == true) {
                 player.pause()
             } else {
@@ -463,7 +465,7 @@ let player = {//Playback control
             return 0;
         }
 
-        /*if (fileindex != player.now_playing && player.playstate != false) {
+        /*if (fileindex != now_playing_content.id && player.playstate != false) {
             //await player.stream1.unload();//unlock the stream thats gonna be used
             //Howler.unload()
             /*backgroundvideo.src = "";
@@ -521,7 +523,7 @@ let player = {//Playback control
                 onplay: async function () {
                     //playback of loaded song file sucessfull
                     player.playstate = true;//now playing and play pause functionality
-                    player.now_playing = Number(fileindex);//remove if you want a brain ache
+                    now_playing_content.id = Number(fileindex);//remove if you want a brain ache
                     config.last_played = Number(fileindex);
                     player.updatemetadata(fileindex);
                     ipcRenderer.send('Play_msg', path.basename(main.get.localfile(fileindex)), 'pause')//Send playing song to main
@@ -553,7 +555,7 @@ let player = {//Playback control
             navigator.mediaSession.playbackState = "paused";
             playbtn.classList = "playbtn";
             playbtn.title = "play";
-            ipcRenderer.send('Play_msg', path.basename(main.get.localfile(player.now_playing)), 'Play');
+            ipcRenderer.send('Play_msg', path.basename(main.get.localfile(now_playing_content.id)), 'Play');
         } else {//assume error
             console.warn('Tried pause functionality with no playback');
         }
@@ -578,13 +580,13 @@ let player = {//Playback control
         let nextsong;
 
         if (config.shuffle == true) {//the next song is choosen at random
-            nextsong = utils.rand_number(main.get.localtable_length() - 1, 0, player.now_playing);
+            nextsong = utils.rand_number(main.get.localtable_length() - 1, 0, now_playing_content.id);
         } else {//next song inline unless at the end
-            nextsong = Number(player.now_playing - 1)
+            nextsong = Number(now_playing_content.id - 1)
         }
 
         player.play(nextsong)
-        player.now_playing = nextsong;
+        now_playing_content.id = nextsong;
         song_progress_bar.value = 0;//reset seek value
         player.scroll_to_current()
 
@@ -600,9 +602,9 @@ let player = {//Playback control
             }
         }
 
-        player.play(player.now_playing - 1)
+        player.play(now_playing_content.id - 1)
         song_progress_bar.value = 0;//reset seek value
-        player.now_playing = player.now_playing - 1;
+        now_playing_content.id = now_playing_content.id - 1;
 
         player.scroll_to_current()
     },
@@ -650,7 +652,7 @@ let player = {//Playback control
 
         const metadata = await main.pullmetadata(fileindex);
 
-        console.log(metadata)
+        //console.log(metadata)
 
         document.getElementById('songTitle').innerText = metadata.title;
         document.getElementById('songArtist').innerText = `by ${metadata.artist}`;
@@ -742,11 +744,11 @@ let player = {//Playback control
     },
     scroll_to_current: async function () {
         document.querySelectorAll('.song_bar_active').forEach((song_bar) => { song_bar.className = "song_bar" })
-        document.getElementById(`${player.now_playing}`).className = "song_bar_active"
-        if (document.getElementById(`#${player.now_playing - 2}`)) {
-            window.location.href = `#${player.now_playing - 2}`
+        document.getElementById(`${now_playing_content.id}`).className = "song_bar_active"
+        if (document.getElementById(`#${now_playing_content.id - 2}`)) {
+            window.location.href = `#${now_playing_content.id - 2}`
         } else {
-            window.location.href = `#${player.now_playing - 1}`
+            window.location.href = `#${now_playing_content.id - 1}`
         }
 
     },
@@ -815,15 +817,21 @@ let player = {//Playback control
                 songicon.className = "songicon"
                 songicon.loading = "lazy"
 
-                eliment.appendChild(songicon)
-
                 songicon.src = metadata.image;
                 eliment.appendChild(songicon)
             } else {
                 //use placeholder image
-                var songicon = document.createElement("div")
-                songicon.className = "songicon_dfault"
-                eliment.appendChild(songicon)
+                if (path.extname(main.get.localfile(fileindex)) == ".mp4") {
+                    var songicon = document.createElement("img")
+                    songicon.className = "songicon"
+                    songicon.loading = "lazy"
+                    eliment.appendChild(songicon)
+                    songicon.src = await thumbnailjs.getVideoThumbnail(main.get.localfile(fileindex), 0.2, 3, "image/jpg");
+                } else {
+                    var songicon = document.createElement("div")
+                    songicon.className = "songicon_dfault"
+                    eliment.appendChild(songicon)
+                }
             }
 
         }
@@ -839,7 +847,7 @@ let player = {//Playback control
                 type: "normal",
                 click() {
                     player.play(fileindex);
-                    //setTimeout(() => { window.location.href = `#${player.now_playing - 2}` }, 300);
+                    //setTimeout(() => { window.location.href = `#${now_playing_content.id - 2}` }, 300);
                 }
             },
             {
@@ -1230,8 +1238,21 @@ let UI = {
 }
 
 
-/* Rework to be a module */
+function isElementInViewport(el) {
 
+    var rect = el.getBoundingClientRect();
+
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /* or $(window).height() */
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth) /* or $(window).width() */
+    );
+}
+
+
+async function first_settup() { require('../Windows/js/first_settup.js').first_settup() }
+/*
 let folders = [];
 
 async function first_settup() {
@@ -1311,16 +1332,4 @@ async function first_settup() {
         })
     }
 }
-
-
-function isElementInViewport(el) {
-
-    var rect = el.getBoundingClientRect();
-
-    return (
-        rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /* or $(window).height() */
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth) /* or $(window).width() */
-    );
-}
+*/

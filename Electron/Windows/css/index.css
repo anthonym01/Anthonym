@@ -86,27 +86,32 @@ body {
 }
 
 @keyframes spinnnnn {
-    0%{
+    0% {
         transform: rotate(0deg);
     }
-    25%{
+
+    25% {
         transform: rotate(90deg);
     }
-    50%{
+
+    50% {
         transform: rotate(180deg);
     }
-    75%{
+
+    75% {
         transform: rotate(270deg);
     }
-    100%{
+
+    100% {
         transform: rotate(360deg);
     }
 }
+
 .loading_screen {
     position: fixed;
     top: 30px;
     right: 0;
-    height: calc(100% - 30px);
+    height: calc(100% - 30px - 7rem);
     width: 100%;
     background-color: var(--background-color);
     color: var(--text-color);
@@ -114,21 +119,39 @@ body {
     /*-webkit-app-region: drag;*/
     opacity: 1;
     /*animation: blonkaway 500ms ease 2500ms 1 forwards;*/
+    cursor: wait;
+}
+
+.spinnerbox {
+    position: absolute;
+    top: 18vh;
+    width: 40vw;
+    height: 16rem;
+    left: 30vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .spinner {
-    position: absolute;
-    width: 5rem;
-    height: 5rem;
+    position: relative;
+    width: 14rem;
+    height: 14rem;
     background-image: url('../img/icons/icon@512x512.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    animation: spinnnnn 2s ease infinite;
+    animation: spinnnnn 3s ease infinite;
 }
 
-.progression_view{
-    
+.progression_view {
+    position: absolute;
+    top: calc(18vh + 16.4rem);
+    width: 100%;
+    height: fit-content;
+    left: 0;
+    text-align: center;
+    font-size: 6rem;
 }
 
 .background_mask {
@@ -423,13 +446,13 @@ body {
     transition: background-color 300ms, background-image 300ms, background-size 300ms, background-position 300ms, filter 0ms;
 }*/
 
-.shufflebtn:hover ,
-.shufflebtn_on:hover ,
-.repeatbtn_no:hover ,
-.repeatbtn_lock:hover ,
-.repeatbtn_all:hover ,
-.playbtn:hover ,
-.pausebtn:hover  {
+.shufflebtn:hover,
+.shufflebtn_on:hover,
+.repeatbtn_no:hover,
+.repeatbtn_lock:hover,
+.repeatbtn_all:hover,
+.playbtn:hover,
+.pausebtn:hover {
     filter: blur(0px) !important;
     background-color: var(--background-color);
     transition: background-color 300ms, background-image 300ms, background-size 300ms, background-position 300ms, filter 0ms;

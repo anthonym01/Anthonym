@@ -346,7 +346,7 @@ async function fetch_local_library() {
 	localtable = [];
 
 	if (config.data.music_folders == [] || config.data.music_folders == undefined || config.data.music_folders.length < 1) {
-		first_settup()//run first settup
+		//first_settup()//run first settup
 	} else {
 		await getfiles(config.data.music_folders)
 		//		console.log('Local library ', localtable)
@@ -439,10 +439,7 @@ async function pullmetadata(information) {
 
 	console.log(metadata)
 	var thumnaildata = null;
-	if (path.extname(information) == ".mp4") {
-		//thumnaildata = await thumbnailjs.getVideoThumbnail(information, 0.2, 3, "image/jpg")
-		thumnaildata  = null;//find a more effective way later
-	} else {
+	if (path.extname(information) != ".mp4") {
 		const picture = mm.selectCover(metadata.common.picture) || null;
 		thumnaildata = picture ? `data:${picture.format};base64,${picture.data.toString('base64')}` : null;
 	}
@@ -477,6 +474,7 @@ module.exports = { //exported modules
 	remove_tray: function () {
 		tray.destroy()
 	},
+	resynclocal:function(){fetch_local_library()	},
 	get: {
 		localtable: function () {
 			return localtable

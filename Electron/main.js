@@ -6,6 +6,7 @@ const windowStateKeeper = require('electron-window-state');
 const Store = require('electron-store');
 const storeinator = new Store;
 const mm = require('music-metadata');
+const ffmetadata = require("ffmetadata");
 const NodeID3 = require('node-id3');
 //const tray = require('./tray.js');
 
@@ -139,76 +140,6 @@ let mainWindow = {
 		}))
 
 		mainWindowState.manage(mainWindow.body); //give window to window manager plugin
-
-		mainWindow.body.on('minimize', function () {
-			if (config.data.minimize_to_tray == true && tray.body != null) {
-				mainWindow.hide()
-			}
-		})
-	},
-	hide: async function () {
-		console.log('hide main window')
-		//if (process.platform == 'linux') { create_tray(); }
-		mainWindow.body.hide();
-		mainWindow.body.setSkipTaskbar(true);
-	},
-	minimize: async function () {
-		mainWindow.body.minimize();
-		if (config.data.minimize_to_tray == true && tray.body != null) {
-			mainWindow.hide()
-		}
-	},
-	show: async function () {
-		console.log('Show main window')
-		if (mainWindow.body != undefined) {
-			mainWindow.body.show();
-			mainWindow.body.focusOnWebView()
-			mainWindow.body.setSkipTaskbar(false);
-		} else {
-			mainWindow.create()
-		}
-
-		//if (process.platform == 'linux') { tray.destroy(); }
-	}
-};
-
-let Editor_window = {
-	body: null, //defines the Editor window
-	create: function (path) {
-		console.log(`crate editor window with intent to edit ${path}`)
-		const {
-			screenwidth,
-			screenheight
-		} = screen.getPrimaryDisplay().workAreaSize //gets screen size
-
-		Editor_window.body = new BrowserWindow({ //make main window
-			width: screenwidth / 4,
-			height: screenheight / 4,
-			minWidth: 400,
-			minHeight: 300,
-			backgroundColor: '#000000',
-			frame: true,
-			center: true,
-			alwaysOnTop: false,
-			icon: path.join(__dirname, '/build/icons/256x256.png'), //some linux window managers cant process due to bug
-			title: 'Anthonym',
-			show: true,
-			skipTaskbar: false,
-			//titleBarStyle: 'hiddenInset',
-			webPreferences: {
-				nodeIntegration: true,
-				enableRemoteModule: true,
-				nodeIntegrationInWorker: true,
-				worldSafeExecuteJavaScript: true,
-				contextIsolation: false
-			},
-		})
-
-		mainWindow.body.loadURL(url.format({
-			pathname: path.join(__dirname, '/Windows/editor.html'),
-			protocol: 'file:',
-			slashes: true
-		}))
 
 		mainWindow.body.on('minimize', function () {
 			if (config.data.minimize_to_tray == true && tray.body != null) {
@@ -447,15 +378,61 @@ async function pullmetadata(information) {
 	return {
 		title: metadata.common.title || path.basename(information),//title as a string
 		artist: metadata.common.artist || "unknown",
-		album :metadata.common.album || "unknown",
+		album: metadata.common.album || "unknown",
 		duration: metadata.format.duration,//durration in seconds
 		image: thumnaildata,//thumbnail data as a string
 	}
 }
 
+async function writemetadata(filepath, dataobj) {
+	console.log('Writing: ', dataobj, ' to ', filepath)
+}
+
+async function edilocalfile(findex) {
+	console.log('Edit: ', localtable[findex])
+	const { screenwidth, screenheight } = screen.getPrimaryDisplay().workAreaSize //gets screen size
+
+	const Editor_windowbody = new BrowserWindow({ //make main window
+		width: screenwidth / 3,
+		height: screenheight / 3,
+		minWidth: 400,
+		minHeight: 300,
+		backgroundColor: '#000000',
+		frame: true,
+		center: true,
+		alwaysOnTop: true,
+		icon: path.join(__dirname, '/build/icons/256x256.png'), //some linux window managers cant process due to bug
+		title: `Edit ${localtable[findex]}`,
+		show: true,
+		skipTaskbar: false,
+		//titleBarStyle: 'hiddenInset',
+		webPreferences: {
+			nodeIntegration: true,
+			enableRemoteModule: true,
+			nodeIntegrationInWorker: true,
+			worldSafeExecuteJavaScript: true,
+			contextIsolation: false
+		},
+	}).webContents.send('editpath', localtable[findex])
+
+	Editor_windowbody.loadURL(url.format({
+		pathname: path.join(__dirname, '/Windows/editor.html'),
+		protocol: 'file:',
+		slashes: true
+	}))
+
+	Editor_windowbody.on('close', function () {
+		Editor_windowbody.destroy()
+	})
+
+	Editor_windowbody.webContents.send('editpath', localtable[findex])
+}
+
 module.exports = { //exported modules
 	pullmetadata,
 	write_file,
+	writemetadata,
+	edilocalfile,
 	setontop: async function () {
 		mainWindow.body.setAlwaysOnTop(true)//always on top the window
 	},
@@ -474,7 +451,7 @@ module.exports = { //exported modules
 	remove_tray: function () {
 		tray.destroy()
 	},
-	resynclocal:function(){fetch_local_library()	},
+	resynclocal: function () { fetch_local_library() },
 	get: {
 		localtable: function () {
 			return localtable
@@ -482,7 +459,7 @@ module.exports = { //exported modules
 		localfile: function (id) {
 			return localtable[id]
 		},
-		localtable_length:function(){
+		localtable_length: function () {
 			return localtable.length
 		},
 		musicfolders: function () {

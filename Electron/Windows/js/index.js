@@ -3,35 +3,35 @@
     samuelmatheson15@gmail.com
 */
 
-const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
+const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me'
 
-const { ipcRenderer, remote, clipboard } = require('electron');
-const { Menu, nativeTheme, systemPreferences, shell } = remote;
-const main = remote.require('./main');
+const { ipcRenderer, remote, clipboard } = require('electron')
+const { Menu, nativeTheme, systemPreferences, shell } = remote
+const main = remote.require('./main')
 
-const path = require('path');
-const wallpaper = require('wallpaper');
-const utils = require('../Windows/js/utils.js');
-const { Howler } = require('howler');
+const path = require('path')
+const wallpaper = require('wallpaper')//
+const utils = require('../Windows/js/utils.js')
+const { Howler } = require('howler')
 const thumbnailjs = require('thumbnail-js');
 
-const playbtn = document.getElementById('playbtn');
-const nextbtn = document.getElementById('nextbtn');
-const previousbtn = document.getElementById('previousbtn');
-const repeatbtn = document.getElementById('repeatbtn');
-const shufflebtn = document.getElementById('shufflebtn');
-const song_progress_bar = document.getElementById('song_progress_bar');
-const backgroundmaskimg = document.getElementById('backgroundmaskimg');
-const backgroundvideo = document.getElementById('backgroundvideo');
-const mainmaskcontainer = document.getElementById('mainmaskcontainer');
-const Menupannel_main = document.getElementById('Menupannel_main');
-const main_library_view = document.getElementById('main_library_view');
-const searchput = document.getElementById('searchput');
-const overpainelm = document.getElementById('overpain');//pannel for queue and search
-const searchbox = document.getElementById('searchbox');
-const coverartsmall = document.getElementById('coverartsmall');
+const playbtn = document.getElementById('playbtn')
+const nextbtn = document.getElementById('nextbtn')
+const previousbtn = document.getElementById('previousbtn')
+const repeatbtn = document.getElementById('repeatbtn')
+const shufflebtn = document.getElementById('shufflebtn')
+const song_progress_bar = document.getElementById('song_progress_bar')
+const backgroundmaskimg = document.getElementById('backgroundmaskimg')
+const backgroundvideo = document.getElementById('backgroundvideo')
+const mainmaskcontainer = document.getElementById('mainmaskcontainer')
+const Menupannel_main = document.getElementById('Menupannel_main')
+const main_library_view = document.getElementById('main_library_view')
+const searchput = document.getElementById('searchput')
+const overpainelm = document.getElementById('overpain')//pannel for queue and search
+const searchbox = document.getElementById('searchbox')
+const coverartsmall = document.getElementById('coverartsmall')
 
-let looking = [];//looking timers, only search after user stops typing
+let looking = [];//lookup timers, only search after user stops typing
 
 let actiontimeout = false;//boolean set when actions cannot happen twice
 
@@ -169,15 +169,13 @@ window.addEventListener('load', async function () {
 
 async function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')
+
     //reset players state to default
     main_library_view.innerHTML = ""
     player.pause();
     player.stop_seeking();
-    //files = [];//path and other details of song files
-    //playlists = [];//playlist files and details
     player.queue = [];//Play queue randomized from playlist/library
     player.playstate = false;//is (should be) playing music
-    //player.fetch_library();
     ipcRenderer.send('Ready_for_action')
 }
 
@@ -193,7 +191,6 @@ let config = {
     favourites: ["I can be the one"]
 }
 
-/* rework to be module */
 let config_manage = {
     save: async function () {//Save the config file
         console.table('Configuration is being saved', config);
@@ -716,11 +713,13 @@ let player = {//Playback control
         player.playback_notification(metadata)
 
     },
-    lookup: async function () {//match any pattern to local file name
+    lookup: async function () {//seach for matches to a pattern amoungst local files pattern
 
         for (let i in looking) { clearInterval(looking.pop()) }//prevent rappid researching
 
-        let lookafor = setTimeout(() => {
+        //let lookafor =
+
+        looking.push(setTimeout(async () => {
 
             let pattern = searchput.value;
             console.log('Look for ', pattern)
@@ -728,18 +727,14 @@ let player = {//Playback control
                 searchbox.innerHTML = ""
                 for (let fileindex in main.get.localtable()) {
                     if (path.basename(main.get.localfile(fileindex)).toLowerCase().search(pattern.toLowerCase()) != -1) {
-                        //setTimeout(() => {
                         player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
-                        //}, fileindex * 5);
                     }
                 }
             }
 
 
 
-        }, 1000);
-
-        looking.push(lookafor)
+        }, 1000))
 
     },
     scroll_to_current: async function () {
@@ -778,7 +773,7 @@ let player = {//Playback control
 
             /* Clean up repitiition when you feel better */
             setTimeout(async () => {
-                if (isElementInViewport(song_bar)) {
+                if (utils.isElementInViewport(song_bar)) {
                     fillmetadata(song_bar, fiso, song_title);
                 }
             }, 1000);
@@ -861,6 +856,10 @@ let player = {//Playback control
                 click() { }
             },
             { type: "separator" },
+            {
+                label: "Edit",
+                click() { main.edilocalfile(fileindex) }
+            },
             {
                 label: "copy file name",
                 click() { clipboard.writeText(path.basename(main.get.localfile(fileindex))) }
@@ -1236,100 +1235,3 @@ let UI = {
         return returned;
     },
 }
-
-
-function isElementInViewport(el) {
-
-    var rect = el.getBoundingClientRect();
-
-    return (
-        rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /* or $(window).height() */
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth) /* or $(window).width() */
-    );
-}
-
-
-async function first_settup() { require('../Windows/js/first_settup.js').first_settup() }
-/*
-let folders = [];
-
-async function first_settup() {
-    document.getElementById('first_setup_screen').style.display = "block";//hide first settup screen
-    document.getElementById('first_finish_btn').addEventListener('click', function () {//finish button in first settup screen
-        main.set.musicfolders(folders);//save selected music folders
-        document.getElementById('first_setup_screen').style.display = "none";//hide first settup screen
-        maininitalizer();
-    })
-    buildfirst_folders()
-
-    function buildfirst_folders() {//rempresent selected folders
-        document.getElementById('first_setup_folders').innerHTML = ""
-
-        for (let i = 0; i < folders.length; i++) {
-            individual_folder(i);
-        }
-        //folders.forEach(folder => { individual_folder(folder) })
-
-        function individual_folder(index) {
-            let parsed_folder = path.parse(folders[index])
-
-            let folder_first = document.createElement('div')
-            folder_first.classList = "folder_first"
-            folder_first.title = folders[index];
-            let first_icon = document.createElement('div')
-            first_icon.classList = "first_icon"
-            let first_title = document.createElement('div')
-            first_title.classList = "first_title"
-
-            if (parsed_folder.name == "") {//root drive on windows
-                first_title.innerText = folders[index];
-                first_title.style.color = 'rgb(255,0,0)';
-                folder_first.title = 'Scanning whole drives not recommended';
-            } else {
-                first_title.innerText = parsed_folder.name;
-            }
-
-            let first_select_cancel_btn = document.createElement('div')
-            first_select_cancel_btn.classList = "first_select_cancel_btn"
-            first_select_cancel_btn.title = "Remove"
-
-            first_select_cancel_btn.addEventListener('click', function () {
-                console.log(folders)
-                console.log('Removing first folder: ', index)
-                folders.splice(index, 1);//yeets the index i and closes the hole left behind
-                buildfirst_folders()
-            })
-
-            folder_first.appendChild(first_select_cancel_btn)
-            folder_first.appendChild(first_title)
-            folder_first.appendChild(first_icon)
-            document.getElementById('first_setup_folders').appendChild(folder_first)
-        }
-
-        //build add new folder functionality
-        var addnew_first = document.createElement('div')
-        addnew_first.classList = "folder_first"
-        addnew_first.title = " click to add new folders, you can select more than one";
-        var first_icon = document.createElement('div')
-        first_icon.classList = "folder_add_new"
-        var first_title = document.createElement('div')
-        first_title.classList = "first_title"
-        first_title.innerHTML = "Add folders"
-
-        addnew_first.appendChild(first_title)
-        addnew_first.appendChild(first_icon)
-        document.getElementById('first_setup_folders').appendChild(addnew_first)
-        addnew_first.addEventListener('click', function () {//click add new button
-            dialog.showOpenDialog({//dialog in directory selection mode
-                buttonLabel: 'Select music folder',
-                properties: ['openDirectory', 'multiSelections'],
-            }).then((filepath) => {//get filepaths
-                console.log(filepath.filePaths)
-                filepath.filePaths.forEach(mpath => { folders.push(mpath) })//push them into temporary local folder variable
-            }).finally(() => { buildfirst_folders() })//rebuild folders with new data
-        })
-    }
-}
-*/

@@ -8,14 +8,14 @@ const storeinator = new Store
 const mm = require('music-metadata')
 const ffmetadata = require("ffmetadata")
 
-//const NodeID3 = require('node-id3');
+const NodeID3 = require('node-id3');
 //const tray = require('./tray.js');
 
 console.log('Running from:', process.resourcesPath)
 
 let localtable = []
 
-let playlists = [//playlists
+let playlist_files = [//playlist_files
 	/*{
 		path: "path  to playlist file, if any",
 		files: [0, 5, 23, 6, 7]//file indexes
@@ -318,7 +318,7 @@ async function fetch_local_library() {
 										break;
 
 									case ".m3u": case ".pls": case ".xml"://playlist files {M3U , plain text PLS Audio Playlist , XML Shareable Playlist Format}
-										playlists.push(fullfilepath);
+										playlist_files.push(fullfilepath);
 										break;
 
 									default: console.warn('not supported: ', fullfilepath);//not supported music file
@@ -365,9 +365,11 @@ async function pullmetadata(information) {
 
 	console.log(metadata)
 	var thumnaildata = null;
+	let rawpic = null;
 	if (path.extname(information) != ".mp4") {
-		const picture = mm.selectCover(metadata.common.picture) || null;
-		thumnaildata = picture ? `data:${picture.format};base64,${picture.data.toString('base64')}` : null;
+		rawpic = mm.selectCover(metadata.common.picture) || null;
+		thumnaildata = rawpic ? `data:${rawpic.format};base64,${rawpic.data.toString('base64')}` : null;
+		
 	}
 
 	return {
@@ -376,6 +378,7 @@ async function pullmetadata(information) {
 		album: metadata.common.album || "unknown",
 		duration: metadata.format.duration,//durration in seconds
 		image: thumnaildata,//thumbnail data as a string
+		rawpic,
 	}
 }
 
@@ -428,12 +431,26 @@ async function edilocalfile(findex) {
 	})).then(() => { Editor_window.webContents.send('editpath', localtable[findex]) })
 }
 
+
+async function id3read(information){
+	console.log('Pull id3 for :', information)
+
+	if (!isNaN(information)) {
+		information = localtable[information]
+		console.log('is point to: ', information)
+	}
+
+	return NodeID3.read(information)
+
+}
+
 module.exports = { //exported modules
 	pullmetadata,
 	write_file,
 	writemetadata,
 	edilocalfile,
 	//pullrawmetadata,
+	id3read,
 	setontop: async function () {
 		mainWindow.body.setAlwaysOnTop(true)//always on top the window
 	},

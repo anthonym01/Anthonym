@@ -255,16 +255,16 @@
                     metainfo[editableprops[index].name] = editableprops[index].value
                 }
             }
-            console.log('Props to be written: ', metainfo)
+            console.log('Props to be written: ', metainfo, options)
             //metainfo
             //main.writemetadata(editpath, metainfo)
-            writemetadata(editpath, metainfo,options)
+            writemetadata(editpath, metainfo, options)
         }
 
 
         async function writemetadata(filepath, dataobj, options) {
             console.log('Writing: ', dataobj, ' to ', filepath)
-            ffmetadata.write(filepath, dataobj,options, function (err) {
+            ffmetadata.write(filepath, dataobj, options, function (err) {
                 if (err) console.error("Error writing metadata", err);
                 else console.log("Data written");
             });

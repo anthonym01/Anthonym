@@ -159,7 +159,7 @@ window.addEventListener('load', async function () {
 
     console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
 
-    if (localStorage.getItem("Anthonymcfg")) { config_manage.load() }
+    if (localStorage.getItem("Anthonymcfg")) { config.load() }
     UI.initalize()
     player.initalize()
 
@@ -180,26 +180,25 @@ async function maininitalizer() {//Used to start re-startable app functions
 }
 
 let config = {
-    key: "Anthonymcfg",
-    background_blur: 2,//pixels
-    last_played: 0,
-    animations: true,
-    shuffle: false,
-    playbar_icons: true,
-    video_icons: true,
-    repeat: 1,//0 no repeat, 1 repeat all, 2 replay current song
-    favourites: ["I can be the one"]
-}
-
-let config_manage = {
+    data: {
+        key: "Anthonymcfg",
+        background_blur: 2,//pixels
+        last_played: 0,
+        animations: true,
+        shuffle: false,
+        playbar_icons: true,
+        video_icons: true,
+        repeat: 1,//0 no repeat, 1 repeat all, 2 replay current song
+        favourites: ["I can be the one"]
+    },
     save: async function () {//Save the config file
-        console.table('Configuration is being saved', config);
-        localStorage.setItem("Anthonymcfg", JSON.stringify(config));
+        console.table('Configuration is being saved', config.data);
+        localStorage.setItem("Anthonymcfg", JSON.stringify(config.data));
     },
     load: function () {//Load the config file
         console.warn('Configuration is being loaded')
-        config = JSON.parse(localStorage.getItem("Anthonymcfg"))
-        console.table(config)
+        config.data = JSON.parse(localStorage.getItem("Anthonymcfg"))
+        console.table(config.data)
     },
     delete: function () { localStorage.clear("Anthonymcfg") },
 }
@@ -224,7 +223,6 @@ ipcRenderer.on('got_local_library', (event, sentarray) => {//listening on channe
         console.warn('Clapped loading screen after leading files')
     }, 0);
 })
-
 
 let player = {//Playback control
     queue: [],//Play queue randomized from playlist/library
@@ -292,7 +290,7 @@ let player = {//Playback control
         })
 
         //shuffle button
-        switch (config.shuffle) {
+        switch (config.data.shuffle) {
             case false://no shuffle
                 shufflebtn.className = "shufflebtn"
                 shufflebtn.title = "no shuffle"
@@ -301,29 +299,29 @@ let player = {//Playback control
                 shufflebtn.className = "shufflebtn_on"
                 shufflebtn.title = "shuffle"
                 break;
-            default: config.shuffle = false; config_manage.save();
+            default: config.data.shuffle = false; config.save();
 
         }
         shufflebtn.addEventListener('click', function () {
-            switch (config.shuffle) {
+            switch (config.data.shuffle) {
                 case false://no shuffle
                     shufflebtn.className = "shufflebtn_on"
                     shufflebtn.title = "shuffle"
-                    config.shuffle = true;
-                    config_manage.save();
+                    config.data.shuffle = true;
+                    config.save();
                     break;
                 case true:// shuffle
                     shufflebtn.className = "shufflebtn";
                     shufflebtn.title = "no shuffle"
-                    config.shuffle = false;
-                    config_manage.save();
+                    config.data.shuffle = false;
+                    config.save();
                     break;
-                default: config.shuffle = false; config_manage.save();
+                default: config.data.shuffle = false; config.save();
             }
         })
 
         //repeat button
-        switch (config.repeat) {
+        switch (config.data.repeat) {
             case 0://no repeat
                 repeatbtn.className = "repeatbtn_no"
                 repeatbtn.title = "no repeat"
@@ -336,31 +334,31 @@ let player = {//Playback control
                 repeatbtn.className = "repeatbtn_lock"
                 repeatbtn.title = "repeat current song"
                 break;
-            default: config.repeat = 0; config_manage.save();
+            default: config.data.repeat = 0; config.save();
 
         }
 
         repeatbtn.addEventListener('click', function () {
-            switch (config.repeat) {
+            switch (config.data.repeat) {
                 case 0://no repeat
                     repeatbtn.className = "repeatbtn_all"
                     repeatbtn.title = "repeat all"
-                    config.repeat = 1;
-                    config_manage.save();
+                    config.data.repeat = 1;
+                    config.save();
                     break;
                 case 1:// repeat all
                     repeatbtn.className = "repeatbtn_lock";
                     repeatbtn.title = "repeat current song"
-                    config.repeat = 2;
-                    config_manage.save();
+                    config.data.repeat = 2;
+                    config.save();
                     break;
                 case 2://replay current song
                     repeatbtn.className = "repeatbtn_no"
                     repeatbtn.title = "no repeat"
-                    config.repeat = 0;
-                    config_manage.save();
+                    config.data.repeat = 0;
+                    config.save();
                     break;
-                default: config.repeat = 0; config_manage.save();
+                default: config.data.repeat = 0; config.save();
 
             }
         })
@@ -397,7 +395,7 @@ let player = {//Playback control
         /*setTimeout(() => {
             navigator.mediaSession.playbackState = "none";
             
-            player.play(config.last_played, true).then(() => { })
+            player.play(config.data.last_played, true).then(() => { })
             setTimeout(() => {
                 player.pause()
                 player.seekbackward()
@@ -414,7 +412,7 @@ let player = {//Playback control
         console.log('Attempt to play: ', fileindex);
 
         if (now_playing_content.id == null && fileindex == undefined) {//play last known song
-            player.play(config.last_played ? config.last_played : 1);
+            player.play(config.data.last_played ? config.data.last_played : 1);
             setTimeout(() => { player.scroll_to_current() }, 500);
             return 0;
         }
@@ -521,14 +519,14 @@ let player = {//Playback control
                     //playback of loaded song file sucessfull
                     player.playstate = true;//now playing and play pause functionality
                     now_playing_content.id = Number(fileindex);//remove if you want a brain ache
-                    config.last_played = Number(fileindex);
+                    config.data.last_played = Number(fileindex);
                     player.updatemetadata(fileindex);
                     ipcRenderer.send('Play_msg', path.basename(main.get.localfile(fileindex)), 'pause')//Send playing song to main
                     playbtn.classList = "pausebtn"
                     playbtn.title = "pause"
                     player.start_seeking()
                     console.log('Playing: ', main.get.localfile(fileindex));
-                    config_manage.save();
+                    config.save();
                 }
             });
 
@@ -560,7 +558,7 @@ let player = {//Playback control
     next: async function () {//Play next song in que if any
         console.log('Play Next');
 
-        switch (config.repeat) {
+        switch (config.data.repeat) {
             case 0://no repeat
                 break;
             case 1:// repeat all
@@ -576,7 +574,7 @@ let player = {//Playback control
         //prototype shuffle
         let nextsong;
 
-        if (config.shuffle == true) {//the next song is choosen at random
+        if (config.data.shuffle == true) {//the next song is choosen at random
             nextsong = utils.rand_number(main.get.localtable_length() - 1, 0, now_playing_content.id);
         } else {//next song inline unless at the end
             nextsong = Number(now_playing_content.id + 1)
@@ -615,15 +613,21 @@ let player = {//Playback control
     start_seeking: async function () {
         console.log('start seeking')
         player.stop_seeking();
-        player.seekterval = setInterval(() => {
-            let seeked = player.stream1.seek()
+        player.seekterval = setInterval(async () => {
+            let seeked = ~~(player.stream1.seek())
             song_progress_bar.value = seeked;
-            /*navigator.mediaSession.setPositionState({
-                duration: now_playing_content.duration,
+            navigator.mediaSession.setPositionState({
+                duration: ~~(now_playing_content.duration),
                 playbackRate: 1,
                 position: seeked,
-            });*/
+            });
+
         }, 1000)
+        /*navigator.mediaSession.setPositionState({
+            duration: backgroundvideo.duration,
+            playbackRate: backgroundvideo.playbackRate,
+            position: backgroundvideo.currentTime,
+        })*/
     },
     stop_seeking: function () {
         console.log('stop seeking')
@@ -657,7 +661,7 @@ let player = {//Playback control
         song_progress_bar.max = metadata.duration;
 
         if (metadata.image != null) {
-            console.log('Cover art info: ', metadata.image)
+            //console.log('Cover art info: ', metadata.image)
             document.getElementById('coverartsmall').src = metadata.image;
             backgroundmaskimg.src = metadata.image;
             backgroundmaskimg.style.display = "block";
@@ -668,7 +672,7 @@ let player = {//Playback control
                 document.getElementById('tbuttonholder').className = "tbuttonholder"
             }
 
-            if (config.background_blur == 0) {//strech song totle as needed
+            if (config.data.background_blur == 0) {//strech song totle as needed
                 document.getElementById('songdetailcontainer').classList = "songdetailcontainer_alt";
             } else {
                 document.getElementById('songdetailcontainer').classList = "songdetailcontainer";
@@ -678,9 +682,20 @@ let player = {//Playback control
                 title: metadata.title,
                 artist: metadata.artist,
                 album: metadata.album,
+                /*artwork: [
+                    { src: URL.createObjectURL(new Blob([metadata.rawpic.data], { type: metadata.rawpic.format })), sizes: '64x64', type: 'image/jpg' },
+                ],*/
+                artwork: [
+                    { src: 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
+                    { src: 'https://dummyimage.com/128x128', sizes: '128x128', type: 'image/png' },
+                    { src: 'https://dummyimage.com/192x192', sizes: '192x192', type: 'image/png' },
+                    { src: 'https://dummyimage.com/256x256', sizes: '256x256', type: 'image/png' },
+                    { src: 'https://dummyimage.com/384x384', sizes: '384x384', type: 'image/png' },
+                    { src: 'https://dummyimage.com/512x512', sizes: '512x512', type: 'image/png' },
+                ]
             });
 
-           // ipcRenderer.send('new_icon',metadata.image)
+            // ipcRenderer.send('new_icon',metadata.image)
 
         } else {
             //use placeholder image
@@ -702,9 +717,17 @@ let player = {//Playback control
                 title: metadata.title,
                 artist: metadata.artist,
                 album: metadata.album,
-                artwork: [
+                /*artwork: [
                     { src: './img/icon.png', sizes: '64x64', type: 'image/png' },
-                ],
+                ],*/
+                artwork: [
+                    { src: 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
+                    { src: 'https://dummyimage.com/128x128', sizes: '128x128', type: 'image/png' },
+                    { src: 'https://dummyimage.com/192x192', sizes: '192x192', type: 'image/png' },
+                    { src: 'https://dummyimage.com/256x256', sizes: '256x256', type: 'image/png' },
+                    { src: 'https://dummyimage.com/384x384', sizes: '384x384', type: 'image/png' },
+                    { src: 'https://dummyimage.com/512x512', sizes: '512x512', type: 'image/png' },
+                ]
             });
         }
 
@@ -850,7 +873,7 @@ let player = {//Playback control
             {
                 label: "add to favourites",
                 type: "normal",
-                click() { }
+                click() { playlistmanager.addtofavourite(fileindex); }
             },
             {
                 label: "add to playlist",
@@ -912,6 +935,9 @@ let UI = {
         //grab desktop wallpaper
         UI.get_desktop_wallpaper().then((wallpaperpath) => { mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')` })
 
+        document.getElementById('library_btn').addEventListener('click', function () { UI.navigate.main_library_view() }, false)
+        document.getElementById('favourits_btn').addEventListener('click', function () { UI.navigate.favourits_view() }, false)
+
         //animations switch trigger
         document.getElementById('Animations_btn').addEventListener('click', function () { UI.settings.animation.flip() })
 
@@ -942,17 +968,17 @@ let UI = {
         document.getElementById('setting_view').addEventListener('mouseenter', function () { UI.overpain.hide() })
 
         //background blur
-        backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
-        document.getElementById('background_blur_put').value = config.background_blur;
-        document.getElementById('bluroutsight').innerHTML = `${config.background_blur}px`;
+        backgroundmaskimg.style.filter = `blur(${config.data.background_blur}px)`;
+        document.getElementById('background_blur_put').value = config.data.background_blur;
+        document.getElementById('bluroutsight').innerHTML = `${config.data.background_blur}px`;
         document.getElementById('background_blur_put').addEventListener('change', async function () {
-            config.background_blur = this.value;
-            config_manage.save();
+            config.data.background_blur = this.value;
+            config.save();
             UI.blurse()
         }, false)
 
         document.getElementById('background_blur_put').addEventListener('input', async function () {
-            config.background_blur = this.value;
+            config.data.background_blur = this.value;
             UI.blurse()
         }, false)
 
@@ -966,38 +992,39 @@ let UI = {
 
                 if (ev.deltaY < 0) {
                     //scroll up
-                    if (config.background_blur >= 100) {
-                        config.background_blur = 100;
+                    if (config.data.background_blur >= 100) {
+                        config.data.background_blur = 100;
 
                     } else {
-                        config.background_blur++
+                        config.data.background_blur++
 
                     }
                 } else {
                     //scroll down
-                    if (config.background_blur <= 0) {
-                        config.background_blur = 0;
+                    if (config.data.background_blur <= 0) {
+                        config.data.background_blur = 0;
 
                     } else {
-                        config.background_blur--
+                        config.data.background_blur--
 
                     }
                 }
-                document.getElementById('bluroutsight').innerHTML = `${config.background_blur}px`;
-                document.getElementById('background_blur_put').value = config.background_blur;
+                document.getElementById('bluroutsight').innerHTML = `${config.data.background_blur}px`;
+                document.getElementById('background_blur_put').value = config.data.background_blur;
                 UI.blurse()
             }
 
         }, false)
     },
     navigate: {
-        main_library_view: function () {
+        main_library_view: async function () {
             console.log('Navigate main library')
             document.getElementById('setting_view').className = "setting_view"
             main_library_view.style.display = "block";
+            document.getElementById('favourits_view').style.display = "none"
             Menupannel_main.style.display = "block";
         },
-        setting_view: function () {
+        setting_view: async function () {
             console.log('Navigate settings')
             if (main_library_view.style.display == "none") {
                 this.main_library_view();
@@ -1005,7 +1032,16 @@ let UI = {
             }
             document.getElementById('setting_view').className = "setting_view_active"
             main_library_view.style.display = "none";
+
+            document.getElementById('favourits_view').style.display = "none"
             Menupannel_main.style.display = "none";
+        }, favourits_view: async function () {
+            console.log('Navigate favourits library')
+            document.getElementById('setting_view').className = "setting_view"
+            main_library_view.style.display = "none";
+            document.getElementById('favourits_view').style.display = "block"
+            Menupannel_main.style.display = "block";
+            playlistmanager.buildfavourites()
         }
     },
     settings: {
@@ -1015,29 +1051,29 @@ let UI = {
                 if (process.platform != "linux" && systemPreferences.getAnimationSettings().shouldRenderRichAnimation == false) {//animations preffered OFF by system
                     notify.new('System over-rule', 'Animations dissabled by Your Systems devices preferences');
                 } else {
-                    if (config.animations == true) {
+                    if (config.data.animations == true) {
                         //turn off the switch
-                        config.animations = false
+                        config.data.animations = false
                         console.warn('animations dissabled');
                     } else {
                         //turn on the witch
-                        config.animations = true
+                        config.data.animations = true
                         console.warn('animations enabled');
                     }
                 }
 
-                config_manage.save();
+                config.save();
                 this.setpostition();
             },
             setpostition: function () {
                 switch (process.platform) {
                     case "linux"://Linux && free BSD
-                        if (config.animations == true) { mation() }
+                        if (config.data.animations == true) { mation() }
                         else { nomation() }
                         break;
                     default://Mac OS && windows
                         if (systemPreferences.getAnimationSettings().shouldRenderRichAnimation == true) {//animations preffered by system only works on windows and wackOS
-                            if (config.animations == true) { mation() } else { nomation() }
+                            if (config.data.animations == true) { mation() } else { nomation() }
                         } else { nomation() }//system preffers no animations
                 }
                 function mation() {
@@ -1209,13 +1245,13 @@ let UI = {
             overpainelm.className = "overpain_active"
             setTimeout(() => { searchput.focus(); searchput.select() }, 100);
             searchput.style.display = "block";
-            document.getElementById('main_library_view').style.filter = `blur(${config.background_blur}px)`;
-            //document.getElementById('searchbox').style.width = `calc(100% - 15rem + ${config.background_blur})`;
+            document.getElementById('main_library_view').style.filter = `blur(${config.data.background_blur}px)`;
+            //document.getElementById('searchbox').style.width = `calc(100% - 15rem + ${config.data.background_blur})`;
         },
     },
     blurse: async function () {
-        backgroundmaskimg.style.filter = `blur(${config.background_blur}px)`;
-        document.getElementById('bluroutsight').innerHTML = `${config.background_blur}px`;
+        backgroundmaskimg.style.filter = `blur(${config.data.background_blur}px)`;
+        document.getElementById('bluroutsight').innerHTML = `${config.data.background_blur}px`;
     },
     unblurse: async function () {
         backgroundmaskimg.style.filter = `blur(0)`;
@@ -1238,5 +1274,30 @@ let UI = {
     },
 }
 
+let playlistmanager = {
+    addtofavourite: async function (datum) {
+        console.log('Add to favourite ', datum)
+        config.data.favourites.push(path.basename(main.get.localfile(datum)))
+        config.save()
+    },
+    buildfavourites: async function () {
+        document.getElementById('favourits_view').innerHTML = "";
 
-async function first_settup() {require('../Windows/js/first_settup.js').first_settup()}
+        for (let fileindex in config.data.favourites) {
+
+            let pattern = config.data.favourites[fileindex];
+            console.log('favourite of ', pattern)
+            for (let f2index in main.get.localtable()) {
+                if (path.basename(main.get.localfile(f2index))==pattern) {
+                    player.build_songbar(f2index).then((songbar) => { document.getElementById('favourits_view').appendChild(songbar); })
+                }
+            }
+
+        }
+
+
+
+    }
+}
+
+async function first_settup() { require('../Windows/js/first_settup.js').first_settup() }

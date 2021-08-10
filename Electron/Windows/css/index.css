@@ -657,17 +657,21 @@ body {
     /*top and bottom*/
     width: 15rem;
     z-index: 3;
-    display: flex;
+    display: block;
 }
 
 .menupa_btn {
+    position: relative;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    margin-left: 0rem;
+    margin-right: 0rem;
     height: 3.5rem;
     width: 100%;
     background-color: transparent;
     border-radius: 1rem;
     cursor: pointer;
     transition: background-color 300ms;
-
 }
 
 .menupa_btn:hover {
@@ -680,7 +684,7 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    background-image: url('../img/icon.png');
+    background-image: url('../img/icons/icon@256x256.png');
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;

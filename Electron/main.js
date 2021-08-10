@@ -1,13 +1,14 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain } = require('electron');
-const path = require('path');
-const url = require('url');
-const fs = require('fs');
-const windowStateKeeper = require('electron-window-state');
-const Store = require('electron-store');
-const storeinator = new Store;
-const mm = require('music-metadata');
-const ffmetadata = require("ffmetadata");
-const NodeID3 = require('node-id3');
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain } = require('electron')
+const path = require('path')
+const url = require('url')
+const fs = require('fs')
+const windowStateKeeper = require('electron-window-state')
+const Store = require('electron-store')
+const storeinator = new Store
+const mm = require('music-metadata')
+const ffmetadata = require("ffmetadata")
+
+//const NodeID3 = require('node-id3');
 //const tray = require('./tray.js');
 
 console.log('Running from:', process.resourcesPath)
@@ -181,12 +182,6 @@ let tray = {
 			tray.update(now_playing, state)
 		}
 	}),
-	new_icon: ipcMain.on('new_icon', (event, image) => { //Receive Song data from mainwindow and apply to tray
-		/*console.log('new tray icon: ', image, /*event);*/
-		if (tray.body != null) {
-			tray.seticon(image)
-		}
-	}),
 	create: async function () {
 		console.log('Create tray')
 		tray.body = new Tray(path.join(__dirname, '/build/icons/256x256.png'))
@@ -262,7 +257,7 @@ let tray = {
 //clap an entire file buffer down
 async function write_file(filepath, data) {
 	console.log(filepath, data)
-	fs.writeFile(filepath, data, 'utf8', (err) => { //write config to file as json
+	fs.writeFile(filepath, data, (err) => { //write config to file as json
 		if (err) {
 			alert("An error occurred creating the file" + err.message)
 		} else {
@@ -384,23 +379,34 @@ async function pullmetadata(information) {
 	}
 }
 
+/*
+async function pullrawmetadata(information){
+	
+}
+*/
+
 async function writemetadata(filepath, dataobj) {
 	console.log('Writing: ', dataobj, ' to ', filepath)
+	ffmetadata.write(filepath, dataobj, function(err) {
+		if (err) console.error("Error writing metadata", err);
+		else console.log("Data written");
+	});
 }
 
 async function edilocalfile(findex) {
 	console.log('Edit: ', localtable[findex])
+
 	const { screenwidth, screenheight } = screen.getPrimaryDisplay().workAreaSize //gets screen size
 
-	const Editor_windowbody = new BrowserWindow({ //make main window
-		width: screenwidth / 3,
-		height: screenheight / 3,
+	let Editor_window = new BrowserWindow({ //make main window
+		width: screenwidth / 2,
+		height: screenheight / 2,
 		minWidth: 400,
 		minHeight: 300,
 		backgroundColor: '#000000',
 		frame: true,
 		center: true,
-		alwaysOnTop: true,
+		alwaysOnTop: false,
 		icon: path.join(__dirname, '/build/icons/256x256.png'), //some linux window managers cant process due to bug
 		title: `Edit ${localtable[findex]}`,
 		show: true,
@@ -413,19 +419,13 @@ async function edilocalfile(findex) {
 			worldSafeExecuteJavaScript: true,
 			contextIsolation: false
 		},
-	}).webContents.send('editpath', localtable[findex])
+	})
 
-	Editor_windowbody.loadURL(url.format({
+	Editor_window.loadURL(url.format({
 		pathname: path.join(__dirname, '/Windows/editor.html'),
 		protocol: 'file:',
 		slashes: true
-	}))
-
-	Editor_windowbody.on('close', function () {
-		Editor_windowbody.destroy()
-	})
-
-	Editor_windowbody.webContents.send('editpath', localtable[findex])
+	})).then(() => { Editor_window.webContents.send('editpath', localtable[findex]) })
 }
 
 module.exports = { //exported modules
@@ -433,6 +433,7 @@ module.exports = { //exported modules
 	write_file,
 	writemetadata,
 	edilocalfile,
+	//pullrawmetadata,
 	setontop: async function () {
 		mainWindow.body.setAlwaysOnTop(true)//always on top the window
 	},

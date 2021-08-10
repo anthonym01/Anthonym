@@ -579,7 +579,7 @@ let player = {//Playback control
         if (config.shuffle == true) {//the next song is choosen at random
             nextsong = utils.rand_number(main.get.localtable_length() - 1, 0, now_playing_content.id);
         } else {//next song inline unless at the end
-            nextsong = Number(now_playing_content.id - 1)
+            nextsong = Number(now_playing_content.id + 1)
         }
 
         player.play(nextsong)
@@ -613,7 +613,7 @@ let player = {//Playback control
         }
     },
     start_seeking: async function () {
-        console.warn('start seeking')
+        console.log('start seeking')
         player.stop_seeking();
         player.seekterval = setInterval(() => {
             let seeked = player.stream1.seek()
@@ -626,7 +626,7 @@ let player = {//Playback control
         }, 1000)
     },
     stop_seeking: function () {
-        console.warn('stop seeking')
+        console.log('stop seeking')
         clearInterval(player.seekterval)
         player.seekterval = null;
     },
@@ -679,6 +679,8 @@ let player = {//Playback control
                 artist: metadata.artist,
                 album: metadata.album,
             });
+
+           // ipcRenderer.send('new_icon',metadata.image)
 
         } else {
             //use placeholder image
@@ -857,7 +859,7 @@ let player = {//Playback control
             },
             { type: "separator" },
             {
-                label: "Edit",
+                label: "Edit properties",
                 click() { main.edilocalfile(fileindex) }
             },
             {
@@ -1235,3 +1237,6 @@ let UI = {
         return returned;
     },
 }
+
+
+async function first_settup() {require('../Windows/js/first_settup.js').first_settup()}

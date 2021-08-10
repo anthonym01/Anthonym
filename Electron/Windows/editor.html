@@ -8,25 +8,267 @@
     <meta name="author" content="Samuel A. Matheson">
     <meta charset="utf-8">
     <link rel="stylesheet" type="text/css" href="css/index.css">
-    <style type="text/css">
-        
+    <style>
+        body,
+        html {
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #coverart {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: auto;
+            width: 30%;
+        }
+
+        #datablocker {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 70%;
+            box-sizing: border-box;
+            height: fit-content;
+            height: 100%;
+            overflow-y: scroll;
+            overflow-x: hidden;
+
+        }
+
+        .datablock_containment,
+        .datablock_containment_large {
+            position: relative;
+            height: fit-content;
+            width: 100%;
+            height: 4.2rem;
+            box-sizing: border-box;
+        }
+
+        .datablock_containment_large {
+            height: 12rem;
+        }
+
+        .datum_title {
+            position: absolute;
+            top: 0.1rem;
+            left: 0.5rem;
+            font-size: 1.4rem;
+            height: 1.5rem;
+            max-width: calc(100% - 2rem);
+            white-space: nowrap;
+            text-align: center;
+            width: fit-content;
+            transition: left 300ms 100ms;
+        }
+
+        .datablock_containment:hover .datum_title {
+            left: 1rem;
+        }
+
+        .datumput,
+        .datumput_large {
+            position: absolute;
+            left: 0.5rem;
+            top: 1.9rem;
+            width: calc(100% - 1rem);
+            appearance: none;
+            outline: none;
+            height: 2rem;
+            font-size: 1.2rem;
+            /*width: fit-content;*/
+            border-radius: 0.5rem;
+            box-sizing: border-box;
+            border: none;
+            padding: 0.2rem;
+            border-bottom: 0.1rem solid var(--accent_color);
+        }
+
+        .datumput_large {
+            height: 10rem;
+        }
     </style>
     <title>Edit file metadata</title>
 </head>
 
 <body>
-    <div>
+    <img id="coverart" src="" alt="cover art"></img>
+    <div id="datablocker">
+        <!--
+        <div class="datablock_containment">
+            <div class="datum_title">Title</div>
+            <input type="text" class="datumput">
+        </div>
+        -->
     </div>
-
-    <script type="text/javascript">
+    <script>
         const { ipcRenderer, remote, clipboard } = require('electron')
         const { Menu } = remote
         const main = remote.require('./main')
         const path = require('path')
 
+        const ffmetadata = require("ffmetadata")
+        const mm = require('music-metadata')
+        //const fs = require('fs')
+
+
+        //Main body menu
+        const menu_body = new Menu.buildFromTemplate([
+            { role: 'reload' },
+            { type: 'separator' },
+            { role: 'zoomIn' },
+            { role: 'resetZoom' },
+            { role: 'zoomOut' },
+            { type: 'separator' },
+            { role: 'toggledevtools' },
+        ]);
+
+        //Menu.setApplicationMenu(menu_body);
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            menu_body.popup({ window: remote.getCurrentWindow() })
+        }, false);
+
+
         ipcRenderer.on('editpath', (event, fpath) => {
+            console.log('Told to edit ', fpath)
             document.title = path.basename(fpath)
+            editpath = fpath
+            pullmmmetadata(fpath)
+            pullffmpgdata(fpath)
         })
+
+        let editpath = null;
+        let editableprops = [];
+        let coverart = null;
+
+        async function pullmmmetadata(florpa) {
+
+            const metadata = await mm.parseFile(florpa, { duration: false });
+
+            //const metadata = await main.pullrawmetadata(florpa);
+
+            const picture = mm.selectCover(metadata.common.picture) || null;
+            let thumnaildata = picture ? `data:${picture.format};base64,${picture.data.toString('base64')}` : null;
+
+            document.getElementById('coverart').src = thumnaildata;
+
+            main.write_file(path.join(process.resourcesPath, `coverartchae.jpg`), picture.data)
+            //coverart = URL.createObjectURL(new Blob([picture.data], { type: picture.format }))
+
+        }
+
+        async function pullffmpgdata(information) {
+            console.log('Pull metadat for :', information)
+
+            if (!isNaN(information)) {
+                information = localtable[information]
+                console.log('is point to: ', information)
+            }
+
+            ffmetadata.read(information, function (err, data) {
+                try {
+                    if (err) throw err;
+
+                    console.log(data);
+                    //deconstruck props and pass to constructor
+                    constructpropertys(data)
+                } catch (err) {
+                    console.error("Error reading metadata", err);
+                }
+            })
+
+            async function constructpropertys(props) {
+                /*
+                    ## Note:
+                    - description and comment are often long if present
+                    - major_brand (file type),compatible_brands and encoder shouldn't be edited
+                */
+
+                if ('title' in props) { buildprop('title', props) }
+                if ('artist' in props) { buildprop('artist', props) }
+                if ('album' in props) { buildprop('album', props) }
+                if ('date' in props) { buildprop('date', props) }
+                if ('description' in props) { buildprop('description', props) }
+                //if ('comment' in props) { buildprop('comment', props) }
+
+                /*for (let prop in props) {
+                    if (prop != 'title' && prop != 'artist' && prop != 'album' && prop != 'date' && prop != 'description' && prop != 'comment') {
+                        buildprop(prop, props)
+                    }
+                }*/
+            }
+
+            async function buildprop(prop, props) {
+                editableprops.prop = props[prop];
+                let datablock_containment = document.createElement('div')
+
+                let datum_title = document.createElement('div')
+                datum_title.className = "datum_title"
+                datum_title.innerHTML = prop
+                let datumput;
+
+                switch (prop) {
+                    case 'date':
+                        datumput = document.createElement('input')
+                        datumput.className = "datumput"
+                        //datumput.type = "date";
+                        datumput.type = "text";
+                        datablock_containment.className = "datablock_containment"
+
+                        datumput.value = props[prop]
+                        console.log(`proced date: ${props[prop].slice(0, 4)}-${props[prop].slice(4, 6)}-${props[prop].slice(6, 8)}`)
+                        break;
+                    case 'description': case 'comment':
+                        datumput = document.createElement('textarea')
+                        datumput.className = "datumput_large"
+                        //datumput.type = "date";
+                        datablock_containment.className = "datablock_containment_large"
+
+                        datumput.value = props[prop];
+                        break;
+                    default:
+                        datumput = document.createElement('input')
+                        datumput.className = "datumput"
+                        datumput.type = "text"; datablock_containment.className = "datablock_containment"
+
+                        datumput.value = props[prop];
+                }
+
+                datumput.name = prop
+
+                datablock_containment.appendChild(datum_title)
+                datablock_containment.appendChild(datumput)
+                document.getElementById('datablocker').appendChild(datablock_containment)
+                editableprops.push(datumput)
+            }
+
+            //console.log(metadata)
+
+        }
+
+        async function write_props() {
+            let metainfo = {};
+            let options = { attachments: [path.join(process.resourcesPath, `coverartchae.jpg`)] }
+            for (let index in editableprops) {
+                if (index != undefined && editableprops[index].value != undefined) {
+                    metainfo[editableprops[index].name] = editableprops[index].value
+                }
+            }
+            console.log('Props to be written: ', metainfo)
+            //metainfo
+            //main.writemetadata(editpath, metainfo)
+            writemetadata(editpath, metainfo,options)
+        }
+
+
+        async function writemetadata(filepath, dataobj, options) {
+            console.log('Writing: ', dataobj, ' to ', filepath)
+            ffmetadata.write(filepath, dataobj,options, function (err) {
+                if (err) console.error("Error writing metadata", err);
+                else console.log("Data written");
+            });
+        }
 
     </script>
 </body>

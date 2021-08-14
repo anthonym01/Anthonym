@@ -795,21 +795,21 @@ let player = {//Playback control
             //functionality(song_bar, fiso);
             player.songbarmenu_build(song_bar, fiso)
 
-
-            /* Clean up repitiition when you feel better */
-            setTimeout(async () => {
-                if (utils.isElementInViewport(song_bar)) {
-                    fillmetadata(song_bar, fiso, song_title);
-                }
-            }, 1000);
-
             let observer = new IntersectionObserver(async function (entries) {
                 if (entries[0].isIntersecting) {
                     observer.disconnect()
                     fillmetadata(song_bar, fiso, song_title);
                 }
-            }, { root: null, rootMargin: '4000px 4000px 4000px 4000px', threshold: 0.1 });
+            }, { root: null, rootMargin: '4000px', threshold: 0.1 });
             observer.observe(song_bar)
+
+
+            setTimeout(async () => {
+                if (utils.isElementInViewport(song_bar)) {
+                    fillmetadata(song_bar, fiso, song_title);
+                    observer.disconnect()
+                }
+            }, 1000);
 
             return song_bar;
 
@@ -1277,26 +1277,43 @@ let UI = {
 let playlistmanager = {
     addtofavourite: async function (datum) {
         console.log('Add to favourite ', datum)
+        //check for duplicate then add
         config.data.favourites.push(path.basename(main.get.localfile(datum)))
         config.save()
     },
     buildfavourites: async function () {
         document.getElementById('favourits_view').innerHTML = "";
 
-        for (let fileindex in config.data.favourites) {
-
-            let pattern = config.data.favourites[fileindex];
-            console.log('favourite of ', pattern)
-            for (let f2index in main.get.localtable()) {
-                if (path.basename(main.get.localfile(f2index))==pattern) {
+        /*for (let f2index in main.get.localtable()) {
+            for (let fileindex in config.data.favourites) {
+                let pattern = config.data.favourites[fileindex];
+                if (path.basename(main.get.localfile(f2index)) == pattern) {
                     player.build_songbar(f2index).then((songbar) => { document.getElementById('favourits_view').appendChild(songbar); })
+                    console.log('favourite of ', pattern)
                 }
             }
+        }*/
 
+        const localtable = main.get.localtable()
+
+        for (let f2index in config.data.favourites) {
+            //let pattern = config.data.favourites[fileindex];
+            let found = localtable.findIndex(data => path.basename(data) == config.data.favourites[f2index]) || null;
+            if (found != null && found != undefined && found != -1) {
+                player.build_songbar(found).then((songbar) => { document.getElementById('favourits_view').appendChild(songbar); })
+                console.log('favourite of ', found)
+            }
         }
 
-
-
+        /*
+        for (let f2index in main.get.localtable()) {
+            //let pattern = config.data.favourites[fileindex];
+            let found = config.data.favourites.findIndex(data => data == path.basename(main.get.localfile(f2index))) || null;
+            if (found != null && found != undefined && found != -1) {
+                player.build_songbar(found).then((songbar) => { document.getElementById('favourits_view').appendChild(songbar); })
+                console.log('favourite of ', found)
+            }
+        }*/
     }
 }
 

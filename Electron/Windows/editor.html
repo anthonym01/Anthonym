@@ -134,8 +134,8 @@
             console.log('Told to edit ', fpath)
             document.title = path.basename(fpath)
             editpath = fpath
-            pullmmmetadata(fpath)
             pullffmpgdata(fpath)
+            pullmmmetadata(fpath)
         })
 
         let editpath = null;

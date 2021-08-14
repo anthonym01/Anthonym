@@ -361,7 +361,7 @@ async function pullmetadata(information) {
 		console.log('is point to: ', information)
 	}
 
-	let metadata = await mm.parseFile(information, { duration: false })
+	let metadata = await mm.parseFile(information, { duration: false,skipCovers:false })
 
 	console.log(metadata)
 	var thumnaildata = null;

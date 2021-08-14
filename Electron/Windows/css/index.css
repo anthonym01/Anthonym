@@ -1046,18 +1046,27 @@ body {
     height: calc(100% - 30px - 7rem);
     /*top and bottom*/
     width: 100%;
+    max-width: 100vw;
     display: none;
-    overflow-x: hidden;
-    overflow-y: scroll;
+    /*overflow-x: hidden;
+    overflow-y: scroll;*/
+    overflow-x: scroll;
+    overflow-y: hidden;
     background-origin: content-box;
     z-index: 5;
+    /*columns: 2 45vw;
+    column-gap: 1rem;*/
 }
 
 .setting_view_active {
-    display: flex;
+    /*display: block;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: wrap;*/
     justify-content: space-around;
+
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
 }
 
 .setting_block {
@@ -1065,14 +1074,15 @@ body {
     min-width: 25vw;
     min-height: 5rem;
     height: fit-content;
-    width: 49%;
+    width: 49vw;
     box-sizing: border-box;
     padding: 0.4rem;
-    margin: 0.2rem;
+    margin: 1rem;
     background-color: var(--eightest_background);
     box-shadow: 0rem 0rem 0rem 0rem var(--accent_color);
     border-radius: 0.3rem;
     transform: none;
+    display: block;
     transition: transform 300ms, background-color 300ms, box-shadow 300ms;
 }
 

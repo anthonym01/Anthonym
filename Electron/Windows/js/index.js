@@ -4,9 +4,8 @@
 */
 
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me'
-
 const { ipcRenderer, remote, clipboard } = require('electron')
-const { Menu, nativeTheme, systemPreferences, shell } = remote
+const { Menu, nativeTheme, systemPreferences } = remote
 const main = remote.require('./main')
 
 const path = require('path')
@@ -527,6 +526,9 @@ let player = {//Playback control
                     player.start_seeking()
                     console.log('Playing: ', main.get.localfile(fileindex));
                     config.save();
+                },
+                onloaderror: function () {
+
                 }
             });
 
@@ -602,13 +604,6 @@ let player = {//Playback control
         now_playing_content.id = now_playing_content.id - 1;
 
         player.scroll_to_current()
-    },
-    mute: async function () {
-        if (Howler._muted == true) {
-            Howler.mute(false)
-        } else {
-            Howler.mute(true)
-        }
     },
     start_seeking: async function () {
         console.log('start seeking')
@@ -923,6 +918,24 @@ let player = {//Playback control
             }
         }
     },
+    setvolume: async function (volume) {
+        Howler.volume(volume);
+    },
+    mute: async function () {
+        if (Howler._muted == true) {
+            Howler.mute(false)
+        } else {
+            Howler.mute(true)
+        }
+    },
+    /*
+        rate Number 1.0
+        The rate of playback. 0.5 to 4.0, with 1.0 being normal speed.
+
+
+
+    */
+
 }
 
 let UI = {

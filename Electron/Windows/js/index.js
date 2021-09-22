@@ -1,10 +1,31 @@
-/*
-    By samuel A. Matheson
-    samuelmatheson15@gmail.com
-*/
+
+console.log("                       dxxxxdoc,.                  ");
+console.log("                       NMMMMMMMMMMXkc.             ");
+console.log("           .:          OMMMMMMMMMMMMMMNd.          ");
+console.log("         ,0MM;         oMMMMMMMMMMMMMMMMMK;        ");
+console.log("       .KMMMMW.        :MMMMMMMMMMMMMMMMMMMK'      ");
+console.log("      oMMMMMMMX        'MMMMMMMMMMMMMMMW0dc'       ");
+console.log("     OMMMMMMMMMO       .MMMMMMMMMMWOo;.            ");
+console.log("    xMMMMMMMMMMMx       MMMMMMKd;.                 ");
+console.log("   .MMMMMMMMMMMMMo      MMWk;                      ");
+console.log("   KMMMMMMMMMMMMMMo    .MM.                        ");
+console.log("   MMMMMMMMMMMMMMMMk   :MMNOxdollloooddxkkO0KXNWM  ");
+console.log("   MMMMMMMMMMMMMMMMMNdoWMMMMWloNMMMMMMMMMMMMMMMMM  ");
+console.log("   WNXK00OkxddoollllllodONMMc   xMMMMMMMMMMMMMMMM  ");
+console.log('                         .WM.    lMMMMMMMMMMMMMMl  ');
+console.log('                       ;kWMM.     lMMMMMMMMMMMMM   ');
+console.log('                  .:dKMMMMMM.      dMMMMMMMMMMM.   ');
+console.log('             .;o0WMMMMMMMMMM.       kMMMMMMMMM.    ');
+console.log("        'cxKWMMMMMMMMMMMMMMM,        KMMMMMMN      ");
+console.log('         MMMMMMMMMMMMMMMMMMMc        .NMMMM.       ');
+console.log("           MMMMMMMMMMMMMMMMMd         'MM          ");
+console.log('              MMMMMMMMMMMMMM0                      ');
+console.log('                  dMMMMMMMMMW                      ');
+console.log('By samuel A. Matheson (samuelmatheson15@gmail.com) Anthonym')
 
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me'
-const { ipcRenderer, remote, clipboard } = require('electron')
+
+const { ipcRenderer, remote, clipboard, shell } = require('electron')
 const { Menu, nativeTheme, systemPreferences } = remote
 const main = remote.require('./main')
 
@@ -29,6 +50,31 @@ const searchput = document.getElementById('searchput')
 const overpainelm = document.getElementById('overpain')//pannel for queue and search
 const searchbox = document.getElementById('searchbox')
 const coverartsmall = document.getElementById('coverartsmall')
+
+
+//window loads
+window.addEventListener('load', async function () {
+
+    setTimeout(() => {
+        document.body.removeChild(document.getElementById('loading_screen'))
+        document.getElementById('songTitle').innerHTML = "Ready to Vibe"
+        console.warn('Clapped loading screen after 10 second timeout')
+    }, 10000);//close loading screen
+
+
+
+    console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
+
+    if (localStorage.getItem("Anthonymcfg")) { config.load() }
+    UI.initalize()
+    player.initalize()
+
+    maininitalizer()
+
+})
+
+
+
 
 let looking = [];//lookup timers, only search after user stops typing
 
@@ -124,47 +170,6 @@ window.addEventListener('keydown', async function (e) {//keyboard actions
         default: console.log('No action')
     }
 }, false)
-
-//window loads
-window.addEventListener('load', async function () {
-    setTimeout(() => {
-        document.body.removeChild(document.getElementById('loading_screen'))
-        document.getElementById('songTitle').innerHTML = "Ready to Vibe"
-        console.warn('Clapped loading screen after 10 second timeout')
-    }, 10000);//close loading screen
-
-    console.log("                       dxxxxdoc,.                  ");
-    console.log("                       NMMMMMMMMMMXkc.             ");
-    console.log("           .:          OMMMMMMMMMMMMMMNd.          ");
-    console.log("         ,0MM;         oMMMMMMMMMMMMMMMMMK;        ");
-    console.log("       .KMMMMW.        :MMMMMMMMMMMMMMMMMMMK'      ");
-    console.log("      oMMMMMMMX        'MMMMMMMMMMMMMMMW0dc'       ");
-    console.log("     OMMMMMMMMMO       .MMMMMMMMMMWOo;.            ");
-    console.log("    xMMMMMMMMMMMx       MMMMMMKd;.                 ");
-    console.log("   .MMMMMMMMMMMMMo      MMWk;                      ");
-    console.log("   KMMMMMMMMMMMMMMo    .MM.                        ");
-    console.log("   MMMMMMMMMMMMMMMMk   :MMNOxdollloooddxkkO0KXNWM  ");
-    console.log("   MMMMMMMMMMMMMMMMMNdoWMMMMWloNMMMMMMMMMMMMMMMMM  ");
-    console.log("   WNXK00OkxddoollllllodONMMc   xMMMMMMMMMMMMMMMM  ");
-    console.log('                         .WM.    lMMMMMMMMMMMMMMl  ');
-    console.log('                       ;kWMM.     lMMMMMMMMMMMMM   ');
-    console.log('                  .:dKMMMMMM.      dMMMMMMMMMMM.   ');
-    console.log('             .;o0WMMMMMMMMMM.       kMMMMMMMMM.    ');
-    console.log("        'cxKWMMMMMMMMMMMMMMM,        KMMMMMMN      ");
-    console.log('         MMMMMMMMMMMMMMMMMMMc        .NMMMM.       ');
-    console.log("           MMMMMMMMMMMMMMMMMd         'MM          ");
-    console.log('              MMMMMMMMMMMMMM0                      ');
-    console.log('                  dMMMMMMMMMW                      ');
-
-    console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
-
-    if (localStorage.getItem("Anthonymcfg")) { config.load() }
-    UI.initalize()
-    player.initalize()
-
-    maininitalizer()
-
-})
 
 async function maininitalizer() {//Used to start re-startable app functions
     console.log('main initalizer')

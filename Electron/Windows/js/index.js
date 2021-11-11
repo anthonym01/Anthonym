@@ -1269,12 +1269,17 @@ let UI = {
     },
     blurse: async function () {
         backgroundmaskimg.style.filter = `blur(${config.data.background_blur}px)`;
+        backgroundmaskimg.style.height = `calc(100vh + ${config.data.background_blur}px)`;
+        backgroundmaskimg.style.width = `calc(100vw + ${config.data.background_blur}px)`;
+        if (config.data.background_blur > 0) { mainmaskcontainer.style.backgroundImage = "" }
+
         document.getElementById('bluroutsight').innerHTML = `${config.data.background_blur}px`;
     },
     unblurse: async function () {
         backgroundmaskimg.style.filter = `blur(0)`;
     },
     get_desktop_wallpaper: async function () {
+        // get desktop wallpaper with 
         let returned = await wallpaper.get()
             .then((wallpaperpath) => {//gets desktop wallpaper
                 if (path.parse(wallpaperpath).ext !== undefined) {

@@ -142,12 +142,14 @@ let mainWindow = {
 
 		mainWindowState.manage(mainWindow.body); //give window to window manager plugin
 
-		mainWindow.body.on('minimize', function () {
+		mainWindow.body.on('minimize', function (event) {
+			
 			if (config.data.minimize_to_tray == true && tray.body != null) {
 				mainWindow.hide()
 			}
 		})
 	},
+	close:async function(){},
 	hide: async function () {
 		console.log('hide main window')
 		//if (process.platform == 'linux') { create_tray(); }

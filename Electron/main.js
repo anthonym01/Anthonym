@@ -50,6 +50,9 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 	app.on('ready', function () { //App ready to roll
 		app.allowRendererProcessReuse = true; //Allow render processes to be reused
 		mainWindow.create();
+		if (process.platform == "linux") {
+			wallpaper_Window.create()
+		}
 		if (config.data.use_tray == true) { tray.create() }
 	})
 
@@ -143,13 +146,13 @@ let mainWindow = {
 		mainWindowState.manage(mainWindow.body); //give window to window manager plugin
 
 		mainWindow.body.on('minimize', function (event) {
-			
+
 			if (config.data.minimize_to_tray == true && tray.body != null) {
 				mainWindow.hide()
 			}
 		})
 	},
-	close:async function(){},
+	close: async function () { },
 	hide: async function () {
 		console.log('hide main window')
 		//if (process.platform == 'linux') { create_tray(); }
@@ -175,6 +178,52 @@ let mainWindow = {
 		//if (process.platform == 'linux') { tray.destroy(); }
 	}
 };
+
+let wallpaper_Window = {
+	body: null, //defines the window as an abject
+	create: function () {
+		console.log('crat main app Window')
+		const {
+			screenwidth,
+			screenheight
+		} = screen.getPrimaryDisplay().workAreaSize //gets screen size
+
+		wallpaper_Window.body = new BrowserWindow({ //make main window
+			x: 0,
+			y: 0,
+			width: screenwidth,
+			height: screenheight,
+			backgroundColor: '#000000',
+			frame: false,
+			type: "desktop",
+			//center: true, //center the window
+			//alwaysOnTop: false,
+			//icon: path.join(__dirname, '/build/icons/256x256.png'), //some linux window managers cant process due to bug
+			//title: 'Anthonym',
+			show: true,
+			skipTaskbar: true,
+			fullscreen: true,
+			//titleBarStyle: 'hiddenInset',
+			/*webPreferences: {
+				nodeIntegration: true,
+				enableRemoteModule: true,
+				nodeIntegrationInWorker: true,
+				worldSafeExecuteJavaScript: true,
+				contextIsolation: false
+			},*/
+			/*minWidth: 400,
+			minHeight: 300,*/
+		})
+
+		wallpaper_Window.body.loadURL(url.format({
+			pathname: path.join(__dirname, '/Windows/desktop.html'),
+			protocol: 'file:',
+			slashes: true
+		}))
+
+	},
+};
+
 
 let tray = {
 	body: null, //tray value
@@ -363,7 +412,7 @@ async function pullmetadata(information) {
 		console.log('is point to: ', information)
 	}
 
-	let metadata = await mm.parseFile(information, { duration: false,skipCovers:false })
+	let metadata = await mm.parseFile(information, { duration: false, skipCovers: false })
 
 	console.log(metadata)
 	var thumnaildata = null;
@@ -371,7 +420,7 @@ async function pullmetadata(information) {
 	if (path.extname(information) != ".mp4") {
 		rawpic = mm.selectCover(metadata.common.picture) || null;
 		thumnaildata = rawpic ? `data:${rawpic.format};base64,${rawpic.data.toString('base64')}` : null;
-		
+
 	}
 
 	return {
@@ -392,7 +441,7 @@ async function pullrawmetadata(information){
 
 async function writemetadata(filepath, dataobj) {
 	console.log('Writing: ', dataobj, ' to ', filepath)
-	ffmetadata.write(filepath, dataobj, function(err) {
+	ffmetadata.write(filepath, dataobj, function (err) {
 		if (err) console.error("Error writing metadata", err);
 		else console.log("Data written");
 	});
@@ -434,7 +483,7 @@ async function edilocalfile(findex) {
 }
 
 
-async function id3read(information){
+async function id3read(information) {
 	console.log('Pull id3 for :', information)
 
 	if (!isNaN(information)) {

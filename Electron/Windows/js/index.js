@@ -30,7 +30,7 @@ const { ipcRenderer, remote, clipboard, shell } = require('electron')
 //const main = require('../../main')
 
 const path = require('path')
-const wallpaper = require('wallpaper')//
+const wallpaper = require('wallpaper')
 const utils = require('../Windows/js/utils.js')
 const { Howler } = require('howler')
 const thumbnailjs = require('thumbnail-js');

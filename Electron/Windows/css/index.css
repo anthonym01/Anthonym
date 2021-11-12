@@ -176,7 +176,7 @@ body {
     width: 100vw;
     min-width: 100vw;
     position: relative;
-    /*object-fit: cover;*/
+    object-fit: cover;
 }
 
 .background_mask video {

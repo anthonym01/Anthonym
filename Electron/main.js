@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain } = require('electron')
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain, nativeTheme, systemPreferences } = require('electron')
 const path = require('path')
 const url = require('url')
 const fs = require('fs')
@@ -7,9 +7,35 @@ const Store = require('electron-store')
 const storeinator = new Store
 const mm = require('music-metadata')
 const ffmetadata = require("ffmetadata")
+const { info } = require('console')
 
-const NodeID3 = require('node-id3');
+//const NodeID3 = require('node-id3');
 //const tray = require('./tray.js');
+
+//Main body menu
+const menu_body = new Menu.buildFromTemplate([
+	{ role: 'reload' },
+	{ label: 'Refresh Library', click() { maininitalizer() } },
+	{ type: 'separator' },
+	{ role: 'zoomIn' },
+	{ role: 'resetZoom' },
+	{ role: 'zoomOut' },
+	{ type: 'separator' },
+	{ label: 'Contact developer', click() { shell.openExternal(my_website) } },
+	{ role: 'toggledevtools' },
+]);
+
+//text box menu
+const text_box_menu = new Menu.buildFromTemplate([
+	{ role: 'cut' },
+	{ role: 'copy' },
+	{ role: 'paste' },
+	{ role: 'selectAll' },
+	//{ role: 'seperator' },
+	{ role: 'undo' },
+	{ role: 'redo' },
+]);
+
 
 console.log('Running from:', process.resourcesPath)
 
@@ -51,7 +77,7 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 		app.allowRendererProcessReuse = true; //Allow render processes to be reused
 		mainWindow.create();
 		if (process.platform == "linux") {
-			wallpaper_Window.create()
+			//wallpaper_Window.create()
 		}
 		if (config.data.use_tray == true) { tray.create() }
 	})
@@ -93,6 +119,9 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 	ipcMain.on('minimize_btn', () => { mainWindow.minimize() })
 
 	ipcMain.on('Ready_for_action', () => { mainWindow.body.webContents.send('got_local_library', localtable) })//mainwindow is ready for action
+
+	//Menu.setApplicationMenu(menu_body);
+	//Menu.setApplicationMenu(null);
 
 	fetch_local_library()
 
@@ -227,12 +256,6 @@ let wallpaper_Window = {
 
 let tray = {
 	body: null, //tray value
-	Play_msg: ipcMain.on('Play_msg', (event, now_playing, state) => { //Receive Song data from mainwindow and apply to tray
-		console.log('now playing: ', now_playing, state, /*event*/);
-		if (tray.body != null) {
-			tray.update(now_playing, state)
-		}
-	}),
 	create: async function () {
 		console.log('Create tray')
 		tray.body = new Tray(path.join(__dirname, '/build/icons/256x256.png'))
@@ -403,7 +426,13 @@ async function fetch_local_library() {
 	}
 }
 
+/*
 async function pullmetadata(information) {
+
+}*/
+ipcMain.on('raisemainwindow', () => { mainWindow.show() })
+
+ipcMain.handle('pullmetadata', async (event,information) => {
 
 	console.log('Pull metadat for :', information)
 
@@ -431,8 +460,7 @@ async function pullmetadata(information) {
 		image: thumnaildata,//thumbnail data as a string
 		rawpic,
 	}
-}
-
+})
 /*
 async function pullrawmetadata(information){
 	
@@ -460,7 +488,7 @@ async function edilocalfile(findex) {
 		backgroundColor: '#000000',
 		frame: true,
 		center: true,
-		alwaysOnTop: false,
+		alwaysOnTop: true,
 		icon: path.join(__dirname, '/build/icons/256x256.png'), //some linux window managers cant process due to bug
 		title: `Edit ${localtable[findex]}`,
 		show: true,
@@ -494,6 +522,22 @@ async function id3read(information) {
 	return NodeID3.read(information)
 
 }
+
+ipcMain.on('menu_body', () => { menu_body.popup({ window: mainWindow }) })
+
+ipcMain.on('textbox', () => { text_box_menu.popup({ window: mainWindow }) })
+
+ipcMain.handle('get.localfile', async (event,id) => { return localtable[id] })
+
+ipcMain.on('Play_msg', (event, index, state) => { //Receive Song data from mainwindow and apply to tray
+	let now_playing = path.basename(localtable[index])
+	console.log('now playing: ', now_playing, state, /*event*/);
+	if (tray.body != null) {
+		tray.update(now_playing, state)
+	}
+})
+
+ipcMain.handle('get.localtable_length', () => { return localtable.length })
 
 module.exports = { //exported modules
 	pullmetadata,

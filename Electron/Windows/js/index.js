@@ -26,8 +26,8 @@ console.log('By samuel A. Matheson (samuelmatheson15@gmail.com) Anthonym')
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me'
 
 const { ipcRenderer, remote, clipboard, shell } = require('electron')
-const { Menu, nativeTheme, systemPreferences } = remote
-const main = remote.require('./main')
+//const { Menu, nativeTheme, systemPreferences } = remote
+//const main = require('../../main')
 
 const path = require('path')
 const wallpaper = require('wallpaper')//
@@ -63,7 +63,7 @@ window.addEventListener('load', async function () {
 
 
 
-    console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
+    //console.log('System preference Dark mode: ', nativeTheme.shouldUseDarkColors)//Check if system is set to dark or light
 
     if (localStorage.getItem("Anthonymcfg")) { config.load() }
     UI.initalize()
@@ -72,9 +72,6 @@ window.addEventListener('load', async function () {
     maininitalizer()
 
 })
-
-
-
 
 let looking = [];//lookup timers, only search after user stops typing
 
@@ -90,43 +87,17 @@ document.getElementById('x-button').addEventListener('click', function () { ipcR
 document.getElementById('maximize-button').addEventListener('click', function () { ipcRenderer.send('maximize_btn') })
 document.getElementById('minimize-button').addEventListener('click', function () { ipcRenderer.send('minimize_btn') })
 
-//Main body menu
-const menu_body = new Menu.buildFromTemplate([
-    { role: 'reload' },
-    { label: 'Refresh Library', click() { maininitalizer() } },
-    { type: 'separator' },
-    { role: 'zoomIn' },
-    { role: 'resetZoom' },
-    { role: 'zoomOut' },
-    { type: 'separator' },
-    { label: 'Contact developer', click() { shell.openExternal(my_website) } },
-    { role: 'toggledevtools' },
-]);
-
-//Menu.setApplicationMenu(menu_body);
-window.addEventListener('contextmenu', (e) => {
+window.addEventListener('contextmenu', (e) => {//invoke mainbody window
     e.preventDefault();
-    menu_body.popup({ window: remote.getCurrentWindow() })
+    ipcRenderer.send('menu_body');
 }, false);
 
-//text box menu
-const text_box_menu = new Menu.buildFromTemplate([
-    { role: 'cut' },
-    { role: 'copy' },
-    { role: 'paste' },
-    { role: 'selectAll' },
-    //{ role: 'seperator' },
-    { role: 'undo' },
-    { role: 'redo' },
-]);
+searchput.addEventListener('contextmenu', (event) => {
+    e.preventDefault();
+    ipcRenderer.send('textbox');
+}, false)
 
-searchput.addEventListener('contextmenu', (event) => { popupmenu(event) }, false)
 
-function popupmenu(event) {//Popup the menu in this window
-    event.preventDefault()
-    event.stopPropagation()
-    text_box_menu.popup({ window: require('electron').remote.getCurrentWindow() })
-}
 
 window.addEventListener('keydown', async function (e) {//keyboard actions
     console.log('Keypress: ', e.key)
@@ -436,7 +407,11 @@ let player = {//Playback control
                     backgroundvideo.muted = true;
                     backgroundvideo.pause()
                 }
-                console.log('resume : ', main.get.localfile(now_playing_content.id));
+
+                ipcRenderer.invoke('get.localfile', now_playing_content.id).then(returned => {
+                    console.log('resume : ', returned);
+                })
+
                 return 0;
             }
         }
@@ -451,7 +426,11 @@ let player = {//Playback control
                 backgroundvideo.muted = true;
                 backgroundvideo.pause()
             }
-            console.log('resume : ', main.get.localfile(now_playing_content.id));
+
+            ipcRenderer.invoke('get.localfile', now_playing_content.id).then(returned => {
+                console.log('resume : ', returned);
+            })
+
             return 0;
         }
 
@@ -476,47 +455,54 @@ let player = {//Playback control
             Howler.unload()//unload playing track if any
 
             player.stream1 = new Howl({
-                src: main.get.localfile(fileindex),//takes an array, or single path
+                src: await ipcRenderer.invoke('get.localfile', fileindex),//takes an array, or single path
                 autoplay: true,
                 loop: false,
                 volume: 1,
                 preload: false,
                 html5: true,
                 onend: function () {//Playback ends
-                    console.log('Finished playing', main.get.localfile(fileindex));
+                    ipcRenderer.invoke('get.localfile', fileindex).then(returned => {
+                        console.log('Finished playing', returned);
+                    })
+
                     player.playstate = false;
                     //place repeat chck here
                     player.next()
                 },
                 onplayerror: function () {//Playback fails
-                    console.warn('fail to play ', main.get.localfile(fileindex))
+                    console.warn('fail to play ', ipcRenderer.invoke('get.localfile', fileindex))
                     stream1.once('unlock', function () {//wait for unlock
                         player.play(fileindex);// try to play again
-                        notify.new('Error', `Could not access file: ${main.get.localfile(fileindex)}`, 'a file access error occured for some reason, could be anything from a bad disk to improper file permissions')
+                        notify.new('Error', `Could not access file: {main/.get.localfile(fileindex)}`, 'a file access error occured for some reason, could be anything from a bad disk to improper file permissions')
                     });
                 },
                 onload: function () {
-                    console.log('loaded: ', main.get.localfile(fileindex))
-                    document.getElementById('songTitle').innerText = path.basename(main.get.localfile(fileindex));
-                    //player.stream1.play()//play the sound that was just loaded
-                    //Handle background video (if any)
-                    song_progress_bar.value = 0;
-                    switch (path.extname(main.get.localfile(fileindex))) {//check file types
 
-                        case ".mp4": case ".m4v": case ".webm": case ".mov"://playable as music files
-                            backgroundvideo.src = main.get.localfile(fileindex);
-                            backgroundvideo.style.display = "block"
-                            backgroundvideo.play();
-                            document.getElementById('tbuttonholder').className = "tbuttonholder"//allow to be hidden
-                            break;
-                        default:
-                            backgroundvideo.src = "";
-                            backgroundvideo.style.display = "none"
-                            backgroundvideo.muted = true;
-                            backgroundvideo.pause()
+                    ipcRenderer.invoke('get.localfile', fileindex).then((filepath) => {
+
+                        console.log('loaded: ', filepath)
+                        document.getElementById('songTitle').innerText = path.basename(filepath);
+                        //player.stream1.play()//play the sound that was just loaded
+                        //Handle background video (if any)
+                        song_progress_bar.value = 0;
+                        switch (path.extname(filepath)) {//check file types
+
+                            case ".mp4": case ".m4v": case ".webm": case ".mov"://playable as music files
+                                backgroundvideo.src = filepath;
+                                backgroundvideo.style.display = "block"
+                                backgroundvideo.play();
+                                document.getElementById('tbuttonholder').className = "tbuttonholder"//allow to be hidden
+                                break;
+                            default:
+                                backgroundvideo.src = "";
+                                backgroundvideo.style.display = "none"
+                                backgroundvideo.muted = true;
+                                backgroundvideo.pause()
 
 
-                    }
+                        }
+                    });
                     backgroundvideo.currentTime = 0;
                 },
                 onplay: async function () {
@@ -525,11 +511,11 @@ let player = {//Playback control
                     now_playing_content.id = Number(fileindex);//remove if you want a brain ache
                     config.data.last_played = Number(fileindex);
                     player.updatemetadata(fileindex);
-                    ipcRenderer.send('Play_msg', path.basename(main.get.localfile(fileindex)), 'pause')//Send playing song to main
+                    ipcRenderer.send('Play_msg', fileindex, 'pause')//Send playing song to main
                     playbtn.classList = "pausebtn"
                     playbtn.title = "pause"
                     player.start_seeking()
-                    console.log('Playing: ', main.get.localfile(fileindex));
+                    console.log('Playing: ', fileindex);
                     config.save();
                 },
                 onloaderror: function () {
@@ -557,7 +543,7 @@ let player = {//Playback control
             navigator.mediaSession.playbackState = "paused";
             playbtn.classList = "playbtn";
             playbtn.title = "play";
-            ipcRenderer.send('Play_msg', path.basename(main.get.localfile(now_playing_content.id)), 'Play');
+            ipcRenderer.send('Play_msg', now_playing_content.id, 'Play');
         } else {//assume error
             console.warn('Tried pause functionality with no playback');
         }
@@ -582,7 +568,8 @@ let player = {//Playback control
         let nextsong;
 
         if (config.data.shuffle == true) {//the next song is choosen at random
-            nextsong = utils.rand_number(main.get.localtable_length() - 1, 0, now_playing_content.id);
+            let length = await ipcRenderer.invoke('get.localtable_length')
+            nextsong = utils.rand_number(length - 1, 0, now_playing_content.id);
         } else {//next song inline unless at the end
             nextsong = Number(now_playing_content.id + 1)
         }
@@ -651,115 +638,114 @@ let player = {//Playback control
 
         navigator.mediaSession.playbackState = "playing";
 
-        const metadata = await main.pullmetadata(fileindex);
 
-        //console.log(metadata)
+        ipcRenderer.invoke('pullmetadata', fileindex).then((metadata) => {
 
-        document.getElementById('songTitle').innerText = metadata.title;
-        document.getElementById('songArtist').innerText = `by ${metadata.artist}`;
-        now_playing_content.duration = metadata.duration;
-        song_progress_bar.max = metadata.duration;
+            document.getElementById('songTitle').innerText = metadata.title;
+            document.getElementById('songArtist').innerText = `by ${metadata.artist}`;
+            now_playing_content.duration = metadata.duration;
+            song_progress_bar.max = metadata.duration;
 
-        if (metadata.image != null) {
-            //console.log('Cover art info: ', metadata.image)
-            document.getElementById('coverartsmall').src = metadata.image;
-            backgroundmaskimg.src = metadata.image;
-            backgroundmaskimg.style.display = "block";
+            if (metadata.image != null) {
+                //console.log('Cover art info: ', metadata.image)
+                document.getElementById('coverartsmall').src = metadata.image;
+                backgroundmaskimg.src = metadata.image;
+                backgroundmaskimg.style.display = "block";
 
-            UI.blurse()
+                UI.blurse()
 
-            if (overpainelm.className != "overpain_active") {//hide titlebar buttons if overpain isnt visible
-                document.getElementById('tbuttonholder').className = "tbuttonholder"
-            }
+                if (overpainelm.className != "overpain_active") {//hide titlebar buttons if overpain isnt visible
+                    document.getElementById('tbuttonholder').className = "tbuttonholder"
+                }
 
-            if (config.data.background_blur == 0) {//strech song totle as needed
-                document.getElementById('songdetailcontainer').classList = "songdetailcontainer_alt";
+                if (config.data.background_blur == 0) {//strech song totle as needed
+                    document.getElementById('songdetailcontainer').classList = "songdetailcontainer_alt";
+                } else {
+                    document.getElementById('songdetailcontainer').classList = "songdetailcontainer";
+
+                }
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: metadata.title,
+                    artist: metadata.artist,
+                    album: metadata.album,
+                    /*artwork: [
+                        { src: URL.createObjectURL(new Blob([metadata.rawpic.data], { type: metadata.rawpic.format })), sizes: '64x64', type: 'image/jpg' },
+                    ],*/
+                    artwork: [
+                        { src: 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
+                        { src: 'https://dummyimage.com/128x128', sizes: '128x128', type: 'image/png' },
+                        { src: 'https://dummyimage.com/192x192', sizes: '192x192', type: 'image/png' },
+                        { src: 'https://dummyimage.com/256x256', sizes: '256x256', type: 'image/png' },
+                        { src: 'https://dummyimage.com/384x384', sizes: '384x384', type: 'image/png' },
+                        { src: 'https://dummyimage.com/512x512', sizes: '512x512', type: 'image/png' },
+                    ]
+                });
+
+                // ipcRenderer.send('new_icon',metadata.image)
+
             } else {
-                document.getElementById('songdetailcontainer').classList = "songdetailcontainer";
+                //use placeholder image
+                document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
 
+                document.getElementById('coverartsmall').name = "vibecat"
+                backgroundmaskimg.src = "";
+                backgroundmaskimg.style.display = "none";
+
+                UI.unblurse()
+
+                document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
+                document.getElementById('songdetailcontainer').classList = "songdetailcontainer_alt";
+                UI.get_desktop_wallpaper().then((wallpaperpath) => {
+                    mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')`
+                });
+
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: metadata.title,
+                    artist: metadata.artist,
+                    album: metadata.album,
+                    /*artwork: [
+                        { src: './img/icon.png', sizes: '64x64', type: 'image/png' },
+                    ],*/
+                    artwork: [
+                        { src: 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
+                        { src: 'https://dummyimage.com/128x128', sizes: '128x128', type: 'image/png' },
+                        { src: 'https://dummyimage.com/192x192', sizes: '192x192', type: 'image/png' },
+                        { src: 'https://dummyimage.com/256x256', sizes: '256x256', type: 'image/png' },
+                        { src: 'https://dummyimage.com/384x384', sizes: '384x384', type: 'image/png' },
+                        { src: 'https://dummyimage.com/512x512', sizes: '512x512', type: 'image/png' },
+                    ]
+                });
             }
-            navigator.mediaSession.metadata = new MediaMetadata({
-                title: metadata.title,
-                artist: metadata.artist,
-                album: metadata.album,
-                /*artwork: [
-                    { src: URL.createObjectURL(new Blob([metadata.rawpic.data], { type: metadata.rawpic.format })), sizes: '64x64', type: 'image/jpg' },
-                ],*/
-                artwork: [
-                    { src: 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
-                    { src: 'https://dummyimage.com/128x128', sizes: '128x128', type: 'image/png' },
-                    { src: 'https://dummyimage.com/192x192', sizes: '192x192', type: 'image/png' },
-                    { src: 'https://dummyimage.com/256x256', sizes: '256x256', type: 'image/png' },
-                    { src: 'https://dummyimage.com/384x384', sizes: '384x384', type: 'image/png' },
-                    { src: 'https://dummyimage.com/512x512', sizes: '512x512', type: 'image/png' },
-                ]
-            });
 
-            // ipcRenderer.send('new_icon',metadata.image)
+            if (backgroundvideo.style.display == "block") { document.getElementById('tbuttonholder').className = "tbuttonholder" }
 
-        } else {
-            //use placeholder image
-            document.getElementById('coverartsmall').src = "img/vinyl-record-pngrepo-com-white.png"
+            player.songbarmenu_build(coverartsmall, fileindex);
 
-            document.getElementById('coverartsmall').name = "vibecat"
-            backgroundmaskimg.src = "";
-            backgroundmaskimg.style.display = "none";
-
-            UI.unblurse()
-
-            document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
-            document.getElementById('songdetailcontainer').classList = "songdetailcontainer_alt";
-            UI.get_desktop_wallpaper().then((wallpaperpath) => {
-                mainmaskcontainer.style.backgroundImage = `url('${wallpaperpath}')`
-            });
-
-            navigator.mediaSession.metadata = new MediaMetadata({
-                title: metadata.title,
-                artist: metadata.artist,
-                album: metadata.album,
-                /*artwork: [
-                    { src: './img/icon.png', sizes: '64x64', type: 'image/png' },
-                ],*/
-                artwork: [
-                    { src: 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
-                    { src: 'https://dummyimage.com/128x128', sizes: '128x128', type: 'image/png' },
-                    { src: 'https://dummyimage.com/192x192', sizes: '192x192', type: 'image/png' },
-                    { src: 'https://dummyimage.com/256x256', sizes: '256x256', type: 'image/png' },
-                    { src: 'https://dummyimage.com/384x384', sizes: '384x384', type: 'image/png' },
-                    { src: 'https://dummyimage.com/512x512', sizes: '512x512', type: 'image/png' },
-                ]
-            });
-        }
-
-        if (backgroundvideo.style.display == "block") { document.getElementById('tbuttonholder').className = "tbuttonholder" }
-
-        player.songbarmenu_build(coverartsmall, fileindex);
-
-        player.playback_notification(metadata)
-
+            player.playback_notification(metadata)
+        })
     },
     lookup: async function () {//seach for matches to a pattern amoungst local files pattern
-
-        for (let i in looking) { clearInterval(looking.pop()) }//prevent rappid researching
-
-        //let lookafor =
-
-        looking.push(setTimeout(async () => {
-
-            let pattern = searchput.value;
-            console.log('Look for ', pattern)
-            if (pattern != "" || pattern != " ") {
-                searchbox.innerHTML = ""
-                for (let fileindex in main.get.localtable()) {
-                    if (path.basename(main.get.localfile(fileindex)).toLowerCase().search(pattern.toLowerCase()) != -1) {
-                        player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
+        /*
+                for (let i in looking) { clearInterval(looking.pop()) }//prevent rappid researching
+        
+                //let lookafor =
+        
+                looking.push(setTimeout(async () => {
+        
+                    let pattern = searchput.value;
+                    console.log('Look for ', pattern)
+                    if (pattern != "" || pattern != " ") {
+                        searchbox.innerHTML = ""
+                        for (let fileindex in main.get.localtable()) {
+                            if (path.basename(main.get.localfile(fileindex)).toLowerCase().search(pattern.toLowerCase()) != -1) {
+                                player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
+                            }
+                        }
                     }
-                }
-            }
-
-
-
-        }, 1000))
+        
+        
+        
+                }, 1000))*/
 
     },
     scroll_to_current: async function () {
@@ -776,42 +762,49 @@ let player = {//Playback control
         /*
             Song bars constructed in series normally from an array or 1 at a time in the case of history, fileindex points to an index in an array of paths to local files
         */
+        try {
 
-        let songbar = buildsong(fileindex);// data filled in later assigned and sent back immediatly
-        return songbar;
+            let songbar = buildsong(fileindex);// data filled in later assigned and sent back immediatly
+            return songbar;
 
-        async function buildsong(fiso) {
-            var song_bar = document.createElement('div');
+            async function buildsong(fiso) {
+                var song_bar = document.createElement('div');
 
-            song_bar.addEventListener('click', function () { player.play(fiso); })
+                song_bar.addEventListener('click', function () { player.play(fiso); })
 
-            song_bar.classList = "song_bar";
-            var song_title = document.createElement('div')
-            song_title.className = "song_title";
-            song_title.innerHTML = path.basename(main.get.localfile(fiso))
-            song_bar.title = `Play ${path.basename(main.get.localfile(fiso))}`;
-            song_bar.appendChild(song_title);
+                song_bar.classList = "song_bar";
+                var song_title = document.createElement('div')
+                song_title.className = "song_title";
+                ipcRenderer.invoke('get.localfile', fiso).then((filepath) => {
 
-            //functionality(song_bar, fiso);
-            player.songbarmenu_build(song_bar, fiso)
+                    song_title.innerHTML = path.basename(filepath)
+                    //song_bar.title = `Play ${path.basename(filepath)}`;
+                })
+                song_bar.appendChild(song_title);
 
-            let observer = new IntersectionObserver(async function (entries) {
-                if (entries[0].isIntersecting) {
-                    observer.disconnect()
-                    fillmetadata(song_bar, fiso, song_title);
-                }
-            }, { root: null, rootMargin: '4000px', threshold: 0.1 });
-            observer.observe(song_bar)
+                //functionality(song_bar, fiso);
+                player.songbarmenu_build(song_bar, fiso)
+
+                let observer = new IntersectionObserver(async function (entries) {
+                    if (entries[0].isIntersecting) {
+                        observer.disconnect()
+                        fillmetadata(song_bar, fiso, song_title);
+                    }
+                }, { root: null, rootMargin: '4000px', threshold: 0.1 });
+                observer.observe(song_bar)
 
 
-            setTimeout(async () => {
-                if (utils.isElementInViewport(song_bar)) {
-                    fillmetadata(song_bar, fiso, song_title);
-                    observer.disconnect()
-                }
-            }, 1000);
+                setTimeout(async () => {
+                    if (utils.isElementInViewport(song_bar)) {
+                        fillmetadata(song_bar, fiso, song_title);
+                        observer.disconnect()
+                    }
+                }, 1000);
 
-            return song_bar;
+                return song_bar;
+
+            }
+        } catch (error) {
 
         }
 
@@ -820,92 +813,98 @@ let player = {//Playback control
             var song_duration = document.createElement('div')
             song_duration.className = "song_duration"
             //mm.parseFile(main.get.localfile(fileindex), { duration: false }).then(async (metadata) => {
-            const metadata = await main.pullmetadata(fileindex);
 
-            //metadata song title
-            song_title.innerHTML = metadata.title;
 
-            //file duration
-            song_duration.title = `${metadata.duration} seconds`;
+            ipcRenderer.invoke('pullmetadata', fileindex).then((metadata) => {
 
-            song_duration.innerHTML = `${~~(Number((metadata.duration - metadata.duration % 60) / 60))}:${~~(Number(metadata.duration % 60))}`;
+                //metadata song title
+                song_title.innerHTML = metadata.title;
 
-            eliment.appendChild(song_duration)
+                //file duration
+                song_duration.title = `${metadata.duration} seconds`;
 
-            if (metadata.image != null) {
-                var songicon = document.createElement("img")
-                songicon.className = "songicon"
-                songicon.loading = "lazy"
+                song_duration.innerHTML = `${~~(Number((metadata.duration - metadata.duration % 60) / 60))}:${~~(Number(metadata.duration % 60))}`;
 
-                songicon.src = metadata.image;
-                eliment.appendChild(songicon)
-            } else {
-                //use placeholder image
-                if (path.extname(main.get.localfile(fileindex)) == ".mp4") {
+                eliment.appendChild(song_duration)
+
+                if (metadata.image != null) {
                     var songicon = document.createElement("img")
                     songicon.className = "songicon"
                     songicon.loading = "lazy"
-                    eliment.appendChild(songicon)
-                    songicon.src = await thumbnailjs.getVideoThumbnail(main.get.localfile(fileindex), 0.2, 3, "image/jpg");
-                } else {
-                    var songicon = document.createElement("div")
-                    songicon.className = "songicon_dfault"
-                    eliment.appendChild(songicon)
-                }
-            }
 
+                    songicon.src = metadata.image;
+                    eliment.appendChild(songicon)
+                } else {
+                    //use placeholder image
+                    ipcRenderer.invoke('get.localfile', fileindex).then((filepath) => {
+                        if (path.extname(filepath) == ".mp4") {
+                            var songicon = document.createElement("img")
+                            songicon.className = "songicon"
+                            songicon.loading = "lazy"
+                            eliment.appendChild(songicon)
+                            thumbnailjs.getVideoThumbnail(filepath, 0.2, 3, "image/jpg").then((src) => { songicon.src = src })
+                        } else {
+                            var songicon = document.createElement("div")
+                            songicon.className = "songicon_dfault"
+                            eliment.appendChild(songicon)
+                        }
+                    })
+
+
+                }
+            })
         }
 
 
 
     },
     songbarmenu_build: async function (eliment, fileindex) {
-
-        let contextMenu = new Menu.buildFromTemplate([
-            {//play button
-                label: "Play",
-                type: "normal",
-                click() {
-                    player.play(fileindex);
-                    //setTimeout(() => { window.location.href = `#${now_playing_content.id - 2}` }, 300);
-                }
-            },
-            {
-                label: "add to favourites",
-                type: "normal",
-                click() { playlistmanager.addtofavourite(fileindex); }
-            },
-            {
-                label: "add to playlist",
-                type: "normal",
-                click() { }
-            },
-            { type: "separator" },
-            {
-                label: "Edit properties",
-                click() { main.edilocalfile(fileindex) }
-            },
-            {
-                label: "copy file name",
-                click() { clipboard.writeText(path.basename(main.get.localfile(fileindex))) }
-            },
-            {//open song file in default external application
-                label: "show in folder",
-                click() { shell.showItemInFolder(main.get.localfile(fileindex)) }
-            },
-            {//copy file path
-                label: "copy file location",
-                //toolTip: `${player.files[fileindex].path}`,
-                click() { clipboard.writeText(main.get.localfile(fileindex)); }
-            }
-        ])
-
-        eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
-            e.preventDefault();
-            e.stopPropagation();//important
-            contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
-        }, false);
-
+        /*
+                let contextMenu = new Menu.buildFromTemplate([
+                    {//play button
+                        label: "Play",
+                        type: "normal",
+                        click() {
+                            player.play(fileindex);
+                            //setTimeout(() => { window.location.href = `#${now_playing_content.id - 2}` }, 300);
+                        }
+                    },
+                    {
+                        label: "add to favourites",
+                        type: "normal",
+                        click() { playlistmanager.addtofavourite(fileindex); }
+                    },
+                    {
+                        label: "add to playlist",
+                        type: "normal",
+                        click() { }
+                    },
+                    { type: "separator" },
+                    {
+                        label: "Edit properties",
+                        click() { main.edilocalfile(fileindex) }
+                    },
+                    {
+                        label: "copy file name",
+                        click() { clipboard.writeText(path.basename(main.get.localfile(fileindex))) }
+                    },
+                    {//open song file in default external application
+                        label: "show in folder",
+                        click() { shell.showItemInFolder(main.get.localfile(fileindex)) }
+                    },
+                    {//copy file path
+                        label: "copy file location",
+                        //toolTip: `${player.files[fileindex].path}`,
+                        click() { clipboard.writeText(main.get.localfile(fileindex)); }
+                    }
+                ])
+        
+                eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
+                    e.preventDefault();
+                    e.stopPropagation();//important
+                    contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
+                }, false);
+        */
     },
     playback_notification: async function (metadata) {
         //notification if hidden
@@ -919,7 +918,8 @@ let player = {//Playback control
                 }
             ).onclick = () => {
                 console.log('Notification clicked')
-                main.Show_window()
+                ipcRenderer.send('raisemainwindow');
+                //main.Show_window()
             }
         }
     },
@@ -1107,29 +1107,32 @@ let UI = {
         use_tray: {
             flip: function () {
                 console.log('use tray switch triggered');
-
-                if (main.get.use_tray() == true) {//turn off the switch
-                    main.set.use_tray(false)
-                    main.remove_tray()
-                    console.warn('use tray  dissabled');
-                } else {//turn on the witch
-                    main.set.use_tray(true)
-                    main.reamake_tray()
-                    console.warn('use tray enabled');
-                }
+                /*
+                                if (main.get.use_tray() == true) {//turn off the switch
+                                    main.set.use_tray(false)
+                                    main.remove_tray()
+                                    console.warn('use tray  dissabled');
+                                } else {//turn on the witch
+                                    main.set.use_tray(true)
+                                    main.reamake_tray()
+                                    console.warn('use tray enabled');
+                                }*/
                 this.setpostition();
             },
             setpostition: function () {
+                /*
                 if (main.get.use_tray() == true) {
                     document.getElementById('tray_put').checked = true;
                 } else {
                     document.getElementById('tray_put').checked = false;
                 }
+                */
             },
         },
         minimize_to_tray: {
             flip: function () {
                 console.log('use tray switch triggered');
+                /*
                 if (main.get.minimize_to_tray() == true) {//turn off the switch
                     main.set.minimize_to_tray(false)
                     //main.remove_tray()
@@ -1139,19 +1142,22 @@ let UI = {
                     //main.reamake_tray()
                     console.warn('use minimize_to_tray enabled');
                 }
+                */
                 this.setpostition();
             },
             setpostition: function () {
+                /*
                 if (main.get.minimize_to_tray() == true) {
                     document.getElementById('minimize_to_tray_put').checked = true;
                 } else {
                     document.getElementById('minimize_to_tray_put').checked = false;
-                }
+                }*/
             },
         },
         quiton_X: {
             flip: function () {
                 console.log('use tray switch triggered');
+                /*
                 if (main.get.quiton_X() == true) {//turn off the switch
                     main.set.quiton_X(false)
                     //main.remove_tray()
@@ -1160,15 +1166,16 @@ let UI = {
                     main.set.quiton_X(true)
                     //main.reamake_tray()
                     console.warn('use minimize_to_tray enabled');
-                }
+                }*/
                 this.setpostition();
             },
             setpostition: function () {
+                /*
                 if (main.get.quiton_X() == true) {
                     document.getElementById('close_to_tray_put').checked = true;
                 } else {
                     document.getElementById('close_to_tray_put').checked = false;
-                }
+                }*/
             },
         }
     },
@@ -1301,7 +1308,9 @@ let playlistmanager = {
     addtofavourite: async function (datum) {
         console.log('Add to favourite ', datum)
         //check for duplicate then add
-        config.data.favourites.push(path.basename(main.get.localfile(datum)))
+        ipcRenderer.invoke('get.localfile', datum).then((filepath) => {
+            config.data.favourites.push(path.basename(filepath))
+        })
         config.save()
     },
     buildfavourites: async function () {
@@ -1316,18 +1325,18 @@ let playlistmanager = {
                 }
             }
         }*/
-
-        const localtable = main.get.localtable()
-
-        for (let f2index in config.data.favourites) {
-            //let pattern = config.data.favourites[fileindex];
-            let found = localtable.findIndex(data => path.basename(data) == config.data.favourites[f2index]) || null;
-            if (found != null && found != undefined && found != -1) {
-                player.build_songbar(found).then((songbar) => { document.getElementById('favourits_view').appendChild(songbar); })
-                console.log('favourite of ', found)
-            }
-        }
-
+        /*
+                const localtable = main.get.localtable()
+        
+                for (let f2index in config.data.favourites) {
+                    //let pattern = config.data.favourites[fileindex];
+                    let found = localtable.findIndex(data => path.basename(data) == config.data.favourites[f2index]) || null;
+                    if (found != null && found != undefined && found != -1) {
+                        player.build_songbar(found).then((songbar) => { document.getElementById('favourits_view').appendChild(songbar); })
+                        console.log('favourite of ', found)
+                    }
+                }
+        */
         /*
         for (let f2index in main.get.localtable()) {
             //let pattern = config.data.favourites[fileindex];

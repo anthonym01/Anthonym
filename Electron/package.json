@@ -62,17 +62,16 @@
   },
   "devDependencies": {
     "asar": "^1.0.0",
-    "electron": "^12.0.2",
+    "electron": "^15.3.1",
     "electron-builder": "^22.9.1"
   },
   "dependencies": {
-    "electron-store": "^6.0.1",
+    "electron-store": "^8.0.1",
     "electron-window-state": "^5.0.3",
     "ffmetadata": "^1.7.0",
-    "howler": "^2.2.1",
-    "image-size": "^0.9.3",
-    "music-metadata": "^7.6.2",
-    "node-id3": "^0.2.2",
+    "howler": "^2.2.3",
+    "music-metadata": "^7.11.4",
+    "node-id3": "^0.2.3",
     "siriwave": "^2.2.3",
     "thumbnail-js": "^0.1.5",
     "wallpaper": "^4.4.1"

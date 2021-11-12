@@ -76,8 +76,8 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 	app.on('ready', function () { //App ready to roll
 		app.allowRendererProcessReuse = true; //Allow render processes to be reused
 		mainWindow.create();
-		if (process.platform == "linux") {
-			//wallpaper_Window.create()
+		if (process.platform != "win32") {
+			wallpaper_Window.create()
 		}
 		if (config.data.use_tray == true) { tray.create() }
 	})
@@ -120,7 +120,8 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 
 	ipcMain.on('Ready_for_action', () => { mainWindow.body.webContents.send('got_local_library', localtable) })//mainwindow is ready for action
 
-	//Menu.setApplicationMenu(menu_body);
+	Menu.setApplicationMenu(menu_body);
+
 	//Menu.setApplicationMenu(null);
 
 	fetch_local_library()
@@ -252,7 +253,6 @@ let wallpaper_Window = {
 
 	},
 };
-
 
 let tray = {
 	body: null, //tray value
@@ -432,7 +432,7 @@ async function pullmetadata(information) {
 }*/
 ipcMain.on('raisemainwindow', () => { mainWindow.show() })
 
-ipcMain.handle('pullmetadata', async (event,information) => {
+ipcMain.handle('pullmetadata', async (event, information) => {
 
 	console.log('Pull metadat for :', information)
 
@@ -523,11 +523,19 @@ async function id3read(information) {
 
 }
 
+ipcMain.handle('playback_notificationchk', () => {
+	//notification if hidden
+	if (mainWindow.body.isVisible() == false || mainWindow.body.isFocused() == false) {
+		return true;
+	}
+	return false
+})
+
 ipcMain.on('menu_body', () => { menu_body.popup({ window: mainWindow }) })
 
 ipcMain.on('textbox', () => { text_box_menu.popup({ window: mainWindow }) })
 
-ipcMain.handle('get.localfile', async (event,id) => { return localtable[id] })
+ipcMain.handle('get.localfile', async (event, id) => { return localtable[id] })
 
 ipcMain.on('Play_msg', (event, index, state) => { //Receive Song data from mainwindow and apply to tray
 	let now_playing = path.basename(localtable[index])

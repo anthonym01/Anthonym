@@ -25,9 +25,7 @@ console.log('By samuel A. Matheson (samuelmatheson15@gmail.com) Anthonym')
 
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me'
 
-const { ipcRenderer, remote, clipboard, shell } = require('electron')
-//const { Menu, nativeTheme, systemPreferences } = remote
-//const main = require('../../main')
+const { ipcRenderer, clipboard, shell } = require('electron')
 
 const path = require('path')
 const wallpaper = require('wallpaper')
@@ -638,7 +636,6 @@ let player = {//Playback control
 
         navigator.mediaSession.playbackState = "playing";
 
-
         ipcRenderer.invoke('pullmetadata', fileindex).then((metadata) => {
 
             document.getElementById('songTitle').innerText = metadata.title;
@@ -720,7 +717,7 @@ let player = {//Playback control
             if (backgroundvideo.style.display == "block") { document.getElementById('tbuttonholder').className = "tbuttonholder" }
 
             player.songbarmenu_build(coverartsmall, fileindex);
-
+            //ipcRenderer.send('playback_notification', metadata);
             player.playback_notification(metadata)
         })
     },
@@ -908,7 +905,7 @@ let player = {//Playback control
     },
     playback_notification: async function (metadata) {
         //notification if hidden
-        if (remote.getCurrentWindow().isVisible() == false || remote.getCurrentWindow().isFocused() == false) {
+        if (await ipcRenderer.invoke('playback_notificationchk')) {
             new Notification(`${metadata.title}`,
                 {
                     body: ` by ${metadata.artist}`,

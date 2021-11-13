@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain, nativeTheme, dialog, systemPreferences } = require('electron')
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, clipboard, ipcMain, shell, nativeTheme, dialog, systemPreferences } = require('electron');
 const path = require('path')
 const url = require('url')
 const fs = require('fs')
@@ -93,9 +93,9 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 	});
 
 
-	Menu.setApplicationMenu(menu_body);
+	//Menu.setApplicationMenu(menu_body);
 
-	//Menu.setApplicationMenu(null);
+	Menu.setApplicationMenu(null);
 
 	fetch_local_library()
 
@@ -185,11 +185,7 @@ let mainWindow = {
 let wallpaper_Window = {
 	body: null, //defines the window as an abject
 	create: function () {
-		console.log('crat main app Window')
-		const {
-			screenwidth,
-			screenheight
-		} = screen.getPrimaryDisplay().workAreaSize //gets screen size
+		const { screenwidth, screenheight } = screen.getPrimaryDisplay().workAreaSize //gets screen size
 
 		wallpaper_Window.body = new BrowserWindow({ //make main window
 			x: 0,
@@ -207,13 +203,13 @@ let wallpaper_Window = {
 			skipTaskbar: true,
 			fullscreen: true,
 			//titleBarStyle: 'hiddenInset',
-			/*webPreferences: {
+			webPreferences: {
 				nodeIntegration: true,
 				enableRemoteModule: true,
 				nodeIntegrationInWorker: true,
 				worldSafeExecuteJavaScript: true,
 				contextIsolation: false
-			},*/
+			},
 			/*minWidth: 400,
 			minHeight: 300,*/
 		})
@@ -225,6 +221,9 @@ let wallpaper_Window = {
 		}))
 
 	},
+	splash: function () {
+
+	}
 };
 
 let tray = {
@@ -458,7 +457,49 @@ async function id3read(information) {
 async function pullmetadata(information) {
 
 }*/
+ipcMain.on('songbarmenu', (event, fileindex) => {
 
+	let contextMenu = new Menu.buildFromTemplate([
+		{//play button
+			label: "Play",
+			type: "normal",
+			click() {
+				//player.play(fileindex);
+				mainWindow.body.webContents.send('playthis', fileindex)
+				//setTimeout(() => { window.location.href = `#${now_playing_content.id - 2}` }, 300);
+			}
+		},
+		{
+			label: "add to favourites",
+			type: "normal",
+			click() { playlistmanager.addtofavourite(fileindex); }
+		},
+		{
+			label: "add to playlist",
+			type: "normal",
+			click() { }
+		},
+		{ type: "separator" },
+		{
+			label: "Edit properties",
+			click() { edilocalfile(fileindex) }
+		},
+		{
+			label: "copy file name",
+			click() { clipboard.writeText(path.basename(localtable[fileindex])) }
+		},
+		{//open song file in default external application
+			label: "show in folder",
+			click() { shell.showItemInFolder(localtable[fileindex]) }
+		},
+		{//copy file path
+			label: "copy file location",
+			//toolTip: `${player.files[fileindex].path}`,
+			click() { clipboard.writeText(localtable[fileindex]); }
+		}
+	])
+	contextMenu.popup({ window: mainWindow.body })//popup menu
+})
 
 ipcMain.on('x_button', () => {//close button signal
 	if (config.data.quiton_X != true) {
@@ -565,13 +606,18 @@ ipcMain.on('Play_msg', (event, index, state) => { //Receive Song data from mainw
 	}
 })
 
+ipcMain.on('wallpaper', (event, fileindex) => {
+	wallpaper_Window.body.webContents.send('wallpaper_in', fileindex);
+})
+
 ipcMain.handle('get.localtable_length', () => { return localtable.length })
 
+ipcMain.handle('get.localtable', () => { return localtable })
+
 module.exports = { //exported modules
-	pullmetadata,
+	//pullmetadata,
 	write_file,
 	writemetadata,
-	edilocalfile,
 	//pullrawmetadata,
 	id3read,
 	setontop: async function () {

@@ -25,7 +25,7 @@ console.log('By samuel A. Matheson (samuelmatheson15@gmail.com) Anthonym')
 
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me'
 
-const { ipcRenderer, clipboard, shell } = require('electron')
+const { ipcRenderer } = require('electron')
 
 const path = require('path')
 const wallpaper = require('wallpaper')
@@ -70,6 +70,8 @@ window.addEventListener('load', async function () {
     maininitalizer()
 
 })
+
+//let localfiles = []
 
 let looking = [];//lookup timers, only search after user stops typing
 
@@ -179,6 +181,7 @@ let config = {
 ipcRenderer.on('got_local_library', (event, sentarray) => {//listening on channel 'tray_play_pause'
 
     //0console.warn('building local library ', sentarray)
+    //localfiles = sentarray;
 
     main_library_view.innerHTML = "";
 
@@ -196,6 +199,8 @@ ipcRenderer.on('got_local_library', (event, sentarray) => {//listening on channe
         console.warn('Clapped loading screen after leading files')
     }, 0);
 })
+
+ipcRenderer.on('playthis', (event, fileindex) => { player.play(fileindex) })
 
 let player = {//Playback control
     queue: [],//Play queue randomized from playlist/library
@@ -407,7 +412,7 @@ let player = {//Playback control
                 }
 
                 ipcRenderer.invoke('get.localfile', now_playing_content.id).then(returned => {
-                    console.log('resume : ', returned);
+                    console.log('resume : ', localfiles[now_playing_content.id]);
                 })
 
                 return 0;
@@ -716,33 +721,37 @@ let player = {//Playback control
 
             if (backgroundvideo.style.display == "block") { document.getElementById('tbuttonholder').className = "tbuttonholder" }
 
-            player.songbarmenu_build(coverartsmall, fileindex);
+            //player.songbarmenu_build(coverartsmall, fileindex);
             //ipcRenderer.send('playback_notification', metadata);
             player.playback_notification(metadata)
+            ipcRenderer.send('wallpaper', fileindex);
         })
     },
     lookup: async function () {//seach for matches to a pattern amoungst local files pattern
-        /*
-                for (let i in looking) { clearInterval(looking.pop()) }//prevent rappid researching
-        
-                //let lookafor =
-        
-                looking.push(setTimeout(async () => {
-        
-                    let pattern = searchput.value;
-                    console.log('Look for ', pattern)
-                    if (pattern != "" || pattern != " ") {
-                        searchbox.innerHTML = ""
-                        for (let fileindex in main.get.localtable()) {
-                            if (path.basename(main.get.localfile(fileindex)).toLowerCase().search(pattern.toLowerCase()) != -1) {
-                                player.build_songbar(fileindex).then((songbar) => { searchbox.appendChild(songbar); })
-                            }
-                        }
+
+        for (let i in looking) { clearInterval(looking.pop()) }//prevent rappid researching
+
+        //let lookafor =
+
+        looking.push(setTimeout(async () => {
+
+            const filelist = await ipcRenderer.invoke('get.localtable');
+
+            const pattern = searchput.value;
+            console.log('Look for ', pattern)
+
+            if (pattern != "" || pattern != " ") {
+                searchbox.innerHTML = ""
+                for (let fileindex in filelist) {
+                    if (path.basename(filelist[fileindex]).toLowerCase().search(pattern.toLowerCase()) != -1) {
+                        player.build_songbar(fileindex).then((songbar) => {
+                            searchbox.appendChild(songbar);
+                        })
                     }
-        
-        
-        
-                }, 1000))*/
+                }
+            }
+            
+        }, 300))
 
     },
     scroll_to_current: async function () {
@@ -856,51 +865,14 @@ let player = {//Playback control
 
     },
     songbarmenu_build: async function (eliment, fileindex) {
+        eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
+            e.preventDefault();
+            e.stopPropagation();//important
+            console.log("Context menu on, ", fileindex)
+            ipcRenderer.send('songbarmenu', fileindex);
+        }, false);
+
         /*
-                let contextMenu = new Menu.buildFromTemplate([
-                    {//play button
-                        label: "Play",
-                        type: "normal",
-                        click() {
-                            player.play(fileindex);
-                            //setTimeout(() => { window.location.href = `#${now_playing_content.id - 2}` }, 300);
-                        }
-                    },
-                    {
-                        label: "add to favourites",
-                        type: "normal",
-                        click() { playlistmanager.addtofavourite(fileindex); }
-                    },
-                    {
-                        label: "add to playlist",
-                        type: "normal",
-                        click() { }
-                    },
-                    { type: "separator" },
-                    {
-                        label: "Edit properties",
-                        click() { main.edilocalfile(fileindex) }
-                    },
-                    {
-                        label: "copy file name",
-                        click() { clipboard.writeText(path.basename(main.get.localfile(fileindex))) }
-                    },
-                    {//open song file in default external application
-                        label: "show in folder",
-                        click() { shell.showItemInFolder(main.get.localfile(fileindex)) }
-                    },
-                    {//copy file path
-                        label: "copy file location",
-                        //toolTip: `${player.files[fileindex].path}`,
-                        click() { clipboard.writeText(main.get.localfile(fileindex)); }
-                    }
-                ])
-        
-                eliment.addEventListener('contextmenu', (e) => {//Body menu attached to window
-                    e.preventDefault();
-                    e.stopPropagation();//important
-                    contextMenu.popup({ window: remote.getCurrentWindow() })//popup menu
-                }, false);
         */
     },
     playback_notification: async function (metadata) {

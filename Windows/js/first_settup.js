@@ -1,18 +1,19 @@
-const { remote } = require('electron');
-const { dialog } = remote;
-const main = remote.require('./main');
-
+const { ipcRenderer } = require('electron');
 
 let folders = [];
 
+/* Placeholder functionality turn into a toolbar window */
 async function first_settup() {
     document.getElementById('first_setup_screen').style.display = "block";//hide first settup screen
     document.getElementById('first_finish_btn').addEventListener('click', function () {//finish button in first settup screen
-        main.set.musicfolders(folders);//save selected music folders
-        main.resynclocal()
+        //main.set.musicfolders(folders);//save selected music folders
+        ipcRenderer.send('newmusicfolders',folders);
+        //main.resynclocal()
         document.getElementById('first_setup_screen').style.display = "none";//hide first settup screen
         //maininitalizer();
+        ipcRenderer.send('restart');
     })
+    
     buildfirst_folders()
 
     function buildfirst_folders() {//rempresent selected folders
@@ -72,14 +73,12 @@ async function first_settup() {
         addnew_first.appendChild(first_title)
         addnew_first.appendChild(first_icon)
         document.getElementById('first_setup_folders').appendChild(addnew_first)
+
         addnew_first.addEventListener('click', function () {//click add new button
-            dialog.showOpenDialog({//dialog in directory selection mode
-                buttonLabel: 'Select music folder',
-                properties: ['openDirectory', 'multiSelections'],
-            }).then((filepath) => {//get filepaths
-                console.log(filepath.filePaths)
-                filepath.filePaths.forEach(mpath => { folders.push(mpath) })//push them into temporary local folder variable
-            }).finally(() => { buildfirst_folders() })//rebuild folders with new data
+            ipcRenderer.invoke('Selectmusicfolder').then((filepaths) => {
+                filepaths.forEach(mpath => { folders.push(mpath) })//push them into temporary local folder variable
+                buildfirst_folders() //rebuild folders with new data
+            })
         })
     }
 }

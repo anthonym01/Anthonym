@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain, nativeTheme, systemPreferences } = require('electron')
+const { app, BrowserWindow, Menu, screen, MenuItem, Tray, ipcMain, nativeTheme, dialog, systemPreferences } = require('electron')
 const path = require('path')
 const url = require('url')
 const fs = require('fs')
@@ -7,7 +7,7 @@ const Store = require('electron-store')
 const storeinator = new Store
 const mm = require('music-metadata')
 const ffmetadata = require("ffmetadata")
-const { info } = require('console')
+//const { info } = require('console')
 
 //const NodeID3 = require('node-id3');
 //const tray = require('./tray.js');
@@ -92,33 +92,6 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 		mainWindow.show();
 	});
 
-	ipcMain.on('x_button', () => {//close button signal
-		if (config.data.quiton_X != true) {
-			app.quit()
-		} else {
-			if (tray.body != null) {
-				mainWindow.hide()
-			} else {
-				app.quit()
-			}
-		}
-	})
-
-	ipcMain.on('maximize_btn', () => {
-		if (config.data.minimize_to_tray == true) {
-			mainWindow.show()
-		}
-
-		if (mainWindow.body.isMaximized()) { //minimize
-			mainWindow.body.restore()
-		} else { //maximize
-			mainWindow.body.maximize()
-		}
-	})
-
-	ipcMain.on('minimize_btn', () => { mainWindow.minimize() })
-
-	ipcMain.on('Ready_for_action', () => { mainWindow.body.webContents.send('got_local_library', localtable) })//mainwindow is ready for action
 
 	Menu.setApplicationMenu(menu_body);
 
@@ -426,47 +399,6 @@ async function fetch_local_library() {
 	}
 }
 
-/*
-async function pullmetadata(information) {
-
-}*/
-ipcMain.on('raisemainwindow', () => { mainWindow.show() })
-
-ipcMain.handle('pullmetadata', async (event, information) => {
-
-	console.log('Pull metadat for :', information)
-
-	if (!isNaN(information)) {
-		information = localtable[information]
-		console.log('is point to: ', information)
-	}
-
-	let metadata = await mm.parseFile(information, { duration: false, skipCovers: false })
-
-	console.log(metadata)
-	var thumnaildata = null;
-	let rawpic = null;
-	if (path.extname(information) != ".mp4") {
-		rawpic = mm.selectCover(metadata.common.picture) || null;
-		thumnaildata = rawpic ? `data:${rawpic.format};base64,${rawpic.data.toString('base64')}` : null;
-
-	}
-
-	return {
-		title: metadata.common.title || path.basename(information),//title as a string
-		artist: metadata.common.artist || "unknown",
-		album: metadata.common.album || "unknown",
-		duration: metadata.format.duration,//durration in seconds
-		image: thumnaildata,//thumbnail data as a string
-		rawpic,
-	}
-})
-/*
-async function pullrawmetadata(information){
-	
-}
-*/
-
 async function writemetadata(filepath, dataobj) {
 	console.log('Writing: ', dataobj, ' to ', filepath)
 	ffmetadata.write(filepath, dataobj, function (err) {
@@ -522,7 +454,95 @@ async function id3read(information) {
 	return NodeID3.read(information)
 
 }
+/*
+async function pullmetadata(information) {
 
+}*/
+
+
+ipcMain.on('x_button', () => {//close button signal
+	if (config.data.quiton_X != true) {
+		app.quit()
+	} else {
+		if (tray.body != null) {
+			mainWindow.hide()
+		} else {
+			app.quit()
+		}
+	}
+})
+
+ipcMain.on('maximize_btn', () => {
+	if (config.data.minimize_to_tray == true) {
+		mainWindow.show()
+	}
+
+	if (mainWindow.body.isMaximized()) { //minimize
+		mainWindow.body.restore()
+	} else { //maximize
+		mainWindow.body.maximize()
+	}
+})
+
+ipcMain.on('minimize_btn', () => { mainWindow.minimize() })
+
+ipcMain.on('Ready_for_action', () => { mainWindow.body.webContents.send('got_local_library', localtable) })//mainwindow is ready for action
+
+ipcMain.on('raisemainwindow', () => { mainWindow.show() })
+
+ipcMain.handle('pullmetadata', async (event, information) => {
+
+	console.log('Pull metadat for :', information)
+
+	if (!isNaN(information)) {
+		information = localtable[information]
+		console.log('is point to: ', information)
+	}
+
+	let metadata = await mm.parseFile(information, { duration: false, skipCovers: false })
+
+	console.log(metadata)
+	var thumnaildata = null;
+	let rawpic = null;
+	if (path.extname(information) != ".mp4") {
+		rawpic = mm.selectCover(metadata.common.picture) || null;
+		thumnaildata = rawpic ? `data:${rawpic.format};base64,${rawpic.data.toString('base64')}` : null;
+
+	}
+
+	return {
+		title: metadata.common.title || path.basename(information),//title as a string
+		artist: metadata.common.artist || "unknown",
+		album: metadata.common.album || "unknown",
+		duration: metadata.format.duration,//durration in seconds
+		image: thumnaildata,//thumbnail data as a string
+		rawpic,
+	}
+})
+/*
+async function pullrawmetadata(information){
+	
+}
+*/
+ipcMain.handle('Selectmusicfolder', async (event) => {
+
+	const filepath = await dialog.showOpenDialog({//dialog in directory selection mode
+		buttonLabel: 'Select music folder',
+		properties: ['openDirectory', 'multiSelections'],
+	})
+
+	console.log(filepath.filePaths)
+
+	return filepath.filePaths;
+})
+
+ipcMain.on('newmusicfolders', (event, mfolders) => {
+
+	config.data.music_folders = mfolders;
+	config.save();
+	fetch_local_library()
+})
+ipcMain.on('restart', (event) => { app.relaunch() })
 ipcMain.handle('playback_notificationchk', () => {
 	//notification if hidden
 	if (mainWindow.body.isVisible() == false || mainWindow.body.isFocused() == false) {
@@ -572,7 +592,7 @@ module.exports = { //exported modules
 	remove_tray: function () {
 		tray.destroy()
 	},
-	resynclocal: function () { fetch_local_library() },
+	resynclocal: function () { },
 	get: {
 		localtable: function () {
 			return localtable
@@ -601,8 +621,7 @@ module.exports = { //exported modules
 	},
 	set: {
 		musicfolders: async function (music_folders) {
-			config.data.music_folders = music_folders;
-			config.save();
+
 		},
 		minimize_to_tray: async function (minimize_to_tray) {
 			config.data.minimize_to_tray = minimize_to_tray;

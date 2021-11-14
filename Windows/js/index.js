@@ -201,6 +201,7 @@ ipcRenderer.on('got_local_library', (event, sentarray) => {//listening on channe
 })
 
 ipcRenderer.on('playthis', (event, fileindex) => { player.play(fileindex) })
+ipcRenderer.on('favouritethis', (event, fileindex) => { playlistmanager.addtofavourite(fileindex) })
 
 let player = {//Playback control
     queue: [],//Play queue randomized from playlist/library
@@ -724,14 +725,12 @@ let player = {//Playback control
             //player.songbarmenu_build(coverartsmall, fileindex);
             //ipcRenderer.send('playback_notification', metadata);
             player.playback_notification(metadata)
-            ipcRenderer.send('wallpaper', fileindex);
+            ipcRenderer.send('wallpaper', fileindex, config.data.background_blur);
         })
     },
     lookup: async function () {//seach for matches to a pattern amoungst local files pattern
 
         for (let i in looking) { clearInterval(looking.pop()) }//prevent rappid researching
-
-        //let lookafor =
 
         looking.push(setTimeout(async () => {
 
@@ -750,8 +749,8 @@ let player = {//Playback control
                     }
                 }
             }
-            
-        }, 300))
+
+        }, 500))
 
     },
     scroll_to_current: async function () {
@@ -1284,37 +1283,42 @@ let playlistmanager = {
     },
     buildfavourites: async function () {
         document.getElementById('favourits_view').innerHTML = "";
-
-        /*for (let f2index in main.get.localtable()) {
-            for (let fileindex in config.data.favourites) {
-                let pattern = config.data.favourites[fileindex];
-                if (path.basename(main.get.localfile(f2index)) == pattern) {
-                    player.build_songbar(f2index).then((songbar) => { document.getElementById('favourits_view').appendChild(songbar); })
-                    console.log('favourite of ', pattern)
-                }
-            }
-        }*/
         /*
-                const localtable = main.get.localtable()
-        
-                for (let f2index in config.data.favourites) {
+                for (let f2index in main.get.localtable()) {
+                    for (let fileindex in config.data.favourites) {
+                        let pattern = config.data.favourites[fileindex];
+                        if (path.basename(main.get.localfile(f2index)) == pattern) {
+                            player.build_songbar(f2index).then((songbar) => { document.getElementById('favourits_view').appendChild(songbar); })
+                            console.log('favourite of ', pattern)
+                        }
+                    }
+                }
+        */
+
+        const localtable = await ipcRenderer.invoke('get.localtable');
+
+        for (let f2index in config.data.favourites) {
+            //let pattern = config.data.favourites[fileindex];
+            
+            let found = localtable.findIndex(data => path.basename(data) == config.data.favourites[f2index]) || null;
+
+            if (found != null && found != undefined && found != -1) {
+                player.build_songbar(found).then((songbar) => {
+                     document.getElementById('favourits_view').appendChild(songbar);
+                     })
+                console.log('favourite of ', found)
+            }
+        }
+
+        /*        
+                for (let f2index in main.get.localtable()) {
                     //let pattern = config.data.favourites[fileindex];
-                    let found = localtable.findIndex(data => path.basename(data) == config.data.favourites[f2index]) || null;
+                    let found = config.data.favourites.findIndex(data => data == path.basename(main.get.localfile(f2index))) || null;
                     if (found != null && found != undefined && found != -1) {
                         player.build_songbar(found).then((songbar) => { document.getElementById('favourits_view').appendChild(songbar); })
                         console.log('favourite of ', found)
                     }
-                }
-        */
-        /*
-        for (let f2index in main.get.localtable()) {
-            //let pattern = config.data.favourites[fileindex];
-            let found = config.data.favourites.findIndex(data => data == path.basename(main.get.localfile(f2index))) || null;
-            if (found != null && found != undefined && found != -1) {
-                player.build_songbar(found).then((songbar) => { document.getElementById('favourits_view').appendChild(songbar); })
-                console.log('favourite of ', found)
-            }
-        }*/
+                }*/
     }
 }
 

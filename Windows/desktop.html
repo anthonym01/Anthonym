@@ -9,8 +9,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/index.css">
     <style>
-        #backgroundmaskimg{
-            filter: blur(3px);
+        #backgroundmaskimg {
+            filter: blur(2px);
         }
     </style>
 </head>
@@ -21,7 +21,26 @@
         <!--<video id="backgroundvideo" src="" autoplay muted preload="metadata"></video>-->
     </div>
 
-    <script src="js/desktop.js">  </script>
+    <script>
+        const { ipcRenderer } = require('electron')
+        const thumbnailjs = require('thumbnail-js');
+        const backgroundmaskimg = document.getElementById('backgroundmaskimg')
+
+
+        //optimize to remove double read later
+        ipcRenderer.on('wallpaper_in', async (event, fileindex,blurse) => {
+            const metadata = await ipcRenderer.invoke('pullmetadata', fileindex);
+            if (metadata.image != null) {
+                backgroundmaskimg.src = metadata.image;
+                backgroundmaskimg.style.filter = `blur(${blurse}px)`;
+                backgroundmaskimg.style.display = "block";
+
+            } else {
+                backgroundmaskimg.src = "img/icons/icon@1024x1024.png"
+                //use placeholder image
+            }
+        })
+    </script>
 </body>
 
 </html>

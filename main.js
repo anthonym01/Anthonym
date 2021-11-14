@@ -424,6 +424,7 @@ async function edilocalfile(findex) {
 		title: `Edit ${localtable[findex]}`,
 		show: true,
 		skipTaskbar: false,
+		//type: "toolbar",
 		//titleBarStyle: 'hiddenInset',
 		webPreferences: {
 			nodeIntegration: true,
@@ -441,7 +442,7 @@ async function edilocalfile(findex) {
 	})).then(() => { Editor_window.webContents.send('editpath', localtable[findex]) })
 }
 
-
+/*
 async function id3read(information) {
 	console.log('Pull id3 for :', information)
 
@@ -452,14 +453,14 @@ async function id3read(information) {
 
 	return NodeID3.read(information)
 
-}
+}*/
 /*
 async function pullmetadata(information) {
 
 }*/
 ipcMain.on('songbarmenu', (event, fileindex) => {
 
-	let contextMenu = new Menu.buildFromTemplate([
+	const contextMenu = new Menu.buildFromTemplate([
 		{//play button
 			label: "Play",
 			type: "normal",
@@ -472,7 +473,7 @@ ipcMain.on('songbarmenu', (event, fileindex) => {
 		{
 			label: "add to favourites",
 			type: "normal",
-			click() { playlistmanager.addtofavourite(fileindex); }
+			click() { mainWindow.body.webContents.send('favouritethis', fileindex); }
 		},
 		{
 			label: "add to playlist",
@@ -539,25 +540,38 @@ ipcMain.handle('pullmetadata', async (event, information) => {
 		information = localtable[information]
 		console.log('is point to: ', information)
 	}
+	try {
+		let metadata = await mm.parseFile(information, { duration: false, skipCovers: false })
 
-	let metadata = await mm.parseFile(information, { duration: false, skipCovers: false })
+		console.log(metadata)
+		var thumnaildata = null;
+		let rawpic = null;
+		if (path.extname(information) != ".mp4") {
+			rawpic = mm.selectCover(metadata.common.picture) || null;
+			thumnaildata = rawpic ? `data:${rawpic.format};base64,${rawpic.data.toString('base64')}` : null;
 
-	console.log(metadata)
-	var thumnaildata = null;
-	let rawpic = null;
-	if (path.extname(information) != ".mp4") {
-		rawpic = mm.selectCover(metadata.common.picture) || null;
-		thumnaildata = rawpic ? `data:${rawpic.format};base64,${rawpic.data.toString('base64')}` : null;
+		}
 
-	}
+		return {
+			title: metadata.common.title || path.basename(information),//title as a string
+			artist: metadata.common.artist || "unknown",
+			album: metadata.common.album || "unknown",
+			duration: metadata.format.duration,//durration in seconds
+			image: thumnaildata,//thumbnail data as a string
+			//rawpic,
+		}
 
-	return {
-		title: metadata.common.title || path.basename(information),//title as a string
-		artist: metadata.common.artist || "unknown",
-		album: metadata.common.album || "unknown",
-		duration: metadata.format.duration,//durration in seconds
-		image: thumnaildata,//thumbnail data as a string
-		rawpic,
+	} catch (err) {
+		console.log(err);
+		return {
+			title: "cannot acess" + information,//title as a string
+			artist: "unknown",
+			album: "unknown",
+			duration: 0,//durration in seconds
+			image: 'img/error-pngrepo-com-white.png',//thumbnail data as a string
+			//rawpic,
+		}
+
 	}
 })
 /*
@@ -606,8 +620,8 @@ ipcMain.on('Play_msg', (event, index, state) => { //Receive Song data from mainw
 	}
 })
 
-ipcMain.on('wallpaper', (event, fileindex) => {
-	wallpaper_Window.body.webContents.send('wallpaper_in', fileindex);
+ipcMain.on('wallpaper', (event, fileindex, blurse) => {
+	wallpaper_Window.body.webContents.send('wallpaper_in', fileindex, blurse);
 })
 
 ipcMain.handle('get.localtable_length', () => { return localtable.length })

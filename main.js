@@ -318,7 +318,7 @@ async function fetch_local_library() {
 	localtable = [];
 
 	if (config.data.music_folders == [] || config.data.music_folders == undefined || config.data.music_folders.length < 1) {
-		//first_settup()//run first settup
+		first_settup()//run first settup
 	} else {
 		await getfiles(config.data.music_folders)
 		//		console.log('Local library ', localtable)
@@ -597,7 +597,8 @@ ipcMain.on('newmusicfolders', (event, mfolders) => {
 	config.save();
 	fetch_local_library()
 })
-ipcMain.on('restart', (event) => { app.relaunch() })
+
+ipcMain.on('restart', (event) => { app.relaunch(); app.quit() })
 ipcMain.handle('playback_notificationchk', () => {
 	//notification if hidden
 	if (mainWindow.body.isVisible() == false || mainWindow.body.isFocused() == false) {
@@ -633,7 +634,7 @@ module.exports = { //exported modules
 	write_file,
 	writemetadata,
 	//pullrawmetadata,
-	id3read,
+	//id3read,
 	setontop: async function () {
 		mainWindow.body.setAlwaysOnTop(true)//always on top the window
 	},

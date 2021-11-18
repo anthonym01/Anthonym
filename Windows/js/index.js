@@ -210,52 +210,6 @@ let player = {//Playback control
     playstate: false,//is (should be) playing music or video
     initalize: async function () {
 
-        navigator.mediaSession.setActionHandler('play', function () {
-            console.log('External play command');
-            if (!actiontimeout) {
-                actiontimeout = true;
-                setTimeout(() => { actiontimeout = false }, 20)
-                player.play();
-            } else {
-                console.warn('2 simultanius commands, Hit action timeout')
-            }
-
-        });
-
-        navigator.mediaSession.setActionHandler('pause', function () {
-            console.log('External pause command');
-            player.pause()
-        });
-
-        navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
-        navigator.mediaSession.setActionHandler('seekbackward', function () { });
-        navigator.mediaSession.setActionHandler('seekforward', function () { });
-        //navigator.mediaSession.setActionHandler('shuffle', function () { });
-        navigator.mediaSession.setActionHandler('seekto', function () { });
-        navigator.mediaSession.setActionHandler('previoustrack', function () {
-            console.log('External previous command');
-            if (!actiontimeout) {
-                actiontimeout = true;
-                setTimeout(() => { actiontimeout = false }, 20)
-                player.previous();
-            } else {
-                console.warn('2 simultanius commands, Hit action timeout')
-            }
-
-
-        });
-        navigator.mediaSession.setActionHandler('nexttrack', function () {
-            console.log('External next command');
-            if (!actiontimeout) {
-                actiontimeout = true;
-                setTimeout(() => { actiontimeout = false }, 20)
-                player.next()
-            } else {
-                console.warn('2 simultanius commands, Hit action timeout')
-            }
-
-        });
-
         coverartsmall.addEventListener('click', function () { player.scroll_to_current() })
 
         //search input
@@ -727,6 +681,52 @@ let player = {//Playback control
             player.playback_notification(metadata)
             ipcRenderer.send('wallpaper', fileindex, config.data.background_blur);
         })
+
+        navigator.mediaSession.setActionHandler('play', function () {
+            console.log('External play command');
+            if (!actiontimeout) {
+                actiontimeout = true;
+                setTimeout(() => { actiontimeout = false }, 20)
+                player.play();
+            } else {
+                console.warn('2 simultanius commands, Hit action timeout')
+            }
+
+        });
+
+        navigator.mediaSession.setActionHandler('pause', function () {
+            console.log('External pause command');
+            player.pause()
+        });
+
+        navigator.mediaSession.setActionHandler('stop', function () { console.log('External stop command') });
+        navigator.mediaSession.setActionHandler('seekbackward', function () { });
+        navigator.mediaSession.setActionHandler('seekforward', function () { });
+        //navigator.mediaSession.setActionHandler('shuffle', function () { });
+        navigator.mediaSession.setActionHandler('seekto', function () { });
+        navigator.mediaSession.setActionHandler('previoustrack', function () {
+            console.log('External previous command');
+            if (!actiontimeout) {
+                actiontimeout = true;
+                setTimeout(() => { actiontimeout = false }, 20)
+                player.previous();
+            } else {
+                console.warn('2 simultanius commands, Hit action timeout')
+            }
+
+
+        });
+        navigator.mediaSession.setActionHandler('nexttrack', function () {
+            console.log('External next command');
+            if (!actiontimeout) {
+                actiontimeout = true;
+                setTimeout(() => { actiontimeout = false }, 20)
+                player.next()
+            } else {
+                console.warn('2 simultanius commands, Hit action timeout')
+            }
+
+        });
     },
     lookup: async function () {//seach for matches to a pattern amoungst local files pattern
 

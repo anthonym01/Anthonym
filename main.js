@@ -230,6 +230,7 @@ let tray = {
 	body: null, //tray value
 	create: async function () {
 		console.log('Create tray')
+
 		tray.body = new Tray(path.join(__dirname, '/build/icons/256x256.png'))
 		tray.body.on('click', function () {
 			console.log('tray clicked');
@@ -240,48 +241,20 @@ let tray = {
 				mainWindow.show()
 			}
 		}) //Single click
+
 		tray.update('Click to open', 'Play') //First menu
 
 	},
 	update: async function (now_playing, state) {
-		let contextMenu = new Menu() //menu
-
-		contextMenu.append(new MenuItem({
-			label: `Playing: ${now_playing}`,
-			toolTip: 'Open Player',
-			click() {
-				mainWindow.show()
-			}
-		}))
-		contextMenu.append(new MenuItem({
-			type: 'separator'
-		}))
-		contextMenu.append(new MenuItem({
-			label: 'Next',
-			click() {
-				tray.next()
-			}
-		}))
-		//contextMenu.append(new MenuItem({ label: state ? 'Play' : 'Pause', click() { tray.playpause() } }))
-		contextMenu.append(new MenuItem({
-			label: state,
-			click() {
-				tray.playpause()
-			}
-		}))
-		contextMenu.append(new MenuItem({
-			label: 'Previous',
-			click() {
-				tray.previous()
-			}
-		}))
-		contextMenu.append(new MenuItem({
-			type: 'separator'
-		}))
-		contextMenu.append(new MenuItem({
-			role: 'quit'
-		}))
-
+		const contextMenu = new Menu.buildFromTemplate([
+			{ label: `Playing: ${now_playing}`, toolTip: 'Open Player', click() { mainWindow.show() } },
+			{ type: 'separator' },
+			{ label: 'Next', click() { tray.next() } },
+			{ label: state, click() { tray.playpause() } },
+			{ label: 'Previous', click() { tray.previous() } },
+			{ type: 'separator' },
+			{ label: "Quit", click() { app.quit() } }
+		])
 		tray.body.setContextMenu(contextMenu) //Set tray menu
 		tray.body.setToolTip(`Playing: ${now_playing}`) //Set tray tooltip
 	},

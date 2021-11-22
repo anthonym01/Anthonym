@@ -481,6 +481,7 @@ let player = {//Playback control
                 }
             });
 
+
             if (load != false) { player.stream1.load() }
 
         } catch (err) {
@@ -561,9 +562,10 @@ let player = {//Playback control
         player.seekterval = setInterval(async () => {
             let seeked = ~~(player.stream1.seek())
             song_progress_bar.value = seeked;
+
             navigator.mediaSession.setPositionState({
-                duration: ~~(now_playing_content.duration),
-                playbackRate: 1,
+                duration: player.stream1._duration,
+                playbackRate: player.stream1._rate,
                 position: seeked,
             });
 
@@ -904,9 +906,6 @@ let player = {//Playback control
     /*
         rate Number 1.0
         The rate of playback. 0.5 to 4.0, with 1.0 being normal speed.
-
-
-
     */
 
 }
@@ -1299,13 +1298,13 @@ let playlistmanager = {
 
         for (let f2index in config.data.favourites) {
             //let pattern = config.data.favourites[fileindex];
-            
+
             let found = localtable.findIndex(data => path.basename(data) == config.data.favourites[f2index]) || null;
 
             if (found != null && found != undefined && found != -1) {
                 player.build_songbar(found).then((songbar) => {
-                     document.getElementById('favourits_view').appendChild(songbar);
-                     })
+                    document.getElementById('favourits_view').appendChild(songbar);
+                })
                 console.log('favourite of ', found)
             }
         }

@@ -21,9 +21,8 @@ console.log('         MMMMMMMMMMMMMMMMMMMc        .NMMMM.       ');
 console.log("           MMMMMMMMMMMMMMMMMd         'MM          ");
 console.log('              MMMMMMMMMMMMMM0                      ');
 console.log('                  dMMMMMMMMMW                      ');
-console.log('By samuel A. Matheson (samuelmatheson15@gmail.com) Anthonym')
 
-const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me'
+
 
 const { ipcRenderer } = require('electron')
 
@@ -492,7 +491,7 @@ let player = {//Playback control
             player.build_songbar(fileindex).then((songbar) => { document.getElementById('playhistory').appendChild(songbar) })
         }
     },
-    pause: function () {
+    pause:async function () {
         console.log('Pause functionaliy');
         if (player.playstate != false) {
             player.stream1.pause();

@@ -7,10 +7,41 @@ const Store = require('electron-store')
 const storeinator = new Store
 const mm = require('music-metadata')
 const ffmetadata = require("ffmetadata")
+
+const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me'
+
 //const { info } = require('console')
 
 //const NodeID3 = require('node-id3');
 //const tray = require('./tray.js');
+
+setTimeout(() => {
+	console.log("                       dxxxxdoc,.                  ");
+	console.log("                       NMMMMMMMMMMXkc.             ");
+	console.log("           .:          OMMMMMMMMMMMMMMNd.          ");
+	console.log("         ,0MM;         oMMMMMMMMMMMMMMMMMK;        ");
+	console.log("       .KMMMMW.        :MMMMMMMMMMMMMMMMMMMK'      ");
+	console.log("      oMMMMMMMX        'MMMMMMMMMMMMMMMW0dc'       ");
+	console.log("     OMMMMMMMMMO       .MMMMMMMMMMWOo;.            ");
+	console.log("    xMMMMMMMMMMMx       MMMMMMKd;.                 ");
+	console.log("   .MMMMMMMMMMMMMo      MMWk;                      ");
+	console.log("   KMMMMMMMMMMMMMMo    .MM.                        ");
+	console.log("   MMMMMMMMMMMMMMMMk   :MMNOxdollloooddxkkO0KXNWM  ");
+	console.log("   MMMMMMMMMMMMMMMMMNdoWMMMMWloNMMMMMMMMMMMMMMMMM  ");
+	console.log("   WNXK00OkxddoollllllodONMMc   xMMMMMMMMMMMMMMMM  ");
+	console.log('                         .WM.    lMMMMMMMMMMMMMMl  ');
+	console.log('                       ;kWMM.     lMMMMMMMMMMMMM   ');
+	console.log('                  .:dKMMMMMM.      dMMMMMMMMMMM.   ');
+	console.log('             .;o0WMMMMMMMMMM.       kMMMMMMMMM.    ');
+	console.log("        'cxKWMMMMMMMMMMMMMMM,        KMMMMMMN      ");
+	console.log('         MMMMMMMMMMMMMMMMMMMc        .NMMMM.       ');
+	console.log("           MMMMMMMMMMMMMMMMMd         'MM          ");
+	console.log('              MMMMMMMMMMMMMM0                      ');
+	console.log('                  dMMMMMMMMMW                      ');
+	console.log('By samuel A. Matheson (samuelmatheson15@gmail.com) Anthonym')
+	console.log('Musick player that only sucks a little')
+
+}, 4000);
 
 //Main body menu
 const menu_body = new Menu.buildFromTemplate([
@@ -155,7 +186,7 @@ let mainWindow = {
 			}
 		})
 	},
-	close: async function () { },
+	close: async function () { mainWindow.body.close() },
 	hide: async function () {
 		console.log('hide main window')
 		//if (process.platform == 'linux') { create_tray(); }
@@ -253,7 +284,7 @@ let tray = {
 			{ label: state, click() { tray.playpause() } },
 			{ label: 'Previous', click() { tray.previous() } },
 			{ type: 'separator' },
-			{ label: "Quit", click() { app.quit() } }
+			{ role:"quit" }
 		])
 		tray.body.setContextMenu(contextMenu) //Set tray menu
 		tray.body.setToolTip(`Playing: ${now_playing}`) //Set tray tooltip

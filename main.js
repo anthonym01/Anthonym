@@ -136,25 +136,20 @@ let mainWindow = {
 	body: null, //defines the window as an abject
 	create: function () {
 		console.log('crat main app Window')
-		const {
-			screenwidth,
-			screenheight
-		} = screen.getPrimaryDisplay().workAreaSize //gets screen size
 
-		let mainWindowState = windowStateKeeper({
-			defaultWidth: screenwidth,
-			defaultHeight: screenheight
-		})
+		const { screenwidth, screenheight } = screen.getPrimaryDisplay().workAreaSize //gets screen size
+		const mainWindowState = windowStateKeeper({ defaultWidth: screenwidth, defaultHeight: screenheight })
 
 		mainWindow.body = new BrowserWindow({ //make main window
 			x: mainWindowState.x, //x position
 			y: mainWindowState.y, //y position 
 			width: mainWindowState.width,
 			height: mainWindowState.height,
+			minWidth: 400,
+			minHeight: 300,
 			backgroundColor: '#000000',
 			frame: false,
 			center: true, //center the window
-			//alwaysOnTop: false,
 			icon: path.join(__dirname, '/build/icons/256x256.png'), //some linux window managers cant process due to bug
 			title: 'Anthonym',
 			show: true,
@@ -166,9 +161,7 @@ let mainWindow = {
 				nodeIntegrationInWorker: true,
 				worldSafeExecuteJavaScript: true,
 				contextIsolation: false
-			},
-			minWidth: 400,
-			minHeight: 300,
+			}
 		})
 
 		mainWindow.body.loadURL(url.format({
@@ -185,11 +178,11 @@ let mainWindow = {
 				mainWindow.hide()
 			}
 		})
+
 	},
 	close: async function () { mainWindow.body.close() },
 	hide: async function () {
 		console.log('hide main window')
-		//if (process.platform == 'linux') { create_tray(); }
 		mainWindow.body.hide();
 		mainWindow.body.setSkipTaskbar(true);
 	},
@@ -284,7 +277,7 @@ let tray = {
 			{ label: state, click() { tray.playpause() } },
 			{ label: 'Previous', click() { tray.previous() } },
 			{ type: 'separator' },
-			{ role:"quit" }
+			{ role: "quit" }
 		])
 		tray.body.setContextMenu(contextMenu) //Set tray menu
 		tray.body.setToolTip(`Playing: ${now_playing}`) //Set tray tooltip
@@ -458,10 +451,10 @@ async function id3read(information) {
 	return NodeID3.read(information)
 
 }*/
-/*
-async function pullmetadata(information) {
 
-}*/
+/*
+	Handles trigering menu for song_bar (s) in mainWindow
+*/
 ipcMain.on('songbarmenu', (event, fileindex) => {
 
 	const contextMenu = new Menu.buildFromTemplate([
@@ -506,6 +499,9 @@ ipcMain.on('songbarmenu', (event, fileindex) => {
 	contextMenu.popup({ window: mainWindow.body })//popup menu
 })
 
+/*
+	'X' button in frameless mainWindow
+*/
 ipcMain.on('x_button', () => {//close button signal
 	if (config.data.quiton_X != true) {
 		app.quit()

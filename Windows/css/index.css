@@ -754,14 +754,16 @@ body {
     position: relative;
     width: 100%;
     height: fit-content;
-    margin: 0.25rem;
+    margin: 0;
+    padding:0.25rem;
     height: 3.5rem;
     transition: background-color 300ms;
     /*user-select: none;*/
     box-sizing: border-box;
     text-align: right;
     /*background-color: rgba(0, 0, 0, 0);*/
-    background-color: none;
+    background-color: var(--half_background-color);
+    background-clip: border-box;
     opacity: 1;
     cursor: pointer;
     animation: fadeintodarkness 300ms ease-in 50ms 1 forwards;
@@ -1000,8 +1002,9 @@ body {
 .overpainin2 {
     display: block;
     position: relative;
-    width: 49%;
+    width: 50%;
     height: 100%;
+    box-sizing: border-box;
 }
 
 

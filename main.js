@@ -219,14 +219,10 @@ let wallpaper_Window = {
 			backgroundColor: '#000000',
 			frame: false,
 			type: "desktop",
-			//center: true, //center the window
-			//alwaysOnTop: false,
-			//icon: path.join(__dirname, '/build/icons/256x256.png'), //some linux window managers cant process due to bug
-			//title: 'Anthonym',
+			alwaysOnTop:false,
 			show: true,
 			skipTaskbar: true,
 			fullscreen: true,
-			//titleBarStyle: 'hiddenInset',
 			webPreferences: {
 				nodeIntegration: true,
 				enableRemoteModule: true,

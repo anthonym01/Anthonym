@@ -22,8 +22,6 @@ console.log("           MMMMMMMMMMMMMMMMMd         'MM          ");
 console.log('              MMMMMMMMMMMMMM0                      ');
 console.log('                  dMMMMMMMMMW                      ');
 
-
-
 const { ipcRenderer } = require('electron')
 
 const path = require('path')
@@ -491,7 +489,7 @@ let player = {//Playback control
             player.build_songbar(fileindex).then((songbar) => { document.getElementById('playhistory').appendChild(songbar) })
         }
     },
-    pause:async function () {
+    pause: async function () {
         console.log('Pause functionaliy');
         if (player.playstate != false) {
             player.stream1.pause();
@@ -946,8 +944,8 @@ let UI = {
             }
         })
 
-        document.getElementById('Menupannel_main').addEventListener('mouseenter', function () { UI.overpain.hide() })
-        document.getElementById('main_library_view').addEventListener('mouseenter', function () { UI.overpain.hide() })
+        Menupannel_main.addEventListener('mouseenter', function () { UI.overpain.hide() })
+        main_library_view.addEventListener('mouseenter', function () { UI.overpain.hide() })
         document.getElementById('Playbar').addEventListener('mouseenter', function () { UI.overpain.hide() })
         document.getElementById('setting_view').addEventListener('mouseenter', function () { UI.overpain.hide() })
 
@@ -1009,16 +1007,13 @@ let UI = {
             Menupannel_main.style.display = "block";
         },
         setting_view: async function () {
-            console.log('Navigate settings')
-            if (main_library_view.style.display == "none") {
-                this.main_library_view();
-                return 0;
+            console.log('Setting toggle settings')
+            if(document.getElementById('setting_view').className == "setting_view_active"){
+                document.getElementById('setting_view').classList = "setting_view"
+            }else{
+                document.getElementById('setting_view').classList ="setting_view_active"
             }
-            document.getElementById('setting_view').className = "setting_view_active"
-            main_library_view.style.display = "none";
 
-            document.getElementById('favourits_view').style.display = "none"
-            Menupannel_main.style.display = "none";
         }, favourits_view: async function () {
             console.log('Navigate favourits library')
             document.getElementById('setting_view').className = "setting_view"
@@ -1213,6 +1208,7 @@ let UI = {
     },
     overpain: {
         hide: async function () {
+            console.log("Hide overpain")
             //if (searchput.value != "" || document.getElementById('searchbox').style.display == "block") {
             if (backgroundmaskimg.style.display == "none" && backgroundvideo.style.display == "none") {
                 document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
@@ -1221,7 +1217,8 @@ let UI = {
             }
             searchput.style.display = ""
             overpainelm.className = "overpain"
-            main_library_view.style.filter = ""
+            main_library_view.style.filter = "";
+            Menupannel_main.style.filter = "";
             /*document.getElementById('searchbox').style.width = ""*/
             /*} else {
     
@@ -1232,12 +1229,13 @@ let UI = {
             }*/
         },
         show: async function () {
+            console.log('Show overpain')
             document.getElementById('tbuttonholder').className = "tbuttonholder_locked"
             overpainelm.className = "overpain_active"
             setTimeout(() => { searchput.focus(); searchput.select() }, 100);
             searchput.style.display = "block";
-            document.getElementById('main_library_view').style.filter = `blur(${config.data.background_blur}px)`;
-            //document.getElementById('searchbox').style.width = `calc(100% - 15rem + ${config.data.background_blur})`;
+            main_library_view.style.filter = `blur(${(config.data.background_blur * 2)}px)`;
+            Menupannel_main.style.filter = `blur(${(config.data.background_blur * 2)}px)`;
         },
     },
     blurse: async function () {

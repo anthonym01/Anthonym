@@ -550,8 +550,8 @@ ipcMain.handle('pullmetadata', async (event, information) => {
 
 		return {
 			title: metadata.common.title || path.basename(information),//title as a string
-			artist: metadata.common.artist || "unknown",
-			album: metadata.common.album || "unknown",
+			artist: metadata.common.artist || "unknown artist",
+			album: metadata.common.album || "unknown album",
 			duration: metadata.format.duration,//durration in seconds
 			image: thumnaildata,//thumbnail data as a string
 			//rawpic,
@@ -560,9 +560,9 @@ ipcMain.handle('pullmetadata', async (event, information) => {
 	} catch (err) {
 		console.log(err);
 		return {
-			title: "cannot acess" + information,//title as a string
-			artist: "unknown",
-			album: "unknown",
+			title: "cannot acess" + information,
+			artist: "unknown artist",
+			album: "unknown album",
 			duration: 0,//durration in seconds
 			image: 'img/error-pngrepo-com-white.png',//thumbnail data as a string
 			//rawpic,

@@ -10,7 +10,55 @@
     <link rel="stylesheet" href="css/index.css">
     <style>
         #backgroundmaskimg {
-            filter: blur(2px);
+            filter: blur(6px);
+        }
+
+        .detailcontainer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 40%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .detblock {
+            height: fit-content;
+            width: 100%;
+            align-self: center;
+
+        }
+
+        .detdot {
+            width: 100%;
+            font-size: 1.6rem;
+            box-sizing: border-box;
+            padding: 0.7rem;
+            text-shadow: 0rem 0rem 1rem black, 0.1rem 0rem 0.6rem black, 0rem -0.1rem 0.6rem black;
+        }
+
+        .subpicontainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 60%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .subpic {
+            height: fit-content;
+            height: auto !important;
+            width: 40vw;
+            max-width: 50vw;
+            position: relative;
+            object-fit: cover;
+            align-self: center;
+
         }
     </style>
 </head>
@@ -21,24 +69,43 @@
         <!--<video id="backgroundvideo" src="" autoplay muted preload="metadata"></video>-->
     </div>
 
+    <div class="detailcontainer">
+        <div class="detblock">
+            <div class="detdot" id="title">Title</div>
+            <div class="detdot" id="Album">Album</div>
+            <div class="detdot" id="Artist">Artist</div>
+        </div>
+    </div>
+
+    <div class="subpicontainer">
+        <img class="subpic" id="subpic" src="img/icons/icon@1024x1024.png">
+    </div>
+
     <script>
-        const { ipcRenderer } = require('electron')
+        const {
+            ipcRenderer
+        } = require('electron')
         const thumbnailjs = require('thumbnail-js');
         const backgroundmaskimg = document.getElementById('backgroundmaskimg')
 
 
         //optimize to remove double read later
-        ipcRenderer.on('wallpaper_in', async (event, fileindex,blurse) => {
+        ipcRenderer.on('wallpaper_in', async (event, fileindex, blurse) => {
             const metadata = await ipcRenderer.invoke('pullmetadata', fileindex);
             if (metadata.image != null) {
                 backgroundmaskimg.src = metadata.image;
+                document.getElementById("subpic").src = metadata.image;
                 backgroundmaskimg.style.filter = `blur(${blurse}px)`;
                 backgroundmaskimg.style.display = "block";
 
             } else {
                 backgroundmaskimg.src = "img/icons/icon@1024x1024.png"
+                document.getElementById("subpic").src = "img/icons/icon@1024x1024.png"
                 //use placeholder image
             }
+            document.getElementById("title").innerHTML = metadata.title;
+            document.getElementById("Album").innerHTML = metadata.artist;
+            document.getElementById("Artist").innerHTML = metadata.album;
         })
     </script>
 </body>

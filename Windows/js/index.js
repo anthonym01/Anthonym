@@ -1008,10 +1008,10 @@ let UI = {
         },
         setting_view: async function () {
             console.log('Setting toggle settings')
-            if(document.getElementById('setting_view').className == "setting_view_active"){
+            if (document.getElementById('setting_view').className == "setting_view_active") {
                 document.getElementById('setting_view').classList = "setting_view"
-            }else{
-                document.getElementById('setting_view').classList ="setting_view_active"
+            } else {
+                document.getElementById('setting_view').classList = "setting_view_active"
             }
 
         }, favourits_view: async function () {

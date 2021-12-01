@@ -24,7 +24,7 @@
   "scripts": {
     "start": "electron main.js",
     "postinstall": "electron-builder install-app-deps",
-    "build": "electron-builder dir",
+    "build": "electron-builder  --linux dir",
     "builder-linux": "electron-builder --linux deb appimage tar.xz tar.gz snap pacman",
     "builder-win": "electron-builder --win --x64",
     "builder-wack": "electron-builder --macos"

@@ -542,6 +542,7 @@ ipcMain.handle('pullmetadata', async (event, information) => {
 		console.log(metadata)
 		var thumnaildata = null;
 		let rawpic = null;
+		
 		if (path.extname(information) != ".mp4") {
 			rawpic = mm.selectCover(metadata.common.picture) || null;
 			thumnaildata = rawpic ? `data:${rawpic.format};base64,${rawpic.data.toString('base64')}` : null;

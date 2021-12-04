@@ -89,9 +89,10 @@ window.addEventListener('contextmenu', (e) => {//invoke mainbody window
     ipcRenderer.send('menu_body');
 }, false);
 
-searchput.addEventListener('contextmenu', (event) => {
+searchput.addEventListener('contextmenu', (e) => {
+    e.stopPropagation();
     e.preventDefault();
-    ipcRenderer.send('textbox');
+    ipcRenderer.send('textboxmain');
 }, false)
 
 

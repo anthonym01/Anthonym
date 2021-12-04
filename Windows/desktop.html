@@ -84,12 +84,14 @@
     <script>
         const {
             ipcRenderer
-        } = require('electron')
+        } = require('electron');
+
         const thumbnailjs = require('thumbnail-js');
+
         const backgroundmaskimg = document.getElementById('backgroundmaskimg')
 
 
-        //optimize to remove double read later
+        //optimize to remove double read later (when a song is played its metadata is read 3 - 4 times)
         ipcRenderer.on('wallpaper_in', async (event, fileindex, blurse) => {
             const metadata = await ipcRenderer.invoke('pullmetadata', fileindex);
             if (metadata.image != null) {

@@ -8,6 +8,7 @@
     <meta name="author" content="Samuel A. Matheson">
     <meta charset="utf-8">
     <link rel="stylesheet" type="text/css" href="css/index.css">
+    
     <style>
         body,
         html {
@@ -88,6 +89,7 @@
             height: 10rem;
         }
     </style>
+    
     <title>Edit file metadata</title>
 </head>
 
@@ -102,15 +104,8 @@
         -->
     </div>
     <script>
-        const { ipcRenderer, remote, clipboard } = require('electron')
-        const { Menu } = remote
-        const main = remote.require('./main')
+        const { ipcRenderer} = require('electron')
         const path = require('path')
-
-        const ffmetadata = require("ffmetadata")
-        const mm = require('music-metadata')
-        //const fs = require('fs')
-
 
         //Main body menu
         const menu_body = new Menu.buildFromTemplate([

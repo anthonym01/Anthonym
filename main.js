@@ -1,19 +1,18 @@
-const { app, BrowserWindow, Menu, screen, MenuItem, Tray, clipboard, ipcMain, shell, nativeTheme, dialog, systemPreferences } = require('electron');
-const path = require('path')
-const url = require('url')
-const fs = require('fs')
-const windowStateKeeper = require('electron-window-state')
-const Store = require('electron-store')
-const storeinator = new Store
-const mm = require('music-metadata')
-const ffmetadata = require("ffmetadata")
 
-const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me'
 
-//const { info } = require('console')
+const { app, BrowserWindow, Menu, screen, Tray, clipboard, ipcMain, shell, nativeTheme, dialog, systemPreferences } = require('electron');
+const path = require('path');
+const url = require('url');
+const fs = require('fs');
+const windowStateKeeper = require('electron-window-state');
 
-//const NodeID3 = require('node-id3');
-//const tray = require('./tray.js');
+const mm = require('music-metadata');
+const ffmetadata = require("ffmetadata");
+const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
+
+let verbose = true;//yes
+
+if (verbose) { console.log('Running from:', process.resourcesPath) }
 
 setTimeout(() => {
 	console.log("                       dxxxxdoc,.                  ");
@@ -41,9 +40,9 @@ setTimeout(() => {
 	console.log('By samuel A. Matheson (samuelmatheson15@gmail.com) Anthonym')
 	console.log('Musick player that only sucks a little')
 
-}, 4000);
+}, 4000)
 
-//Main body menu
+//Main application menu
 const menu_body = new Menu.buildFromTemplate([
 	{ role: 'reload' },
 	{ label: 'Refresh Library', click() { maininitalizer() } },
@@ -54,49 +53,56 @@ const menu_body = new Menu.buildFromTemplate([
 	{ type: 'separator' },
 	{ label: 'Contact developer', click() { shell.openExternal(my_website) } },
 	{ role: 'toggledevtools' },
-]);
+])
 
-//text box menu
+//text menu
 const text_box_menu = new Menu.buildFromTemplate([
 	{ role: 'cut' },
 	{ role: 'copy' },
 	{ role: 'paste' },
 	{ role: 'selectAll' },
-	//{ role: 'seperator' },
 	{ role: 'undo' },
 	{ role: 'redo' },
-]);
+])
 
+let localtable = [//local song file paths
+	"/home/samuel/Music/kerzkazat/Beauty – Soundtrack (2018)-zVMsJInJxdo.m4a",
+	"/home/samuel/Music/kerzkazat/The Year 12,020 – Soundtrack (2019)-8DUrjs8Z0ZE.m4a"
+]
 
-console.log('Running from:', process.resourcesPath)
+let playlist_files = [//paths to any playlist files within paths specified in config.data.music_folders
 
-let localtable = []
+]
 
-let playlist_files = [//playlist_files
-	/*{
-		path: "path  to playlist file, if any",
-		files: [0, 5, 23, 6, 7]//file indexes
-	}*/
-];
+const Store = require('electron-store');
+const storeinator = new Store;
 
-/* Configuration, application properties or persistent user settings */
-let config = {
+let config = {//configuration data
 	data: {
 		alt_location: false,
 		minimize_to_tray: true,
 		quiton_X: true,
 		use_tray: true,
+		use_wallpapers: true,
 		music_folders: [],
 	},
 	save: async function () {
 		storeinator.set('default', JSON.stringify(config.data))
+		if (verbose) {
+			console.log('Save configuration to, ', storeinator.path)
+		}
 	},
 	load: function () {
 		config.data = JSON.parse(storeinator.get('default'))
+		config.data.use_wallpapers = true;
+		if (verbose) {
+			console.log('configuration load from, ', storeinator.path)
+		}
 	}
 }
 
-if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
+if (!app.requestSingleInstanceLock()) {
+	//stop app if other instence is running
 	app.quit();
 } else {
 
@@ -104,16 +110,15 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 
 	if (storeinator.get('default')) { config.load() }
 
-	app.on('ready', function () { //App ready to roll
-		app.allowRendererProcessReuse = true; //Allow render processes to be reused
+	app.on('ready', function () {
+		app.allowRendererProcessReuse = true;
+
 		mainWindow.create();
-		if (process.platform != "win32") {
-			wallpaper_Window.create()
-		}
+		if (process.platform != "win32" && config.data.use_wallpapers == true) { wallpaper_Window.create() }
 		if (config.data.use_tray == true) { tray.create() }
 	})
 
-	app.on('window-all-closed', () => {//kill app immediatly if window closed
+	app.on('window-all-closed', () => {
 		if (tray.body == null) {
 			app.quit()
 		}
@@ -123,10 +128,9 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 		mainWindow.show();
 	});
 
+	Menu.setApplicationMenu(menu_body);
 
-	//Menu.setApplicationMenu(menu_body);
-
-	Menu.setApplicationMenu(null);
+	//Menu.setApplicationMenu(null);
 
 	fetch_local_library()
 
@@ -135,7 +139,7 @@ if (!app.requestSingleInstanceLock()) { //stop app if other instence is running
 let mainWindow = {
 	body: null, //defines the window as an abject
 	create: function () {
-		console.log('crat main app Window')
+		if (verbose) { console.log('crate main app Window') }
 
 		const { screenwidth, screenheight } = screen.getPrimaryDisplay().workAreaSize //gets screen size
 		const mainWindowState = windowStateKeeper({ defaultWidth: screenwidth, defaultHeight: screenheight })
@@ -196,6 +200,7 @@ let mainWindow = {
 		console.log('Show main window')
 		if (mainWindow.body != undefined) {
 			mainWindow.body.show();
+			mainWindow.body.focus()
 			mainWindow.body.focusOnWebView()
 			mainWindow.body.setSkipTaskbar(false);
 		} else {
@@ -219,7 +224,7 @@ let wallpaper_Window = {
 			backgroundColor: '#000000',
 			frame: false,
 			type: "desktop",
-			alwaysOnTop:false,
+			alwaysOnTop: false,
 			show: true,
 			skipTaskbar: true,
 			fullscreen: true,
@@ -253,14 +258,13 @@ let tray = {
 
 		tray.body = new Tray(path.join(__dirname, '/build/icons/256x256.png'))
 		tray.body.on('click', function () {
-			console.log('tray clicked');
-			console.log("Focused: ", mainWindow.body.isFocused(), " Visible: ", mainWindow.body.isVisible())
-			if (mainWindow.body.isVisible() == true) {
+			//console.log("Focused: ", mainWindow.body.isFocused(), " Visible: ", mainWindow.body.isVisible())
+			if (mainWindow.body.isFocused() == true) {
 				mainWindow.hide()
 			} else {
 				mainWindow.show()
 			}
-		}) //Single click
+		})
 
 		tray.update('Click to open', 'Play') //First menu
 
@@ -273,7 +277,14 @@ let tray = {
 			{ label: state, click() { tray.playpause() } },
 			{ label: 'Previous', click() { tray.previous() } },
 			{ type: 'separator' },
-			{ role: "quit" }
+			{
+				label: "quit", click() {
+					wallpaper_Window.body.hide();
+					mainWindow.body.destroy()
+					wallpaper_Window.body.destroy()
+					setTimeout(() => { app.quit() }, 1000);
+				}
+			},
 		])
 		tray.body.setContextMenu(contextMenu) //Set tray menu
 		tray.body.setToolTip(`Playing: ${now_playing}`) //Set tray tooltip
@@ -528,6 +539,9 @@ ipcMain.on('Ready_for_action', () => { mainWindow.body.webContents.send('got_loc
 
 ipcMain.on('raisemainwindow', () => { mainWindow.show() })
 
+
+let lastpool = null;
+let metadatachae = {}
 ipcMain.handle('pullmetadata', async (event, information) => {
 
 	console.log('Pull metadat for :', information)
@@ -536,20 +550,33 @@ ipcMain.handle('pullmetadata', async (event, information) => {
 		information = localtable[information]
 		console.log('is point to: ', information)
 	}
+
+	if (lastpool == information) {
+		if (verbose) {
+			console.log("Metadata from chae")
+		}
+		return metadatachae;
+	}
+
+	lastpool = information;
+
 	try {
 		let metadata = await mm.parseFile(information, { duration: false, skipCovers: false })
 
-		console.log(metadata)
+		if (verbose) {
+			console.log(metadata)
+		}
+
 		var thumnaildata = null;
 		let rawpic = null;
-		
+
 		if (path.extname(information) != ".mp4") {
 			rawpic = mm.selectCover(metadata.common.picture) || null;
 			thumnaildata = rawpic ? `data:${rawpic.format};base64,${rawpic.data.toString('base64')}` : null;
 
 		}
 
-		return {
+		metadatachae = {
 			title: metadata.common.title || path.basename(information),//title as a string
 			artist: metadata.common.artist || "unknown artist",
 			album: metadata.common.album || "unknown album",
@@ -557,10 +584,12 @@ ipcMain.handle('pullmetadata', async (event, information) => {
 			image: thumnaildata,//thumbnail data as a string
 			//rawpic,
 		}
+		return metadatachae;
 
 	} catch (err) {
 		console.log(err);
-		return {
+
+		metadatachae = {
 			title: "cannot acess" + information,
 			artist: "unknown artist",
 			album: "unknown album",
@@ -568,6 +597,8 @@ ipcMain.handle('pullmetadata', async (event, information) => {
 			image: 'img/error-pngrepo-com-white.png',//thumbnail data as a string
 			//rawpic,
 		}
+
+		return metadatachae;
 
 	}
 })
@@ -596,6 +627,7 @@ ipcMain.on('newmusicfolders', (event, mfolders) => {
 })
 
 ipcMain.on('restart', (event) => { app.relaunch(); app.quit() })
+
 ipcMain.handle('playback_notificationchk', () => {
 	//notification if hidden
 	if (mainWindow.body.isVisible() == false || mainWindow.body.isFocused() == false) {
@@ -604,9 +636,9 @@ ipcMain.handle('playback_notificationchk', () => {
 	return false
 })
 
-ipcMain.on('menu_body', () => { menu_body.popup({ window: mainWindow }) })
+ipcMain.on('menu_body', () => { menu_body.popup() })
 
-ipcMain.on('textbox', () => { text_box_menu.popup({ window: mainWindow }) })
+ipcMain.on('textboxmain', () => { text_box_menu.popup() })
 
 ipcMain.handle('get.localfile', async (event, id) => { return localtable[id] })
 

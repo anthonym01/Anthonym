@@ -1,4 +1,6 @@
 *.directory
+yarn.lock
+*.lock
 
 # Logs
 logs

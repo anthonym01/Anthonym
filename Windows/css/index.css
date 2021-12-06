@@ -7,16 +7,17 @@
 :root {
     --text-color: rgb(0, 0, 0);
     --background-color: rgb(255, 255, 255);
-    --half_background-color: rgba(255, 255, 255, 0.4);
+    --half_background-color: rgba(255, 255, 255, 0.8);
     --ninest_background: rgba(255, 255, 255, 0.9);
-    --eightest_background: rgba(255, 255, 255, 0.8);
+    --eightest_background: rgba(255, 255, 255, 0.85);
     --accent_color: rgb(0, 153, 255);
     --grey: rgb(122, 122, 122);
     --off_grey: rgb(205, 205, 205);
     --half_grey: rgb(165, 165, 165);
-    --Playbar_grade: linear-gradient(0deg, rgb(255, 255, 255), rgb(255, 255, 255));
-    --Playbar_grade_a: linear-gradient(0deg, rgb(255, 255, 255), rgb(255, 255, 255));
-    --Playbar_gradereverse: linear-gradient(180deg, rgb(255, 255, 255), rgb(255, 255, 255), rgb(255, 255, 255));
+    --fourest_background: rgba(255, 255, 255, 0.8);
+    --Playbar_grade: linear-gradient(0deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
+    --Playbar_grade_a: linear-gradient(0deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+    --Playbar_gradereverse: linear-gradient(180deg, rgba(0, 0, 0, .8), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
     --file_icon: url('../img/filecons/folder_black.webp');
     --add_icon: url('../img/plus-dark.webp');
     --setting_icon: url('../img/setting-dark.webp');
@@ -41,7 +42,6 @@
         --half_background-color: rgba(0, 0, 0, 0.2);
         --fourest_background: rgba(0, 0, 0, 0.4);
         --eightest_background: rgba(0, 0, 0, 0.5);
-        --fiveest_background: rgba(0, 0, 0, 0.8);
         --ninest_background: rgba(0, 0, 0, 0.9);
         --accent_color: rgb(0, 153, 255);
         --grey: rgb(122, 122, 122);

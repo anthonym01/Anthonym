@@ -736,7 +736,13 @@ body {
     transition: filter 300ms;
     filter: blur(0px);
 }
-
+/*
+#favourits_view{
+    flex-direction: column-reverse;
+    justify-content: start;
+    flex-wrap: nowrap;
+}
+*/
 @keyframes fadeintodarkness {
     0% {
         opacity: 0;

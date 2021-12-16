@@ -1294,10 +1294,12 @@ let playlistmanager = {
 
         const localtable = await ipcRenderer.invoke('get.localtable');
 
-        for (let f2index in config.data.favourites) {
+        const favlength = config.data.favourites.length;
+        //let f2index = favlength;
+        for (let f2index = favlength; f2index > 0; f2index--) {
             //let pattern = config.data.favourites[fileindex];
 
-            let found = localtable.findIndex(data => path.basename(data) == config.data.favourites[f2index]) || null;
+            let found = localtable.findIndex(data => path.basename(data) == config.data.favourites[f2index - 1]) || null;
 
             if (found != null && found != undefined && found != -1) {
                 player.build_songbar(found).then((songbar) => {
@@ -1317,6 +1319,13 @@ let playlistmanager = {
                     }
                 }*/
     }
+}
+
+
+async function remove_favourite_duplicates() {
+    let hold = config.data.favourites;
+    config.data.favourites = Array.from(new Set(hold));
+    config.save()
 }
 
 async function first_settup() { require('../Windows/js/first_settup.js').first_settup() }

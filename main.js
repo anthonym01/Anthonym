@@ -594,7 +594,7 @@ ipcMain.handle('pullmetadata', async (event, information) => {
 			artist: "unknown artist",
 			album: "unknown album",
 			duration: 0,//durration in seconds
-			image: 'img/error-pngrepo-com-white.png',//thumbnail data as a string
+			image: null,//thumbnail data as a string
 			//rawpic,
 		}
 

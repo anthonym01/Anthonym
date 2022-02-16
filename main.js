@@ -128,7 +128,7 @@ if (!app.requestSingleInstanceLock()) {
 		mainWindow.show();
 	});
 
-	Menu.setApplicationMenu(menu_body);
+	Menu.setApplicationMenu(Menu.buildFromTemplate([{ label: "menu placeholder" }]));
 
 	//Menu.setApplicationMenu(null);
 

@@ -62,15 +62,15 @@
   },
   "devDependencies": {
     "asar": "^1.0.0",
-    "electron": "^17.0.1",
-    "electron-builder": "^22.14.5"
+    "electron": "^17.1.2",
+    "electron-builder": "^22.14.13"
   },
   "dependencies": {
     "electron-store": "^8.0.1",
     "electron-window-state": "^5.0.3",
     "ffmetadata": "^1.7.0",
     "howler": "^2.2.3",
-    "music-metadata": "^7.11.4",
+    "music-metadata": "^7.12.2",
     "node-id3": "^0.2.3",
     "siriwave": "^2.2.3",
     "thumbnail-js": "^0.1.5",

@@ -309,7 +309,7 @@ async function write_file(filepath, data) {
 	console.log(filepath, data)
 	fs.writeFile(filepath, data, (err) => { //write config to file as json
 		if (err) {
-			alert("An error occurred creating the file" + err.message)
+			alert("An error occurred creating the file" + err.message)
 		} else {
 			console.log("The file has been successfully saved to: ", filepath);
 		}
@@ -539,7 +539,17 @@ ipcMain.on('Ready_for_action', () => { mainWindow.body.webContents.send('got_loc
 
 ipcMain.on('raisemainwindow', () => { mainWindow.show() })
 
+ipcMain.on('export_playlist', async (event, filedata) => {
+	const filepath = await dialog.showSaveDialog(mainWindow.body, {//dialog in directory selection mode
+		buttonLabel: 'Save playlist file',
+	})
 
+	console.log('Export playlist file to: ' + filepath.filePath + '. With data: ' + filedata);
+	const fsp = filepath.filePath + '.m3u';
+	write_file(fsp, filedata);
+})
+
+// metadata
 let lastpool = null;
 let metadatachae = {}
 ipcMain.handle('pullmetadata', async (event, information) => {

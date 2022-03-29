@@ -65,14 +65,9 @@ const text_box_menu = new Menu.buildFromTemplate([
 	{ role: 'redo' },
 ])
 
-let localtable = [//local song file paths
-	"/home/samuel/Music/kerzkazat/Beauty – Soundtrack (2018)-zVMsJInJxdo.m4a",
-	"/home/samuel/Music/kerzkazat/The Year 12,020 – Soundtrack (2019)-8DUrjs8Z0ZE.m4a"
-]
+let localtable = []//local song file paths]
 
-let playlist_files = [//paths to any playlist files within paths specified in config.data.music_folders
-
-]
+let playlist_files = []//paths to any playlist files within paths specified in config.data.music_folders
 
 const Store = require('electron-store');
 const storeinator = new Store;
@@ -128,7 +123,12 @@ if (!app.requestSingleInstanceLock()) {
 		mainWindow.show();
 	});
 
-	Menu.setApplicationMenu(Menu.buildFromTemplate([{ label: "menu placeholder" }]));
+	Menu.setApplicationMenu(Menu.buildFromTemplate([
+		{ label: "menu placeholder" },
+		{submenu: [
+			{ label: 'export favourites' },
+		]},
+	]));
 
 	//Menu.setApplicationMenu(null);
 

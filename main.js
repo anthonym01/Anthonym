@@ -124,10 +124,12 @@ if (!app.requestSingleInstanceLock()) {
 	});
 
 	Menu.setApplicationMenu(Menu.buildFromTemplate([
-		{ label: "menu placeholder" },
-		{submenu: [
-			{ label: 'export favourites' },
-		]},
+		{
+			label: "menu placeholder", submenu: [
+				{ label: 'remove dupicate favourites', click() { mainWindow.body.webContents.send('remove_dupicate_favourites') } },
+				{ label: 'export favourites', click() { mainWindow.body.webContents.send('export_favourites') } },
+			]
+		},
 	]));
 
 	//Menu.setApplicationMenu(null);

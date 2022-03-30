@@ -1324,13 +1324,17 @@ let playlistmanager = {
 
 
 /* Temporary prototypes */
+ipcRenderer.on('remove_dupicate_favourites', (event) => { remove_favourite_duplicates() })
+
 async function remove_favourite_duplicates() {
     let hold = config.data.favourites;
     config.data.favourites = Array.from(new Set(hold));
     config.save()
 }
 
-async function export_favourites(){
+ipcRenderer.on('export_favourites', (event) => { export_favourites() })
+
+async function export_favourites() {
     let outputs = '';
 
     const localtable = await ipcRenderer.invoke('get.localtable');
@@ -1343,13 +1347,13 @@ async function export_favourites(){
         let found = localtable.findIndex(data => path.basename(data) == config.data.favourites[f2index - 1]) || null;
 
         if (found != null && found != undefined && found != -1) {
-            outputs = outputs + /*path.basename(*/localtable[found]/*)*/+'\n';
+            outputs = outputs + /*path.basename(*/localtable[found]/*)*/ + '\n';
             console.log('Export of ', found)
         }
     }
     console.log(outputs);
 
-    ipcRenderer.send('export_playlist',outputs);
+    ipcRenderer.send('export_playlist', outputs);
 }
 
 async function first_settup() { require('../Windows/js/first_settup.js').first_settup() }

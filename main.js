@@ -547,8 +547,12 @@ ipcMain.on('export_playlist', async (event, filedata) => {
 	})
 
 	console.log('Export playlist file to: ' + filepath.filePath + '. With data: ' + filedata);
-	const fsp = filepath.filePath + '.m3u';
-	write_file(fsp, filedata);
+	
+	if(path.extname(filepath.filePath)=='.m3u'){
+		write_file(filepath.filePath, filedata);
+	}else{
+		write_file(`${filepath.filePath}`.m3u, filedata);
+	}	
 })
 
 // metadata

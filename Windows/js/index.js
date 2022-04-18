@@ -1218,8 +1218,9 @@ let UI = {
             }
             searchput.style.display = ""
             overpainelm.className = "overpain"
-            main_library_view.style.filter = "";
-            Menupannel_main.style.filter = "";
+            //overpainelm.style.backdropFilter = `blur(${(config.data.background_blur * 2)}px)`;
+            //main_library_view.style.filter = "";
+            //Menupannel_main.style.filter = "";
             /*document.getElementById('searchbox').style.width = ""*/
             /*} else {
     
@@ -1235,8 +1236,9 @@ let UI = {
             overpainelm.className = "overpain_active"
             setTimeout(() => { searchput.focus(); searchput.select() }, 100);
             searchput.style.display = "block";
-            main_library_view.style.filter = `blur(${(config.data.background_blur * 2)}px)`;
-            Menupannel_main.style.filter = `blur(${(config.data.background_blur * 2)}px)`;
+            overpainelm.style.backdropFilter = `blur(${(config.data.background_blur * 2)}px)`;
+            //main_library_view.style.filter = `blur(${(config.data.background_blur * 2)}px)`;
+            //Menupannel_main.style.filter = `blur(${(config.data.background_blur * 2)}px)`;
         },
     },
     blurse: async function () {

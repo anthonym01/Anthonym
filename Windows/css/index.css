@@ -160,7 +160,7 @@ body {
     top: 0px;
     left: 0;
     width: 100vw;
-    height: 100vh; 
+    height: 100vh;
     /*filter: blur(1px);*/
     background-size: cover;
     background-position: center;
@@ -423,18 +423,19 @@ body {
     bottom: 0;
     width: 100%;
     height: 7rem;
-    background: var(--Playbar_grade);
+    background: var(--Playbar_grade_a);
     background-position: 0%;
     box-shadow: 0 0 1rem 0 var(--accent_color);
     transition: background 300ms;
     z-index: 10;
 }
 
+/*
 .Playbar:hover {
     background: var(--Playbar_grade_a);
-}
+}*/
 
-/*
+
 .Playbar:hover .shufflebtn,
 .Playbar:hover .shufflebtn_on,
 .Playbar:hover .repeatbtn_no,
@@ -442,10 +443,10 @@ body {
 .Playbar:hover .repeatbtn_all,
 .Playbar:hover .playbtn,
 .Playbar:hover .pausebtn {
-    filter: blur(0px) !important;
-    background-color: var(--background-color);
+
+    /*background-color: var(--background-color);*/
     transition: background-color 300ms, background-image 300ms, background-size 300ms, background-position 300ms, filter 0ms;
-}*/
+}
 
 .shufflebtn:hover,
 .shufflebtn_on:hover,
@@ -454,9 +455,11 @@ body {
 .repeatbtn_all:hover,
 .playbtn:hover,
 .pausebtn:hover {
-    filter: blur(0px) !important;
-    background-color: var(--background-color);
+    box-shadow: 0rem 0rem 0.5rem 0.2rem var(--text-color);
+    background-color: var(--half_background-color);
     transition: background-color 300ms, background-image 300ms, background-size 300ms, background-position 300ms, filter 0ms;
+
+    /*outline: 0.5rem solid var(--ninest_background);*/
 }
 
 
@@ -488,6 +491,8 @@ body {
     filter: blur(0px);
     background-size: 80%;
     background-position: 90% 50%;
+    box-shadow: 0rem 0rem 0rem 0rem var(--text-color);
+    backdrop-filter: blur(5px) !important;
 }
 
 .pausebtn {
@@ -542,6 +547,8 @@ body {
     /* Shuffle button */
     left: calc(50vw - 12rem);
     background-image: var(--shuffle_no_icon);
+    box-shadow: 0rem 0rem 0rem 0rem var(--text-color);
+    backdrop-filter: blur(5px) !important;
 }
 
 .shufflebtn_on {
@@ -736,6 +743,7 @@ body {
     transition: filter 300ms;
     filter: blur(0px);
 }
+
 /*
 #favourits_view{
     flex-direction: column-reverse;

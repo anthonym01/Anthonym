@@ -178,8 +178,7 @@ let mainWindow = {
 
 		mainWindowState.manage(mainWindow.body); //give window to window manager plugin
 
-		mainWindow.body.on('minimize', function (event) {
-
+		mainWindow.body.on('minimize', function () {
 			if (config.data.minimize_to_tray == true && tray.body != null) {
 				mainWindow.hide()
 			}
@@ -259,8 +258,9 @@ let tray = {
 		console.log('Create tray')
 
 		tray.body = new Tray(path.join(__dirname, '/build/icons/256x256.png'))
+		
 		tray.body.on('click', function () {
-			//console.log("Focused: ", mainWindow.body.isFocused(), " Visible: ", mainWindow.body.isVisible())
+			console.log("Focused: ", mainWindow.body.isFocused(), " Visible: ", mainWindow.body.isVisible())
 			if (mainWindow.body.isFocused() == true) {
 				mainWindow.hide()
 			} else {

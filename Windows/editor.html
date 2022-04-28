@@ -8,7 +8,7 @@
     <meta name="author" content="Samuel A. Matheson">
     <meta charset="utf-8">
     <link rel="stylesheet" type="text/css" href="css/index.css">
-    
+
     <style>
         body,
         html {
@@ -89,12 +89,12 @@
             height: 10rem;
         }
     </style>
-    
+
     <title>Edit file metadata</title>
 </head>
 
 <body>
-    <img id="coverart" src="" alt="cover art"></img>
+    <img id="coverart" src="" alt="cover art">
     <div id="datablocker">
         <!--
         <div class="datablock_containment">
@@ -104,56 +104,42 @@
         -->
     </div>
     <script>
-        const { ipcRenderer} = require('electron')
-        const path = require('path')
+        const {
+            ipcRenderer
+        } = require('electron');
+        const path = require('path');
 
         //Main body menu
-        const menu_body = new Menu.buildFromTemplate([
-            { role: 'reload' },
-            { type: 'separator' },
-            { role: 'zoomIn' },
-            { role: 'resetZoom' },
-            { role: 'zoomOut' },
-            { type: 'separator' },
-            { role: 'toggledevtools' },
-        ]);
+
 
         //Menu.setApplicationMenu(menu_body);
         window.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            menu_body.popup({ window: remote.getCurrentWindow() })
+            ipcRenderer.send('editor_body');
         }, false);
 
 
         ipcRenderer.on('editpath', (event, fpath) => {
-            console.log('Told to edit ', fpath)
-            document.title = path.basename(fpath)
-            editpath = fpath
-            pullffmpgdata(fpath)
-            pullmmmetadata(fpath)
-        })
+            console.log('Told to edit ', fpath);
+            document.title = path.basename(fpath);
+            editpath = fpath;
+            //pullffmpgdata(fpath);
+            pullmmmetadata(fpath);
+        });
 
         let editpath = null;
         let editableprops = [];
         let coverart = null;
 
-        async function pullmmmetadata(florpa) {
+        async function pullmmmetadata(florpa) { //Get picture metadata for display purposes
 
-            const metadata = await mm.parseFile(florpa, { duration: false });
-
-            //const metadata = await main.pullrawmetadata(florpa);
-
-            const picture = mm.selectCover(metadata.common.picture) || null;
-            let thumnaildata = picture ? `data:${picture.format};base64,${picture.data.toString('base64')}` : null;
-
-            document.getElementById('coverart').src = thumnaildata;
-
-            main.write_file(path.join(process.resourcesPath, `coverartchae.jpg`), picture.data)
-            //coverart = URL.createObjectURL(new Blob([picture.data], { type: picture.format }))
-
+            const metadata = await ipcRenderer.invoke('pullmetadata', florpa)
+            document.getElementById('coverart').src = metadata.image;
+            ipcRenderer.send('write_to_file', path.join(process.resourcesPath, `coverartchae.jpg`), metadata.rawpic
+                .data);
         }
 
-        async function pullffmpgdata(information) {
+        async function pullffmpgdata(information) { //Get matadata for reading and writing purposes
             console.log('Pull metadat for :', information)
 
             if (!isNaN(information)) {
@@ -180,11 +166,21 @@
                     - major_brand (file type),compatible_brands and encoder shouldn't be edited
                 */
 
-                if ('title' in props) { buildprop('title', props) }
-                if ('artist' in props) { buildprop('artist', props) }
-                if ('album' in props) { buildprop('album', props) }
-                if ('date' in props) { buildprop('date', props) }
-                if ('description' in props) { buildprop('description', props) }
+                if ('title' in props) {
+                    buildprop('title', props)
+                }
+                if ('artist' in props) {
+                    buildprop('artist', props)
+                }
+                if ('album' in props) {
+                    buildprop('album', props)
+                }
+                if ('date' in props) {
+                    buildprop('date', props)
+                }
+                if ('description' in props) {
+                    buildprop('description', props)
+                }
                 //if ('comment' in props) { buildprop('comment', props) }
 
                 /*for (let prop in props) {
@@ -212,9 +208,12 @@
                         datablock_containment.className = "datablock_containment"
 
                         datumput.value = props[prop]
-                        console.log(`proced date: ${props[prop].slice(0, 4)}-${props[prop].slice(4, 6)}-${props[prop].slice(6, 8)}`)
+                        console.log(
+                            `proced date: ${props[prop].slice(0, 4)}-${props[prop].slice(4, 6)}-${props[prop].slice(6, 8)}`
+                        )
                         break;
-                    case 'description': case 'comment':
+                    case 'description':
+                    case 'comment':
                         datumput = document.createElement('textarea')
                         datumput.className = "datumput_large"
                         //datumput.type = "date";
@@ -225,7 +224,8 @@
                     default:
                         datumput = document.createElement('input')
                         datumput.className = "datumput"
-                        datumput.type = "text"; datablock_containment.className = "datablock_containment"
+                        datumput.type = "text";
+                        datablock_containment.className = "datablock_containment"
 
                         datumput.value = props[prop];
                 }
@@ -244,7 +244,9 @@
 
         async function write_props() {
             let metainfo = {};
-            let options = { attachments: [path.join(process.resourcesPath, `coverartchae.jpg`)] }
+            let options = {
+                attachments: [path.join(process.resourcesPath, `coverartchae.jpg`)]
+            }
             for (let index in editableprops) {
                 if (index != undefined && editableprops[index].value != undefined) {
                     metainfo[editableprops[index].name] = editableprops[index].value
@@ -264,7 +266,6 @@
                 else console.log("Data written");
             });
         }
-
     </script>
 </body>
 

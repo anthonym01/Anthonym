@@ -65,6 +65,30 @@ const text_box_menu = new Menu.buildFromTemplate([
 	{ role: 'redo' },
 ])
 
+//editor menu 
+const editor_menu = new Menu.buildFromTemplate([{
+	role: 'reload'
+},
+{
+	type: 'separator'
+},
+{
+	role: 'zoomIn'
+},
+{
+	role: 'resetZoom'
+},
+{
+	role: 'zoomOut'
+},
+{
+	type: 'separator'
+},
+{
+	role: 'toggledevtools'
+},
+]);
+
 let localtable = []//local song file paths]
 
 let playlist_files = []//paths to any playlist files within paths specified in config.data.music_folders
@@ -258,7 +282,7 @@ let tray = {
 		console.log('Create tray')
 
 		tray.body = new Tray(path.join(__dirname, '/build/icons/256x256.png'))
-		
+
 		tray.body.on('click', function () {
 			console.log("Focused: ", mainWindow.body.isFocused(), " Visible: ", mainWindow.body.isVisible())
 			if (mainWindow.body.isFocused() == true) {
@@ -508,9 +532,6 @@ ipcMain.on('songbarmenu', (event, fileindex) => {
 	contextMenu.popup({ window: mainWindow.body })//popup menu
 })
 
-/*
-	'X' button in frameless mainWindow
-*/
 ipcMain.on('x_button', () => {//close button signal
 	if (config.data.quiton_X != true) {
 		app.quit()
@@ -547,12 +568,12 @@ ipcMain.on('export_playlist', async (event, filedata) => {
 	})
 
 	console.log('Export playlist file to: ' + filepath.filePath + '. With data: ' + filedata);
-	
-	if(path.extname(filepath.filePath)=='.m3u'){
+
+	if (path.extname(filepath.filePath) == '.m3u') {
 		write_file(filepath.filePath, filedata);
-	}else{
+	} else {
 		write_file(`${filepath.filePath}`.m3u, filedata);
-	}	
+	}
 })
 
 // metadata
@@ -598,7 +619,7 @@ ipcMain.handle('pullmetadata', async (event, information) => {
 			album: metadata.common.album || "unknown album",
 			duration: metadata.format.duration,//durration in seconds
 			image: thumnaildata,//thumbnail data as a string
-			//rawpic,
+			rawpic,
 		}
 		return metadatachae;
 
@@ -649,8 +670,10 @@ ipcMain.handle('playback_notificationchk', () => {
 	if (mainWindow.body.isVisible() == false || mainWindow.body.isFocused() == false) {
 		return true;
 	}
-	return false
+	return false;
 })
+
+ipcMain.on('editor_body', () => { editor_menu.popup() })
 
 ipcMain.on('menu_body', () => { menu_body.popup() })
 
@@ -674,73 +697,6 @@ ipcMain.handle('get.localtable_length', () => { return localtable.length })
 
 ipcMain.handle('get.localtable', () => { return localtable })
 
-module.exports = { //exported modules
-	//pullmetadata,
-	write_file,
-	writemetadata,
-	//pullrawmetadata,
-	//id3read,
-	setontop: async function () {
-		mainWindow.body.setAlwaysOnTop(true)//always on top the window
-	},
-	setnotontop: async function () {
-		mainWindow.body.setAlwaysOnTop(false)
-	}, //always on top'nt the window
-	Stash_window: async function () {
-		mainWindow.hide()
-	},
-	Show_window: async function () {
-		mainWindow.show()
-	},
-	reamake_tray: function () {
-		tray.create()
-	},
-	remove_tray: function () {
-		tray.destroy()
-	},
-	resynclocal: function () { },
-	get: {
-		localtable: function () {
-			return localtable
-		},
-		localfile: function (id) {
-			return localtable[id]
-		},
-		localtable_length: function () {
-			return localtable.length
-		},
-		musicfolders: function () {
-			return config.data.music_folders
-		},
-		alt_location: function () {
-			return config.data.alt_location
-		},
-		minimize_to_tray: function () {
-			return config.data.minimize_to_tray
-		},
-		quiton_X: function () {
-			return config.data.quiton_X
-		},
-		use_tray: function () {
-			return config.data.use_tray
-		}
-	},
-	set: {
-		musicfolders: async function (music_folders) {
-
-		},
-		minimize_to_tray: async function (minimize_to_tray) {
-			config.data.minimize_to_tray = minimize_to_tray;
-			config.save();
-		},
-		quiton_X: async function (quiton_X) {
-			config.data.quiton_X = quiton_X;
-			config.save();
-		},
-		use_tray: async function (use_tray) {
-			config.data.use_tray = use_tray;
-			config.save();
-		},
-	}
-
-}
+ipcMain.on('write_to_file', (event, filepath, filedata) => {
+	write_file(filepath,filedata);
+})

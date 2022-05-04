@@ -1092,28 +1092,19 @@ let UI = {
             },
         },
         minimize_to_tray: {
-            flip: function () {
+            flip:async function () {
                 console.log('use tray switch triggered');
-                /*
-                if (main.get.minimize_to_tray() == true) {//turn off the switch
-                    main.set.minimize_to_tray(false)
-                    //main.remove_tray()
-                    console.warn('use minimize_to_tray dissabled');
-                } else {//turn on the witch
-                    main.set.minimize_to_tray(true)
-                    //main.reamake_tray()
-                    console.warn('use minimize_to_tray enabled');
-                }
-                */
+                ipcRenderer.sendSync('minimize_to_tray_flip');
                 this.setpostition();
             },
             setpostition: function () {
-                /*
-                if (main.get.minimize_to_tray() == true) {
-                    document.getElementById('minimize_to_tray_put').checked = true;
-                } else {
-                    document.getElementById('minimize_to_tray_put').checked = false;
-                }*/
+                ipcRenderer.invoke('get_minimize_to_tray').then((blool)=>{
+                    if (blool) {
+                        document.getElementById('minimize_to_tray_put').checked = true;
+                    } else {
+                        document.getElementById('minimize_to_tray_put').checked = false;
+                    }
+                })
             },
         },
         quiton_X: {
@@ -1325,7 +1316,6 @@ let playlistmanager = {
 
 
 
-/* Temporary prototypes */
 ipcRenderer.on('remove_dupicate_favourites', (event) => { remove_favourite_duplicates() })
 
 async function remove_favourite_duplicates() {

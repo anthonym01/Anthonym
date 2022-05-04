@@ -66,27 +66,14 @@ const text_box_menu = new Menu.buildFromTemplate([
 ])
 
 //editor menu 
-const editor_menu = new Menu.buildFromTemplate([{
-	role: 'reload'
-},
-{
-	type: 'separator'
-},
-{
-	role: 'zoomIn'
-},
-{
-	role: 'resetZoom'
-},
-{
-	role: 'zoomOut'
-},
-{
-	type: 'separator'
-},
-{
-	role: 'toggledevtools'
-},
+const editor_menu = new Menu.buildFromTemplate([
+	{ role: 'reload' },
+	{ type: 'separator' },
+	{ role: 'zoomIn' },
+	{ role: 'resetZoom' },
+	{ role: 'zoomOut' },
+	{ type: 'separator' },
+	{ role: 'toggledevtools' },
 ]);
 
 let localtable = []//local song file paths]
@@ -472,6 +459,18 @@ async function edilocalfile(findex) {
 	})).then(() => { Editor_window.webContents.send('editpath', localtable[findex]) })
 }
 
+ipcMain.handle('get_minimize_to_tray', (event) => { return config.data.minimize_to_tray})
+ipcMain.on('minimize_to_tray_flip',(event)=>{
+	
+	if (config.data.minimize_to_tray) {//turn off the switch
+		config.data.minimize_to_tray = false;
+		console.log('use minimize_to_tray dissabled');
+	} else {//turn on the switch (not too much tho :d)
+		config.data.minimize_to_tray = true;
+		console.log('use minimize_to_tray enabled');
+	}
+	config.save()
+})
 /*
 async function id3read(information) {
 	console.log('Pull id3 for :', information)
@@ -698,5 +697,5 @@ ipcMain.handle('get.localtable_length', () => { return localtable.length })
 ipcMain.handle('get.localtable', () => { return localtable })
 
 ipcMain.on('write_to_file', (event, filepath, filedata) => {
-	write_file(filepath,filedata);
+	write_file(filepath, filedata);
 })

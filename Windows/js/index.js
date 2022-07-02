@@ -1028,42 +1028,28 @@ let UI = {
         animation: {
             flip: function () {
                 console.log('animation switch triggered');
-                if (process.platform != "linux" && systemPreferences.getAnimationSettings().shouldRenderRichAnimation == false) {//animations preffered OFF by system
-                    notify.new('System over-rule', 'Animations dissabled by Your Systems devices preferences');
+                if (config.data.animations == true) {
+                    //turn off the switch
+                    config.data.animations = false
+                    console.warn('animations dissabled');
                 } else {
-                    if (config.data.animations == true) {
-                        //turn off the switch
-                        config.data.animations = false
-                        console.warn('animations dissabled');
-                    } else {
-                        //turn on the witch
-                        config.data.animations = true
-                        console.warn('animations enabled');
-                    }
+                    //turn on the witch
+                    config.data.animations = true
+                    console.warn('animations enabled');
                 }
-
                 config.save();
                 this.setpostition();
             },
             setpostition: function () {
-                switch (process.platform) {
-                    case "linux"://Linux && free BSD
-                        if (config.data.animations == true) { mation() }
-                        else { nomation() }
-                        break;
-                    default://Mac OS && windows
-                        if (systemPreferences.getAnimationSettings().shouldRenderRichAnimation == true) {//animations preffered by system only works on windows and wackOS
-                            if (config.data.animations == true) { mation() } else { nomation() }
-                        } else { nomation() }//system preffers no animations
-                }
-                function mation() {
+                if (config.data.animations == true) {
                     document.getElementById('anime_put').checked = true;
                     document.getElementById('nomation_box').innerText = "";
                 }
-                function nomation() {
+                else {
                     document.getElementById('anime_put').checked = false;
                     document.getElementById('nomation_box').innerText = "*{transition: none !important;animation: none !important;}";
                 }
+
             },
         },
         use_tray: {
@@ -1092,13 +1078,13 @@ let UI = {
             },
         },
         minimize_to_tray: {
-            flip:async function () {
+            flip: async function () {
                 console.log('use tray switch triggered');
                 ipcRenderer.sendSync('minimize_to_tray_flip');
                 this.setpostition();
             },
             setpostition: function () {
-                ipcRenderer.invoke('get_minimize_to_tray').then((blool)=>{
+                ipcRenderer.invoke('get_minimize_to_tray').then((blool) => {
                     if (blool) {
                         document.getElementById('minimize_to_tray_put').checked = true;
                     } else {
@@ -1348,4 +1334,6 @@ async function export_favourites() {
     ipcRenderer.send('export_playlist', outputs);
 }
 
+
+ipcRenderer.on('do_first_settup', () => { first_settup() })
 async function first_settup() { require('../Windows/js/first_settup.js').first_settup() }

@@ -1,6 +1,6 @@
 
 
-const { app, BrowserWindow, Menu, screen, Tray, clipboard, ipcMain, shell, nativeTheme, dialog, systemPreferences } = require('electron');
+const { app, BrowserWindow, Menu, screen, Tray, clipboard, ipcMain, shell, nativeTheme, dialog } = require('electron');
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
@@ -292,10 +292,12 @@ let tray = {
 			{ type: 'separator' },
 			{
 				label: "quit", click() {
-					wallpaper_Window.body.hide();
-					mainWindow.body.destroy()
-					wallpaper_Window.body.destroy()
 					setTimeout(() => { app.quit() }, 1000);
+					mainWindow.body.destroy();
+					if (process.platform == 'linux') {
+						wallpaper_Window.body.hide();
+						wallpaper_Window.body.destroy();
+					}
 				}
 			},
 		])
@@ -335,7 +337,12 @@ async function fetch_local_library() {
 	localtable = [];
 
 	if (config.data.music_folders == [] || config.data.music_folders == undefined || config.data.music_folders.length < 1) {
+		/*requires first settup
 		first_settup()//run first settup
+		*/
+		setTimeout(() => {
+			mainWindow.body.webContents.send('do_first_settup')
+		}, 7000);
 	} else {
 		await getfiles(config.data.music_folders)
 		//		console.log('Local library ', localtable)
@@ -459,9 +466,9 @@ async function edilocalfile(findex) {
 	})).then(() => { Editor_window.webContents.send('editpath', localtable[findex]) })
 }
 
-ipcMain.handle('get_minimize_to_tray', (event) => { return config.data.minimize_to_tray})
-ipcMain.on('minimize_to_tray_flip',(event)=>{
-	
+ipcMain.handle('get_minimize_to_tray', (event) => { return config.data.minimize_to_tray })
+ipcMain.on('minimize_to_tray_flip', (event) => {
+
 	if (config.data.minimize_to_tray) {//turn off the switch
 		config.data.minimize_to_tray = false;
 		console.log('use minimize_to_tray dissabled');
@@ -689,7 +696,9 @@ ipcMain.on('Play_msg', (event, index, state) => { //Receive Song data from mainw
 })
 
 ipcMain.on('wallpaper', (event, fileindex, blurse) => {
-	wallpaper_Window.body.webContents.send('wallpaper_in', fileindex, blurse);
+	if (process.platform == 'linux') {
+		wallpaper_Window.body.webContents.send('wallpaper_in', fileindex, blurse);
+	}
 })
 
 ipcMain.handle('get.localtable_length', () => { return localtable.length })

@@ -584,7 +584,7 @@ ipcMain.on('export_playlist', async (event, filedata) => {
 
 // metadata
 let lastpool = null;
-let metadatachae = {}
+let metadatachae = {};
 ipcMain.handle('pullmetadata', async (event, information) => {
 
 	console.log('Pull metadat for :', information)
@@ -705,6 +705,6 @@ ipcMain.handle('get.localtable_length', () => { return localtable.length })
 
 ipcMain.handle('get.localtable', () => { return localtable })
 
-ipcMain.on('write_to_file', (event, filepath, filedata) => {
+ipcMain.on('write_to_file', async (event, filepath, filedata) => {
 	write_file(filepath, filedata);
 })

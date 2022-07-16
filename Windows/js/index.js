@@ -1,4 +1,3 @@
-
 console.log("                       dxxxxdoc,.                  ");
 console.log("                       NMMMMMMMMMMXkc.             ");
 console.log("           .:          OMMMMMMMMMMMMMMNd.          ");
@@ -21,6 +20,9 @@ console.log('         MMMMMMMMMMMMMMMMMMMc        .NMMMM.       ');
 console.log("           MMMMMMMMMMMMMMMMMd         'MM          ");
 console.log('              MMMMMMMMMMMMMM0                      ');
 console.log('                  dMMMMMMMMMW                      ');
+
+console.log("Contact me:    https://anthonym01.github.io/Portfolio/?contact=me");
+console.log("My Portfolio:  https://anthonym01.github.io/Portfolio/");
 
 const { ipcRenderer } = require('electron')
 

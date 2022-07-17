@@ -10,7 +10,7 @@ const mm = require('music-metadata');
 const ffmetadata = require("ffmetadata");
 const my_website = 'https://anthonym01.github.io/Portfolio/?contact=me';
 
-let verbose = true;//yes
+let verbose = true;//yes for testing
 
 if (verbose) { console.log('Running from:', process.resourcesPath) }
 

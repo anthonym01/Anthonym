@@ -311,16 +311,32 @@ let player = {//Playback control
         //seek controls
         song_progress_bar.addEventListener('click', function (e) {
             e.preventDefault();
+            console.log('Songbar click trigger')
             song_progress_bar_seek(this.value);
         })
+        
+        // Refine later
         song_progress_bar.addEventListener('touchmove', function (e) {
             e.preventDefault();
+            console.log('Songbar touchmove trigger')
             song_progress_bar_seek(this.value);
         })
+        song_progress_bar.addEventListener('change', function (e) {
+            e.preventDefault();
+            console.log('Songbar change trigger')
+            song_progress_bar_seek(this.value);
+        })
+        
+        song_progress_bar.addEventListener('touchend', function (e) {
+            e.preventDefault();
+            console.log('Songbar touchend trigger')
+            song_progress_bar_seek(this.value);
+        })
+        /*
         song_progress_bar.addEventListener('touchstart', function (e) {
             e.preventDefault();
             song_progress_bar_seek(this.value);
-        })
+        })*/
 
 
         function song_progress_bar_seek(seek_value){

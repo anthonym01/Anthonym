@@ -28,7 +28,7 @@ const { ipcRenderer } = require('electron')
 
 const path = require('path')
 const wallpaper = require('wallpaper')
-const utils = require('../Windows/js/utils.js')
+const utils = require('../Windows/js/utils.js');//use as if in main.js
 const { Howler } = require('howler')
 const thumbnailjs = require('thumbnail-js');
 
@@ -311,14 +311,34 @@ let player = {//Playback control
         //seek controls
         song_progress_bar.addEventListener('click', function (e) {
             e.preventDefault();
-            console.log('seek to :', this.value);
-            player.stop_seeking();
-            player.stream1.seek(this.value);
-            backgroundvideo.currentTime = this.value;
+            song_progress_bar_seek(this.value);
         })
+        song_progress_bar.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+            song_progress_bar_seek(this.value);
+        })
+        song_progress_bar.addEventListener('touchstart', function (e) {
+            e.preventDefault();
+            song_progress_bar_seek(this.value);
+        })
+
+
+        function song_progress_bar_seek(seek_value){
+            player.stop_seeking();
+            player.stream1.seek(seek_value);
+            backgroundvideo.currentTime = seek_value;
+            console.log('seek to :', seek_value);
+        }
+
         song_progress_bar.addEventListener('mouseenter', function () { player.stop_seeking() })
+        song_progress_bar.addEventListener('touchstart', function () { player.stop_seeking() })
         song_progress_bar.addEventListener('mouseleave', function (e) {
-            if (player.playstate == true && player.seekterval == null) {
+            if (player.playstate == true && player.seekterval == null) {// if music playing as defined by player and not by howler
+                player.start_seeking()
+            }
+        })
+        song_progress_bar.addEventListener('touchend', function (e) {
+            if (player.playstate == true && player.seekterval == null) {// if music playing as defined by player and not by howler
                 player.start_seeking()
             }
         })

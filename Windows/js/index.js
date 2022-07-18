@@ -102,7 +102,7 @@ searchput.addEventListener('contextmenu', (e) => {
 window.addEventListener('keydown', async function (e) {//keyboard actions
     console.log('Keypress: ', e.key)
     switch (e.key) {
-        case " ": case "p": case "enter":
+        case " ": case "p":case "P": case "enter":
             e.preventDefault();
             player.play();
             break;
@@ -114,16 +114,16 @@ window.addEventListener('keydown', async function (e) {//keyboard actions
                 UI.navigate.main_library_view()
             }
             break;
-        case "f": e.preventDefault(); UI.overpain.show(); break;
-        case "n":
+        case "f":case "F": e.preventDefault(); UI.overpain.show(); break;
+        case "n":case "N":
             e.preventDefault();
             console.log('Seekforward on keypress');
             player.next(); break;
-        case "b":
+        case "b":case "B":
             e.preventDefault();
             console.log('previous on keypress');
             player.previous(); break;
-        case "m":
+        case "m":case "M":
             e.preventDefault();
             console.log('mute on keypress');
             player.mute();

@@ -321,11 +321,12 @@ let player = {//Playback control
             console.log('Songbar touchmove trigger')
             song_progress_bar_seek(this.value);
         })
+        /*
         song_progress_bar.addEventListener('change', function (e) {
             e.preventDefault();
             console.log('Songbar change trigger')
             song_progress_bar_seek(this.value);
-        })
+        })*/
         
         song_progress_bar.addEventListener('touchend', function (e) {
             e.preventDefault();
@@ -788,7 +789,7 @@ let player = {//Playback control
                 }
             }
 
-        }, 500))
+        }, 50))
 
     },
     scroll_to_current: async function () {

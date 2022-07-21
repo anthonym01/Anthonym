@@ -102,7 +102,7 @@ searchput.addEventListener('contextmenu', (e) => {
 window.addEventListener('keydown', async function (e) {//keyboard actions
     console.log('Keypress: ', e.key)
     switch (e.key) {
-        case " ": case "p":case "P": case "enter":
+        case " ": case "p":case "P":case "k":case "K": case "enter":
             e.preventDefault();
             player.play();
             break;

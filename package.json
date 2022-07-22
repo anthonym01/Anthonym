@@ -24,9 +24,10 @@
   "scripts": {
     "start": "electron main.js",
     "postinstall": "electron-builder install-app-deps",
-    "builder-linux": "electron-builder --linux deb appimage tar.xz tar.gz snap pacman",
-    "builder-win": "electron-builder --win --ia32",
-    "builder-wack": "electron-builder --macos"
+    "build-linux-unpacked": "electron-builder --linux dir",
+    "build-linux-all": "electron-builder --linux deb appimage tar.xz tar.gz snap pacman",
+    "builder-win": "electron-builder --win --ia32 --x64",
+    "builder-wack_OS": "electron-builder --macos"
   },
   "build": {
     "appId": "com.anthonym.music",

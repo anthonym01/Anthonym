@@ -29,7 +29,7 @@
     --shuffle_no_icon: url('../img/play-bck-controls/shuffle-pngrepo-com-dark-non.webp');
     --repeat_icon: url('../img/play-bck-controls/repeat-dark.webp');
     --repeat_lock_icon: url('../img/play-bck-controls/repeat-lock-dark.webp');
-    --vynal_icon: url('../img/vinyl-record-pngrepo-com.png');
+    --vynal_icon: url('../img/vinyl-record-svgrepo-com.svg');
     --video_icon: url('../img/video-pngrepo-com.png');
 }
 
@@ -61,7 +61,7 @@
         --shuffle_no_icon: url('../img/play-bck-controls/shuffle-pngrepo-com-light-non.webp');
         --repeat_icon: url('../img/play-bck-controls/repeat-light.webp');
         --repeat_lock_icon: url('../img/play-bck-controls/repeat-lock-light.webp');
-        --vynal_icon: url('../img/vinyl-record-pngrepo-com-white.png');
+        --vynal_icon: url('../img/vinyl-record-svgrepo-com-white.svg');
         --video_icon: url('../img/video-pngrepo-com-white.png')
     }
 }

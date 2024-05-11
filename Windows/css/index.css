@@ -32,7 +32,8 @@
     --vynal_icon: url('../img/vinyl-record-svgrepo-com.svg');
     --video_icon: url('../img/video-pngrepo-com.png');
 }
-.dark{
+
+.dark {
     --text-color: rgb(255, 255, 255);
     --background-color: rgb(0, 0, 0);
     --half_background-color: rgba(0, 0, 0, 0.2);
@@ -60,6 +61,7 @@
     --vynal_icon: url('../img/vinyl-record-svgrepo-com-white.svg');
     --video_icon: url('../img/video-pngrepo-com-white.png');
 }
+
 @media (prefers-color-scheme: dark) {
 
     .dark,

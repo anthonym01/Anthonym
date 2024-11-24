@@ -8,14 +8,8 @@
   "license": "ISC",
   "bin": "AA01",
   "icon": "build/icon.png",
-  "author": {
-    "name": "Anthonym",
-    "email": "samuelmatheson20@gmail.com"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/anthonym01/Anthonym"
-  },
+  "author": "Anthonym <samuelmatheson20@gmail.com>",
+  "repository": "https://github.com/anthonym01/Anthonym",
   "keywords": [
     "Electron",
     "Audio",
